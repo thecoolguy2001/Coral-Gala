@@ -7,7 +7,7 @@ import StripeProvider from './components/StripeProvider.jsx';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <StripeProvider>
-      <App />
+    <App />
     </StripeProvider>
   </React.StrictMode>,
 )

@@ -16,7 +16,7 @@ function App() {
       <FallbackBanner message={error ? 'Live updates are currently paused. We are trying to reconnect...' : null} />
       <InteractionUI disabled={!!error} events={events} />
       <Aquarium fishData={fishData} />
-    </div>
+      </div>
   );
 }
 
