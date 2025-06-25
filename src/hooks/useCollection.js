@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 
-const useCollection = (collectionName) => {
+const useCollection = (collectionName, orderByField, orderByDirection = 'desc') => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,7 +11,12 @@ const useCollection = (collectionName) => {
     setLoading(true);
     setError(null);
 
-    const q = query(collection(db, collectionName), orderBy('timestamp', 'desc'));
+    let q = query(collection(db, collectionName));
+
+    // Only add 'orderBy' if the field is provided
+    if (orderByField) {
+      q = query(collection(db, collectionName), orderBy(orderByField, orderByDirection));
+    }
 
     const unsubscribe = onSnapshot(
       q,
@@ -33,7 +38,7 @@ const useCollection = (collectionName) => {
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, [collectionName]);
+  }, [collectionName, orderByField, orderByDirection]);
 
   return { documents, loading, error };
 };

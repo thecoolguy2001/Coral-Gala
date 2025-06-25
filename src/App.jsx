@@ -6,7 +6,7 @@ import useCollection from './hooks/useCollection';
 
 function App() {
   const { documents: fishData, error: fishError } = useCollection('fish');
-  const { documents: events, error: eventsError } = useCollection('events');
+  const { documents: events, error: eventsError } = useCollection('events', 'timestamp', 'desc');
 
   // Any error from our hooks will be captured here
   const error = fishError || eventsError;
