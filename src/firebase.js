@@ -4,12 +4,13 @@ import { getAuth } from "firebase/auth";
 
 // TODO: Replace with your app's Firebase project configuration
 const firebaseConfig = {
-  apiKey: "API_KEY",
-  authDomain: "PROJECT_ID.firebaseapp.com",
-  projectId: "PROJECT_ID",
-  storageBucket: "PROJECT_ID.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID",
+  apiKey: "AIzaSyA3dBwrdZWGCgMz61NGhgV5DdTkaXNE-mY",
+  authDomain: "coral-gala.firebaseapp.com",
+  projectId: "coral-gala",
+  storageBucket: "coral-gala.firebasestorage.app",
+  messagingSenderId: "588155127899",
+  appId: "1:588155127899:web:f97cf77b64c80db548977e",
+  measurementId: "G-PK1WJ4P8QR"
 };
 
 // Initialize Firebase
