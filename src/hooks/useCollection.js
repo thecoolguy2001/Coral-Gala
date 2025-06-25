@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy } from 'firebase/firestore';
 
 const useCollection = (collectionName, orderByField, orderByDirection = 'desc') => {
   const [documents, setDocuments] = useState([]);
@@ -8,36 +8,33 @@ const useCollection = (collectionName, orderByField, orderByDirection = 'desc') 
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    const getCollection = async () => {
+      setLoading(true);
+      setError(null);
 
-    let q = query(collection(db, collectionName));
+      try {
+        let q = query(collection(db, collectionName));
 
-    // Only add 'orderBy' if the field is provided
-    if (orderByField) {
-      q = query(collection(db, collectionName), orderBy(orderByField, orderByDirection));
-    }
+        if (orderByField) {
+          q = query(collection(db, collectionName), orderBy(orderByField, orderByDirection));
+        }
 
-    const unsubscribe = onSnapshot(
-      q,
-      (querySnapshot) => {
+        const querySnapshot = await getDocs(q);
         const docs = [];
         querySnapshot.forEach((doc) => {
           docs.push({ ...doc.data(), id: doc.id });
         });
         setDocuments(docs);
-        setLoading(false);
-      },
-      (err) => {
+
+      } catch (err) {
         console.error(err);
         setError('Failed to fetch data. See console for details.');
-        // This is where we would implement the UX Fallback Strategy (Phase 5)
+      } finally {
         setLoading(false);
       }
-    );
+    };
 
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
+    getCollection();
   }, [collectionName, orderByField, orderByDirection]);
 
   return { documents, loading, error };
