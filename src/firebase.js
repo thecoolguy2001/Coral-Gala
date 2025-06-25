@@ -12,6 +12,10 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// --- DIAGNOSTIC LOG ---
+console.log("Firebase config being used:", firebaseConfig);
+// --------------------
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
