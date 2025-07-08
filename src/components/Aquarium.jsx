@@ -29,11 +29,25 @@ const Scene = ({ fishData, events }) => {
 };
 
 const Aquarium = ({ fishData = [], events = [] }) => {
+  // Add some default fish if no data is available
+  const defaultFish = [
+    { id: 'fish1', position: [-5, 2, 0] },
+    { id: 'fish2', position: [5, -2, 5] },
+    { id: 'fish3', position: [0, 3, -3] },
+    { id: 'fish4', position: [-3, -1, 2] },
+    { id: 'fish5', position: [4, 0, -1] }
+  ];
+  
+  const activeFishData = fishData.length > 0 ? fishData : defaultFish;
+
   return (
-    <Canvas camera={{ position: [0, 0, 30], fov: 75 }}>
+    <Canvas 
+      camera={{ position: [0, 0, 30], fov: 75 }}
+      style={{ width: '100%', height: '100%', background: 'linear-gradient(to bottom, #87CEEB, #4682B4)' }}
+    >
       <ambientLight intensity={0.8} />
       <pointLight position={[10, 10, 10]} />
-      <Scene fishData={fishData} events={events} />
+      <Scene fishData={activeFishData} events={events} />
     </Canvas>
   );
 };
