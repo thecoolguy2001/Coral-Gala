@@ -3,15 +3,34 @@ import { Canvas } from '@react-three/fiber';
 import Fish from './Fish';
 import useFlockingSimulation from '../hooks/useFlockingSimulation';
 
+// Simple test fish component
+const SimpleFish = ({ position, id }) => {
+  return (
+    <mesh position={position}>
+      <coneGeometry args={[0.3, 1, 8]} rotation-x={Math.PI / 2} />
+      <meshStandardMaterial color={'#ffdd88'} />
+    </mesh>
+  );
+};
+
 // This new Scene component will live inside the Canvas
 const Scene = ({ fishData, events }) => {
-  const initialFish = useMemo(() => fishData.map(f => ({
-    id: f.id,
-    initialPosition: f.position || [0, 0, 0]
-  })), [fishData]);
+  const initialFish = useMemo(() => {
+    console.log('Scene - fishData:', fishData);
+    const mapped = fishData.map(f => {
+      console.log('Scene - mapping fish:', f);
+      return {
+        id: f.id,
+        initialPosition: f.position || [0, 0, 0]
+      };
+    });
+    console.log('Scene - initialFish:', mapped);
+    return mapped;
+  }, [fishData]);
 
-  // Now this hook is called within a child of Canvas, which is correct
-  const boids = useFlockingSimulation(initialFish);
+  // TEMPORARILY DISABLED - using simple fish instead
+  // const boids = useFlockingSimulation(initialFish);
+  // console.log('Scene - boids:', boids);
 
   useEffect(() => {
     if (events.length > 0) {
@@ -21,8 +40,8 @@ const Scene = ({ fishData, events }) => {
 
   return (
     <Suspense fallback={null}>
-      {boids.map(boid => (
-        <Fish key={boid.id} boid={boid} />
+      {initialFish.map(fish => (
+        <SimpleFish key={fish.id} position={fish.initialPosition} id={fish.id} />
       ))}
     </Suspense>
   );
