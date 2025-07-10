@@ -11,6 +11,13 @@ const useCollection = (collectionName, orderByField, orderByDirection = 'desc') 
     setLoading(true);
     setError(null);
 
+    // Check if Firebase is properly initialized
+    if (!db) {
+      setError('Firebase is not properly configured. Please check your environment variables.');
+      setLoading(false);
+      return;
+    }
+
     let q = query(collection(db, collectionName));
 
     // Only add 'orderBy' if the field is provided
@@ -27,10 +34,17 @@ const useCollection = (collectionName, orderByField, orderByDirection = 'desc') 
         });
         setDocuments(docs);
         setLoading(false);
+        console.log(`Loaded ${docs.length} documents from ${collectionName} collection`);
       },
       (err) => {
-        console.error(err);
-        setError('Failed to fetch data. See console for details.');
+        console.error('Firestore error:', err);
+        if (err.code === 'permission-denied') {
+          setError('Permission denied. Please check your Firestore security rules.');
+        } else if (err.code === 'unavailable') {
+          setError('Firebase is currently unavailable. Please try again later.');
+        } else {
+          setError(`Failed to fetch data from ${collectionName}: ${err.message}`);
+        }
         setLoading(false);
       }
     );
