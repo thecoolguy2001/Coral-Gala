@@ -45,7 +45,7 @@ class ThreeErrorBoundary extends React.Component {
 const SimpleFish = ({ position, id }) => {
   return (
     <mesh position={position}>
-      <boxGeometry args={[0.5, 0.5, 0.5]} />
+      <coneGeometry args={[0.3, 1, 8]} />
       <meshStandardMaterial color={'#ffdd88'} />
     </mesh>
   );
@@ -66,9 +66,9 @@ const Scene = ({ fishData, events }) => {
     return mapped;
   }, [fishData]);
 
-  // TEMPORARILY DISABLED - using simple fish instead
-  // const boids = useFlockingSimulation(initialFish);
-  // console.log('Scene - boids:', boids);
+  // Re-enable flocking simulation
+  const boids = useFlockingSimulation(initialFish);
+  console.log('Scene - boids:', boids);
 
   useEffect(() => {
     if (events.length > 0) {
@@ -78,8 +78,8 @@ const Scene = ({ fishData, events }) => {
 
   return (
     <Suspense fallback={null}>
-      {initialFish.map(fish => (
-        <SimpleFish key={fish.id} position={fish.initialPosition} id={fish.id} />
+      {boids.map(boid => (
+        <Fish key={boid.id} boid={boid} />
       ))}
     </Suspense>
   );

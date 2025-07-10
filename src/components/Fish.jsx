@@ -13,8 +13,8 @@ const Fish = ({ boid }) => {
   });
 
   return (
-    <mesh ref={mesh}>
-      <coneGeometry args={[0.3, 1, 8]} rotation-x={Math.PI / 2} />
+    <mesh ref={mesh} rotation={[0, 0, Math.PI / 2]}>
+      <coneGeometry args={[0.3, 1, 8]} />
       <meshStandardMaterial color={'#ffdd88'} />
     </mesh>
   );
