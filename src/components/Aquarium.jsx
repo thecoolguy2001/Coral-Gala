@@ -3,11 +3,49 @@ import { Canvas } from '@react-three/fiber';
 import Fish from './Fish';
 import useFlockingSimulation from '../hooks/useFlockingSimulation';
 
+// Error boundary for Three.js errors
+class ThreeErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Three.js error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ 
+          position: 'absolute', 
+          top: '50%', 
+          left: '50%', 
+          transform: 'translate(-50%, -50%)',
+          color: 'white',
+          background: 'rgba(0,0,0,0.8)',
+          padding: '20px',
+          borderRadius: '10px'
+        }}>
+          <h3>3D Rendering Error</h3>
+          <p>There was an issue with the 3D aquarium. Please refresh the page.</p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 // Simple test fish component
 const SimpleFish = ({ position, id }) => {
   return (
     <mesh position={position}>
-      <coneGeometry args={[0.3, 1, 8]} rotation-x={Math.PI / 2} />
+      <boxGeometry args={[0.5, 0.5, 0.5]} />
       <meshStandardMaterial color={'#ffdd88'} />
     </mesh>
   );
@@ -64,14 +102,16 @@ const Aquarium = ({ fishData = [], events = [] }) => {
   console.log('Aquarium - activeFishData:', activeFishData);
 
   return (
-    <Canvas 
-      camera={{ position: [0, 0, 30], fov: 75 }}
-      style={{ width: '100%', height: '100%', background: 'linear-gradient(to bottom, #87CEEB, #4682B4)' }}
-    >
-      <ambientLight intensity={0.8} />
-      <pointLight position={[10, 10, 10]} />
-      <Scene fishData={activeFishData} events={events} />
-    </Canvas>
+    <ThreeErrorBoundary>
+      <Canvas 
+        camera={{ position: [0, 0, 30], fov: 75 }}
+        style={{ width: '100%', height: '100%', background: 'linear-gradient(to bottom, #87CEEB, #4682B4)' }}
+      >
+        <ambientLight intensity={0.8} />
+        <pointLight position={[10, 10, 10]} />
+        <Scene fishData={activeFishData} events={events} />
+      </Canvas>
+    </ThreeErrorBoundary>
   );
 };
 
