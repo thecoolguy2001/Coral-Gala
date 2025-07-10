@@ -5,7 +5,7 @@ const Fish = ({ boid }) => {
   const mesh = useRef();
 
   useFrame(() => {
-    if (!mesh.current || !boid) return;
+    if (!mesh.current || !boid || !boid.position || !boid.ref) return;
 
     // Apply the position and rotation calculated by the simulation
     mesh.current.position.copy(boid.position);

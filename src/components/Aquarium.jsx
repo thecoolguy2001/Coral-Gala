@@ -39,6 +39,10 @@ const Aquarium = ({ fishData = [], events = [] }) => {
   ];
   
   const activeFishData = fishData.length > 0 ? fishData : defaultFish;
+  
+  // Debug logging
+  console.log('Aquarium - fishData:', fishData);
+  console.log('Aquarium - activeFishData:', activeFishData);
 
   return (
     <Canvas 

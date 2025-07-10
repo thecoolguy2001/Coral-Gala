@@ -7,16 +7,23 @@ import * as THREE from 'three';
 const useFlockingSimulation = (fishData) => {
   const boids = useMemo(() => {
     // Initialize boids with position, velocity, and a Three.js object for calculations
-    return fishData.map(f => ({
-      ...f,
-      position: new THREE.Vector3(...f.initialPosition),
-      velocity: new THREE.Vector3(
-        (Math.random() - 0.5) * 2,
-        (Math.random() - 0.5) * 2,
-        (Math.random() - 0.5) * 2
-      ),
-      ref: new THREE.Object3D(), // Used to calculate rotations
-    }));
+    return fishData.map(f => {
+      // Ensure we have valid position data
+      const safePosition = f.initialPosition && Array.isArray(f.initialPosition) && f.initialPosition.length >= 3 
+        ? f.initialPosition 
+        : [0, 0, 0];
+      
+      return {
+        ...f,
+        position: new THREE.Vector3(...safePosition),
+        velocity: new THREE.Vector3(
+          (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 2
+        ),
+        ref: new THREE.Object3D(), // Used to calculate rotations
+      };
+    });
   }, [fishData]);
 
   useFrame((state, delta) => {
