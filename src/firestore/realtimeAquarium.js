@@ -5,17 +5,60 @@ const REALTIME_COLLECTION = 'realtime-aquarium';
 const SIMULATION_MASTER_DOC = 'simulation-master';
 
 /**
+ * Sanitizes fish data for Firebase storage
+ */
+const sanitizeFishData = (fish) => {
+  const sanitized = {};
+  
+  // Go through each property and handle appropriately
+  Object.keys(fish).forEach(key => {
+    const value = fish[key];
+    
+    // Skip undefined values and Three.js objects
+    if (value === undefined || key === 'ref') {
+      return;
+    }
+    
+    // Handle nested objects
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      // Handle Three.js Vector3 objects
+      if (value.toArray && typeof value.toArray === 'function') {
+        sanitized[key] = value.toArray();
+        return;
+      }
+      
+      // Handle nested objects recursively
+      const nestedSanitized = {};
+      Object.keys(value).forEach(nestedKey => {
+        const nestedValue = value[nestedKey];
+        if (nestedValue !== undefined) {
+          nestedSanitized[nestedKey] = nestedValue;
+        }
+      });
+      sanitized[key] = nestedSanitized;
+    } else {
+      // Handle primitive values and arrays
+      sanitized[key] = value;
+    }
+  });
+  
+  return sanitized;
+};
+
+/**
  * Updates a fish's position in the real-time aquarium
  */
 export const updateFishPosition = async (fishId, position, velocity) => {
   if (!db) return;
   
   try {
-    await setDoc(doc(db, REALTIME_COLLECTION, fishId), {
+    const sanitizedData = sanitizeFishData({
       position: position.toArray ? position.toArray() : position,
       velocity: velocity.toArray ? velocity.toArray() : velocity,
       lastUpdated: serverTimestamp(),
     });
+    
+    await setDoc(doc(db, REALTIME_COLLECTION, fishId), sanitizedData);
   } catch (error) {
     console.error('Error updating fish position:', error);
   }
@@ -30,18 +73,16 @@ export const updateAllFishPositions = async (fishData) => {
   try {
     const batch = [];
     Object.entries(fishData).forEach(([fishId, fish]) => {
-      // Store complete fish data, not just position/velocity
-      const fishDataToStore = {
+      // Sanitize the complete fish data before storing
+      const sanitizedFish = sanitizeFishData({
         ...fish,
-        position: fish.position.toArray ? fish.position.toArray() : fish.position,
-        velocity: fish.velocity.toArray ? fish.velocity.toArray() : fish.velocity,
+        position: fish.position?.toArray ? fish.position.toArray() : fish.position,
+        velocity: fish.velocity?.toArray ? fish.velocity.toArray() : fish.velocity,
         lastUpdated: serverTimestamp(),
-      };
+      });
       
-      // Remove Three.js objects that can't be serialized
-      delete fishDataToStore.ref;
-      
-      batch.push(setDoc(doc(db, REALTIME_COLLECTION, fishId), fishDataToStore));
+      console.log(`🧹 Sanitized fish data for ${fishId}:`, sanitizedFish);
+      batch.push(setDoc(doc(db, REALTIME_COLLECTION, fishId), sanitizedFish));
     });
     
     await Promise.all(batch);

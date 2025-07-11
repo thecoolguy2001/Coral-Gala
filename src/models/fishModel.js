@@ -50,20 +50,34 @@ export const FISH_SPECIES = {
 
 // Create a new fish with full stats
 export const createFish = (overrides = {}) => {
-  const species = overrides.species || FISH_SPECIES.CLOWNFISH;
-  const traits = overrides.traits || species.traits || [PERSONALITY_TRAITS.FRIENDLY];
+  // Handle species - could be string or species object
+  let speciesObj = FISH_SPECIES.CLOWNFISH; // default
+  let speciesName = 'Clownfish'; // default
+  
+  if (typeof overrides.species === 'string') {
+    // Species passed as string name
+    speciesName = overrides.species;
+    // Find matching species object
+    speciesObj = Object.values(FISH_SPECIES).find(s => s.name === overrides.species) || FISH_SPECIES.CLOWNFISH;
+  } else if (overrides.species && typeof overrides.species === 'object') {
+    // Species passed as object
+    speciesObj = overrides.species;
+    speciesName = speciesObj.name;
+  }
+  
+  const traits = overrides.traits || speciesObj.traits || [PERSONALITY_TRAITS.FRIENDLY];
   
   return {
     // Basic Info
     id: overrides.id || `fish_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     name: overrides.name || 'Unnamed Fish',
-    species: species.name,
+    species: speciesName, // Always use string for species
     age: overrides.age || Math.floor(Math.random() * 12) + 1, // 1-12 months
-    color: overrides.color || species.colors[0],
+    color: overrides.color || speciesObj.colors?.[0] || '#ffdd88',
     
     // Physical Properties
-    size: overrides.size || (species.averageSize * (0.8 + Math.random() * 0.4)), // ±20% variation
-    speed: overrides.speed || (species.baseSpeed * (0.9 + Math.random() * 0.2)), // ±10% variation
+    size: overrides.size || (speciesObj.averageSize * (0.8 + Math.random() * 0.4)), // ±20% variation
+    speed: overrides.speed || (speciesObj.baseSpeed * (0.9 + Math.random() * 0.2)), // ±10% variation
     
     // Position in tank
     position: overrides.position || [
@@ -73,23 +87,23 @@ export const createFish = (overrides = {}) => {
     ],
     
     // Health Stats (0-100)
-    hunger: overrides.hunger || Math.floor(Math.random() * 30) + 70, // Start well-fed
-    health: overrides.health || Math.floor(Math.random() * 20) + 80, // Start healthy
-    mood: overrides.mood || Math.floor(Math.random() * 40) + 60, // Start content
-    energy: overrides.energy || Math.floor(Math.random() * 30) + 70, // Start energetic
+    hunger: overrides.hunger !== undefined ? overrides.hunger : Math.floor(Math.random() * 30) + 70, // Start well-fed
+    health: overrides.health !== undefined ? overrides.health : Math.floor(Math.random() * 20) + 80, // Start healthy
+    mood: overrides.mood !== undefined ? overrides.mood : Math.floor(Math.random() * 40) + 60, // Start content
+    energy: overrides.energy !== undefined ? overrides.energy : Math.floor(Math.random() * 30) + 70, // Start energetic
     
     // Personality
     personality: {
       traits: traits,
       primary: traits[0],
-      friendliness: Math.floor(Math.random() * 50) + 50, // 50-100
-      playfulness: Math.floor(Math.random() * 100),
-      shyness: Math.floor(Math.random() * 100),
+      friendliness: overrides.personality?.friendliness !== undefined ? overrides.personality.friendliness : Math.floor(Math.random() * 50) + 50, // 50-100
+      playfulness: overrides.personality?.playfulness !== undefined ? overrides.personality.playfulness : Math.floor(Math.random() * 100),
+      shyness: overrides.personality?.shyness !== undefined ? overrides.personality.shyness : Math.floor(Math.random() * 100),
     },
     
     // Preferences
     preferences: {
-      favoriteFood: species.favoriteFood,
+      favoriteFood: speciesObj.favoriteFood || 'fish flakes',
       temperature: Math.floor(Math.random() * 4) + 76, // 76-80°F
       depth: ['surface', 'middle', 'bottom'][Math.floor(Math.random() * 3)],
     },
@@ -116,9 +130,9 @@ export const createFish = (overrides = {}) => {
     
     // Display Properties
     display: {
-      nickname: overrides.nickname || null,
-      bio: overrides.bio || generateRandomBio(traits),
-      achievements: overrides.achievements || [],
+      nickname: overrides.nickname || overrides.display?.nickname || null,
+      bio: overrides.bio || overrides.display?.bio || generateRandomBio(traits),
+      achievements: overrides.achievements || overrides.display?.achievements || [],
     },
     
     // Metadata
@@ -252,7 +266,7 @@ export const getDefaultFish = () => [
   createFish({
     id: 'phillip',
     name: 'Phillip',
-    species: FISH_SPECIES.CLOWNFISH.name,
+    species: 'Clownfish', // Use string directly, not object
     position: [-5, 2, 0],
     age: 8,
     color: '#FF6B35',
@@ -277,7 +291,7 @@ export const getDefaultFish = () => [
   createFish({
     id: 'jojo',
     name: 'Jojo',
-    species: FISH_SPECIES.ANGELFISH.name,
+    species: 'Angelfish', // Use string directly
     position: [5, -2, 5],
     age: 6,
     color: '#FFD700',
@@ -302,7 +316,7 @@ export const getDefaultFish = () => [
   createFish({
     id: 'marina',
     name: 'Marina',
-    species: FISH_SPECIES.NEMO.name,
+    species: 'Nemo Fish', // Use string directly
     position: [0, 3, -3],
     age: 4,
     color: '#FF4500',
@@ -327,7 +341,7 @@ export const getDefaultFish = () => [
   createFish({
     id: 'bubbles',
     name: 'Bubbles',
-    species: FISH_SPECIES.TANG.name,
+    species: 'Blue Tang', // Use string directly
     position: [-3, -1, 2],
     age: 10,
     color: '#0066CC',
