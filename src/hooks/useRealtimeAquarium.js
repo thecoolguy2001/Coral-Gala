@@ -49,6 +49,14 @@ const useRealtimeAquarium = (fishData) => {
         console.log('🎯 Became simulation master!');
         setIsMaster(true);
         
+        // Initialize Firebase with complete fish data when becoming master
+        const initialPositions = {};
+        boids.forEach(boid => {
+          initialPositions[boid.id] = boid;
+        });
+        await updateAllFishPositions(initialPositions);
+        console.log('📡 Initialized Firebase with complete fish data');
+        
         // Start heartbeat
         heartbeatInterval.current = setInterval(() => {
           updateMasterHeartbeat();
@@ -77,7 +85,7 @@ const useRealtimeAquarium = (fishData) => {
         clearInterval(heartbeatInterval.current);
       }
     };
-  }, []);
+  }, [boids]); // Add boids as dependency
 
   // Subscribe to real-time positions (for non-masters)
   useEffect(() => {
@@ -182,39 +190,41 @@ const useRealtimeAquarium = (fishData) => {
     return { boids, isMaster: true };
   } else {
     // Convert Firebase data back to boid format for rendering
-    const remoteBoids = Object.entries(realtimePositions).map(([id, firebaseData]) => {
-      // Create a boid from the complete fish data stored in Firebase
-      const boid = {
-        ...firebaseData, // Use all data from Firebase
-        id,
-        position: new THREE.Vector3(...(firebaseData.position || [0, 0, 0])),
-        velocity: new THREE.Vector3(...(firebaseData.velocity || [0, 0, 0])),
-        ref: new THREE.Object3D(),
-      };
+    // Merge real-time position data with original comprehensive fish data
+    const remoteBoids = fishData.map(originalFish => {
+      const firebaseData = realtimePositions[originalFish.id];
       
-      // Update ref orientation for rendering
-      boid.ref.position.copy(boid.position);
-      boid.ref.lookAt(boid.position.clone().add(boid.velocity));
-      
-      return boid;
-    });
-    
-    // If we don't have real-time data yet, fall back to original fish data
-    if (remoteBoids.length === 0) {
-      const fallbackBoids = fishData.map(originalFish => ({
-        ...originalFish,
-        position: new THREE.Vector3(...(originalFish.initialPosition || [0, 0, 0])),
-        velocity: new THREE.Vector3(0, 0, 0),
-        ref: new THREE.Object3D(),
-      }));
-      
-      fallbackBoids.forEach(boid => {
+      if (firebaseData) {
+        // Merge original comprehensive data with real-time position/velocity
+        const boid = {
+          ...originalFish, // Start with comprehensive fish data
+          ...firebaseData, // Overlay with Firebase data (which should also be comprehensive)
+          id: originalFish.id,
+          position: new THREE.Vector3(...(firebaseData.position || originalFish.initialPosition || [0, 0, 0])),
+          velocity: new THREE.Vector3(...(firebaseData.velocity || [0, 0, 0])),
+          ref: new THREE.Object3D(),
+        };
+        
+        // Update ref orientation for rendering
         boid.ref.position.copy(boid.position);
         boid.ref.lookAt(boid.position.clone().add(boid.velocity));
-      });
-      
-      return { boids: fallbackBoids, isMaster: false };
-    }
+        
+        return boid;
+      } else {
+        // No Firebase data yet, use original comprehensive fish data
+        const boid = {
+          ...originalFish,
+          position: new THREE.Vector3(...(originalFish.initialPosition || [0, 0, 0])),
+          velocity: new THREE.Vector3(0, 0, 0),
+          ref: new THREE.Object3D(),
+        };
+        
+        boid.ref.position.copy(boid.position);
+        boid.ref.lookAt(boid.position.clone().add(boid.velocity));
+        
+        return boid;
+      }
+    });
     
     return { boids: remoteBoids, isMaster: false };
   }

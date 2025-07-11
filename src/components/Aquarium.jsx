@@ -72,8 +72,9 @@ const SyncStatus = ({ isMaster }) => (
 // This new Scene component will live inside the Canvas
 const Scene = ({ fishData, events, onStatusChange, onFishClick }) => {
   const initialFish = useMemo(() => {
+    // Pass complete fish data, just add initialPosition property
     return fishData.map(f => ({
-      id: f.id,
+      ...f, // Keep all fish data (name, personality, etc.)
       initialPosition: f.position || [0, 0, 0]
     }));
   }, [fishData]);
@@ -111,8 +112,14 @@ const Aquarium = ({ fishData = [], events = [] }) => {
   const defaultFish = useMemo(() => getDefaultFish(), []);
   
   const activeFishData = fishData.length > 0 ? fishData : defaultFish;
+  
+  // Debug logging
+  console.log('🐠 Aquarium - fishData from props:', fishData.length, fishData);
+  console.log('🐠 Aquarium - defaultFish:', defaultFish.length, defaultFish);
+  console.log('🐠 Aquarium - activeFishData:', activeFishData.length, activeFishData);
 
   const handleFishClick = (fish) => {
+    console.log('🎣 Fish clicked:', fish);
     setSelectedFish(fish);
   };
 
