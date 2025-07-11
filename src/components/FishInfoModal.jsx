@@ -11,6 +11,7 @@ const FishInfoModal = ({ fish, onClose }) => {
   };
 
   const getStatusIcon = (fish) => {
+    if (!fish.states) return '🐟';
     if (fish.states.isEating) return '🍽️';
     if (fish.states.isBeingPetted) return '💕';
     if (fish.states.isHungry) return '😋';
@@ -38,9 +39,9 @@ const FishInfoModal = ({ fish, onClose }) => {
             {getStatusIcon(fish)}
           </div>
           <div className="fish-title">
-            <h2>{fish.name}</h2>
-            <p className="fish-species">{fish.species}</p>
-            {fish.display.nickname && (
+            <h2>{fish.name || 'Unnamed Fish'}</h2>
+            <p className="fish-species">{fish.species || 'Unknown Species'}</p>
+            {fish.display?.nickname && (
               <p className="fish-nickname">"{fish.display.nickname}"</p>
             )}
           </div>
@@ -57,12 +58,12 @@ const FishInfoModal = ({ fish, onClose }) => {
                   <div 
                     className="stat-fill" 
                     style={{ 
-                      width: `${fish.hunger}%`, 
-                      backgroundColor: getHealthColor(fish.hunger) 
+                      width: `${fish.hunger || 50}%`, 
+                      backgroundColor: getHealthColor(fish.hunger || 50) 
                     }}
                   />
                 </div>
-                <span className="stat-value">{fish.hunger}%</span>
+                <span className="stat-value">{fish.hunger || 50}%</span>
               </div>
               <div className="stat">
                 <span className="stat-label">Health:</span>
@@ -70,12 +71,12 @@ const FishInfoModal = ({ fish, onClose }) => {
                   <div 
                     className="stat-fill" 
                     style={{ 
-                      width: `${fish.health}%`, 
-                      backgroundColor: getHealthColor(fish.health) 
+                      width: `${fish.health || 75}%`, 
+                      backgroundColor: getHealthColor(fish.health || 75) 
                     }}
                   />
                 </div>
-                <span className="stat-value">{fish.health}%</span>
+                <span className="stat-value">{fish.health || 75}%</span>
               </div>
               <div className="stat">
                 <span className="stat-label">Mood:</span>
@@ -83,12 +84,12 @@ const FishInfoModal = ({ fish, onClose }) => {
                   <div 
                     className="stat-fill" 
                     style={{ 
-                      width: `${fish.mood}%`, 
-                      backgroundColor: getHealthColor(fish.mood) 
+                      width: `${fish.mood || 60}%`, 
+                      backgroundColor: getHealthColor(fish.mood || 60) 
                     }}
                   />
                 </div>
-                <span className="stat-value">{fish.mood}%</span>
+                <span className="stat-value">{fish.mood || 60}%</span>
               </div>
               <div className="stat">
                 <span className="stat-label">Energy:</span>
@@ -96,12 +97,12 @@ const FishInfoModal = ({ fish, onClose }) => {
                   <div 
                     className="stat-fill" 
                     style={{ 
-                      width: `${fish.energy}%`, 
-                      backgroundColor: getHealthColor(fish.energy) 
+                      width: `${fish.energy || 70}%`, 
+                      backgroundColor: getHealthColor(fish.energy || 70) 
                     }}
                   />
                 </div>
-                <span className="stat-value">{fish.energy}%</span>
+                <span className="stat-value">{fish.energy || 70}%</span>
               </div>
             </div>
           </div>
@@ -110,17 +111,17 @@ const FishInfoModal = ({ fish, onClose }) => {
             <h3>🎭 Personality</h3>
             <div className="personality-traits">
               <div className="primary-trait">
-                <strong>Primary:</strong> {fish.personality.primary}
+                <strong>Primary:</strong> {fish.personality?.primary || 'Unknown'}
               </div>
               <div className="all-traits">
-                {fish.personality.traits.map((trait, index) => (
+                {(fish.personality?.traits || ['friendly']).map((trait, index) => (
                   <span key={index} className="trait-badge">{trait}</span>
                 ))}
               </div>
               <div className="personality-scores">
-                <div>Friendliness: {fish.personality.friendliness}%</div>
-                <div>Playfulness: {fish.personality.playfulness}%</div>
-                <div>Shyness: {fish.personality.shyness}%</div>
+                <div>Friendliness: {fish.personality?.friendliness || 50}%</div>
+                <div>Playfulness: {fish.personality?.playfulness || 50}%</div>
+                <div>Shyness: {fish.personality?.shyness || 50}%</div>
               </div>
             </div>
           </div>
@@ -129,13 +130,13 @@ const FishInfoModal = ({ fish, onClose }) => {
             <h3>📊 Information</h3>
             <div className="fish-info-grid">
               <div className="info-item">
-                <strong>Age:</strong> {fish.age} months
+                <strong>Age:</strong> {fish.age || 6} months
               </div>
               <div className="info-item">
-                <strong>Size:</strong> {fish.size?.toFixed(1)} units
+                <strong>Size:</strong> {fish.size?.toFixed(1) || '0.5'} units
               </div>
               <div className="info-item">
-                <strong>Favorite Food:</strong> {fish.preferences?.favoriteFood || 'Unknown'}
+                <strong>Favorite Food:</strong> {fish.preferences?.favoriteFood || 'Fish flakes'}
               </div>
               <div className="info-item">
                 <strong>Preferred Depth:</strong> {fish.preferences?.depth || 'Middle'}
@@ -147,16 +148,16 @@ const FishInfoModal = ({ fish, onClose }) => {
             <h3>📈 History</h3>
             <div className="fish-history">
               <div className="history-item">
-                <strong>Times Fed:</strong> {fish.history.timesFed}
+                <strong>Times Fed:</strong> {fish.history?.timesFed || 0}
               </div>
               <div className="history-item">
-                <strong>Times Petted:</strong> {fish.history.timesPetted}
+                <strong>Times Petted:</strong> {fish.history?.timesPetted || 0}
               </div>
               <div className="history-item">
-                <strong>Last Fed:</strong> {formatTimestamp(fish.history.lastFed)}
+                <strong>Last Fed:</strong> {formatTimestamp(fish.history?.lastFed)}
               </div>
               <div className="history-item">
-                <strong>Last Petted:</strong> {formatTimestamp(fish.history.lastPetted)}
+                <strong>Last Petted:</strong> {formatTimestamp(fish.history?.lastPetted)}
               </div>
             </div>
           </div>
@@ -164,7 +165,7 @@ const FishInfoModal = ({ fish, onClose }) => {
           <div className="fish-section">
             <h3>🏆 Achievements</h3>
             <div className="achievements">
-              {fish.display.achievements && fish.display.achievements.length > 0 ? (
+              {fish.display?.achievements && fish.display.achievements.length > 0 ? (
                 fish.display.achievements.map((achievement, index) => (
                   <span key={index} className="achievement-badge">{achievement}</span>
                 ))
@@ -176,7 +177,7 @@ const FishInfoModal = ({ fish, onClose }) => {
 
           <div className="fish-section">
             <h3>💭 Bio</h3>
-            <p className="fish-bio">{fish.display.bio}</p>
+            <p className="fish-bio">{fish.display?.bio || "A mysterious fish with a story yet to be discovered."}</p>
           </div>
         </div>
       </div>

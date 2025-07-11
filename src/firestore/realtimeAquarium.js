@@ -24,17 +24,24 @@ export const updateFishPosition = async (fishId, position, velocity) => {
 /**
  * Updates multiple fish positions at once (more efficient)
  */
-export const updateAllFishPositions = async (fishPositions) => {
+export const updateAllFishPositions = async (fishData) => {
   if (!db) return;
   
   try {
     const batch = [];
-    Object.entries(fishPositions).forEach(([fishId, data]) => {
-      batch.push(setDoc(doc(db, REALTIME_COLLECTION, fishId), {
-        position: data.position.toArray ? data.position.toArray() : data.position,
-        velocity: data.velocity.toArray ? data.velocity.toArray() : data.velocity,
+    Object.entries(fishData).forEach(([fishId, fish]) => {
+      // Store complete fish data, not just position/velocity
+      const fishDataToStore = {
+        ...fish,
+        position: fish.position.toArray ? fish.position.toArray() : fish.position,
+        velocity: fish.velocity.toArray ? fish.velocity.toArray() : fish.velocity,
         lastUpdated: serverTimestamp(),
-      }));
+      };
+      
+      // Remove Three.js objects that can't be serialized
+      delete fishDataToStore.ref;
+      
+      batch.push(setDoc(doc(db, REALTIME_COLLECTION, fishId), fishDataToStore));
     });
     
     await Promise.all(batch);

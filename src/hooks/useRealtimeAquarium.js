@@ -171,10 +171,7 @@ const useRealtimeAquarium = (fishData) => {
     // Update Firebase with new positions
     const positions = {};
     boids.forEach(boid => {
-      positions[boid.id] = {
-        position: boid.position,
-        velocity: boid.velocity,
-      };
+      positions[boid.id] = boid; // Pass the entire boid object, not just position/velocity
     });
     
     updateAllFishPositions(positions);
@@ -184,19 +181,40 @@ const useRealtimeAquarium = (fishData) => {
   if (isMaster) {
     return { boids, isMaster: true };
   } else {
-    // Convert Firebase positions back to boid format for rendering
-    const remoteBoids = Object.entries(realtimePositions).map(([id, data]) => ({
-      id,
-      position: new THREE.Vector3(...(data.position || [0, 0, 0])),
-      velocity: new THREE.Vector3(...(data.velocity || [0, 0, 0])),
-      ref: new THREE.Object3D(),
-    }));
-    
-    // Update ref orientations for rendering
-    remoteBoids.forEach(boid => {
+    // Convert Firebase data back to boid format for rendering
+    const remoteBoids = Object.entries(realtimePositions).map(([id, firebaseData]) => {
+      // Create a boid from the complete fish data stored in Firebase
+      const boid = {
+        ...firebaseData, // Use all data from Firebase
+        id,
+        position: new THREE.Vector3(...(firebaseData.position || [0, 0, 0])),
+        velocity: new THREE.Vector3(...(firebaseData.velocity || [0, 0, 0])),
+        ref: new THREE.Object3D(),
+      };
+      
+      // Update ref orientation for rendering
       boid.ref.position.copy(boid.position);
       boid.ref.lookAt(boid.position.clone().add(boid.velocity));
+      
+      return boid;
     });
+    
+    // If we don't have real-time data yet, fall back to original fish data
+    if (remoteBoids.length === 0) {
+      const fallbackBoids = fishData.map(originalFish => ({
+        ...originalFish,
+        position: new THREE.Vector3(...(originalFish.initialPosition || [0, 0, 0])),
+        velocity: new THREE.Vector3(0, 0, 0),
+        ref: new THREE.Object3D(),
+      }));
+      
+      fallbackBoids.forEach(boid => {
+        boid.ref.position.copy(boid.position);
+        boid.ref.lookAt(boid.position.clone().add(boid.velocity));
+      });
+      
+      return { boids: fallbackBoids, isMaster: false };
+    }
     
     return { boids: remoteBoids, isMaster: false };
   }
