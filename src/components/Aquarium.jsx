@@ -1,7 +1,7 @@
 import React, { Suspense, useMemo, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import Fish from './Fish';
-import useFlockingSimulation from '../hooks/useFlockingSimulation';
+import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
 
 // Error boundary for Three.js errors
 class ThreeErrorBoundary extends React.Component {
@@ -41,6 +41,32 @@ class ThreeErrorBoundary extends React.Component {
   }
 }
 
+// Status indicator component
+const SyncStatus = ({ isMaster }) => (
+  <div style={{
+    position: 'absolute',
+    top: '70px',
+    left: '20px',
+    background: 'rgba(0,0,0,0.7)',
+    color: 'white',
+    padding: '8px 12px',
+    borderRadius: '20px',
+    fontSize: '12px',
+    zIndex: 20,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
+  }}>
+    <div style={{
+      width: '8px',
+      height: '8px',
+      borderRadius: '50%',
+      backgroundColor: isMaster ? '#00ff00' : '#ffaa00'
+    }} />
+    {isMaster ? '🎯 Running Simulation' : '🔄 Syncing with Others'}
+  </div>
+);
+
 // Simple test fish component
 const SimpleFish = ({ position, id }) => {
   return (
@@ -52,23 +78,23 @@ const SimpleFish = ({ position, id }) => {
 };
 
 // This new Scene component will live inside the Canvas
-const Scene = ({ fishData, events }) => {
+const Scene = ({ fishData, events, onStatusChange }) => {
   const initialFish = useMemo(() => {
-    console.log('Scene - fishData:', fishData);
-    const mapped = fishData.map(f => {
-      console.log('Scene - mapping fish:', f);
-      return {
-        id: f.id,
-        initialPosition: f.position || [0, 0, 0]
-      };
-    });
-    console.log('Scene - initialFish:', mapped);
-    return mapped;
+    return fishData.map(f => ({
+      id: f.id,
+      initialPosition: f.position || [0, 0, 0]
+    }));
   }, [fishData]);
 
-  // Re-enable flocking simulation
-  const boids = useFlockingSimulation(initialFish);
-  console.log('Scene - boids:', boids);
+  // Use real-time aquarium instead of local simulation
+  const { boids, isMaster } = useRealtimeAquarium(initialFish);
+
+  // Pass status up to parent
+  useEffect(() => {
+    if (onStatusChange) {
+      onStatusChange(isMaster);
+    }
+  }, [isMaster, onStatusChange]);
 
   useEffect(() => {
     if (events.length > 0) {
@@ -86,6 +112,8 @@ const Scene = ({ fishData, events }) => {
 };
 
 const Aquarium = ({ fishData = [], events = [] }) => {
+  const [isMaster, setIsMaster] = React.useState(false);
+  
   // Add some default fish if no data is available
   const defaultFish = [
     { id: 'fish1', position: [-5, 2, 0] },
@@ -96,22 +124,21 @@ const Aquarium = ({ fishData = [], events = [] }) => {
   ];
   
   const activeFishData = fishData.length > 0 ? fishData : defaultFish;
-  
-  // Debug logging
-  console.log('Aquarium - fishData:', fishData);
-  console.log('Aquarium - activeFishData:', activeFishData);
 
   return (
-    <ThreeErrorBoundary>
-      <Canvas 
-        camera={{ position: [0, 0, 30], fov: 75 }}
-        style={{ width: '100%', height: '100%', background: 'linear-gradient(to bottom, #87CEEB, #4682B4)' }}
-      >
-        <ambientLight intensity={0.8} />
-        <pointLight position={[10, 10, 10]} />
-        <Scene fishData={activeFishData} events={events} />
-      </Canvas>
-    </ThreeErrorBoundary>
+    <>
+      <SyncStatus isMaster={isMaster} />
+      <ThreeErrorBoundary>
+        <Canvas 
+          camera={{ position: [0, 0, 30], fov: 75 }}
+          style={{ width: '100%', height: '100%', background: 'linear-gradient(to bottom, #87CEEB, #4682B4)' }}
+        >
+          <ambientLight intensity={0.8} />
+          <pointLight position={[10, 10, 10]} />
+          <Scene fishData={activeFishData} events={events} onStatusChange={setIsMaster} />
+        </Canvas>
+      </ThreeErrorBoundary>
+    </>
   );
 };
 
