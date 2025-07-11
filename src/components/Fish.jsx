@@ -1,11 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useFrame } from '@react-three/fiber';
-import FishInfoModal from './FishInfoModal';
 
-const Fish = ({ boid }) => {
+const Fish = ({ boid, onFishClick }) => {
   const mesh = useRef();
-  const [showInfo, setShowInfo] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
   useFrame(() => {
@@ -21,7 +18,9 @@ const Fish = ({ boid }) => {
 
   const handleClick = (e) => {
     e.stopPropagation();
-    setShowInfo(true);
+    if (onFishClick) {
+      onFishClick(boid);
+    }
   };
 
   const handlePointerEnter = () => {
@@ -38,30 +37,20 @@ const Fish = ({ boid }) => {
   const fishColor = boid.color || '#ffdd88';
 
   return (
-    <>
-      <mesh 
-        ref={mesh} 
-        rotation={[0, 0, Math.PI / 2]}
-        onClick={handleClick}
-        onPointerEnter={handlePointerEnter}
-        onPointerLeave={handlePointerLeave}
-      >
-        <coneGeometry args={[0.3, 1, 8]} />
-        <meshStandardMaterial 
-          color={fishColor} 
-          transparent={true}
-          opacity={isHovered ? 0.8 : 1.0}
-        />
-      </mesh>
-      
-      {showInfo && createPortal(
-        <FishInfoModal 
-          fish={boid} 
-          onClose={() => setShowInfo(false)} 
-        />,
-        document.body
-      )}
-    </>
+    <mesh 
+      ref={mesh} 
+      rotation={[0, 0, Math.PI / 2]}
+      onClick={handleClick}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
+    >
+      <coneGeometry args={[0.3, 1, 8]} />
+      <meshStandardMaterial 
+        color={fishColor} 
+        transparent={true}
+        opacity={isHovered ? 0.8 : 1.0}
+      />
+    </mesh>
   );
 };
 

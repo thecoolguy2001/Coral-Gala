@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import Fish from './Fish';
 import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
 import { getDefaultFish } from '../models/fishModel';
+import FishInfoModal from './FishInfoModal';
 
 // Error boundary for Three.js errors
 class ThreeErrorBoundary extends React.Component {
@@ -68,22 +69,12 @@ const SyncStatus = ({ isMaster }) => (
   </div>
 );
 
-// Simple test fish component
-const SimpleFish = ({ position, id }) => {
-  return (
-    <mesh position={position}>
-      <coneGeometry args={[0.3, 1, 8]} />
-      <meshStandardMaterial color={'#ffdd88'} />
-    </mesh>
-  );
-};
-
 // This new Scene component will live inside the Canvas
-const Scene = ({ fishData, events, onStatusChange }) => {
+const Scene = ({ fishData, events, onStatusChange, onFishClick }) => {
   const initialFish = useMemo(() => {
     return fishData.map(f => ({
-    id: f.id,
-    initialPosition: f.position || [0, 0, 0]
+      id: f.id,
+      initialPosition: f.position || [0, 0, 0]
     }));
   }, [fishData]);
 
@@ -106,7 +97,7 @@ const Scene = ({ fishData, events, onStatusChange }) => {
   return (
     <Suspense fallback={null}>
       {boids.map(boid => (
-        <Fish key={boid.id} boid={boid} />
+        <Fish key={boid.id} boid={boid} onFishClick={onFishClick} />
       ))}
     </Suspense>
   );
@@ -114,11 +105,20 @@ const Scene = ({ fishData, events, onStatusChange }) => {
 
 const Aquarium = ({ fishData = [], events = [] }) => {
   const [isMaster, setIsMaster] = React.useState(false);
+  const [selectedFish, setSelectedFish] = React.useState(null);
   
   // Use comprehensive fish data with full stats and personalities
   const defaultFish = useMemo(() => getDefaultFish(), []);
   
   const activeFishData = fishData.length > 0 ? fishData : defaultFish;
+
+  const handleFishClick = (fish) => {
+    setSelectedFish(fish);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedFish(null);
+  };
 
   return (
     <>
@@ -130,9 +130,16 @@ const Aquarium = ({ fishData = [], events = [] }) => {
         >
           <ambientLight intensity={0.8} />
           <pointLight position={[10, 10, 10]} />
-          <Scene fishData={activeFishData} events={events} onStatusChange={setIsMaster} />
+          <Scene fishData={activeFishData} events={events} onStatusChange={setIsMaster} onFishClick={handleFishClick} />
         </Canvas>
       </ThreeErrorBoundary>
+      
+      {selectedFish && (
+        <FishInfoModal 
+          fish={selectedFish} 
+          onClose={handleCloseModal} 
+        />
+      )}
     </>
   );
 };
