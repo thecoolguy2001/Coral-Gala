@@ -71,14 +71,26 @@ const SyncStatus = ({ isMaster }) => (
 
 // This new Scene component will live inside the Canvas
 const Scene = ({ fishData, events, onStatusChange, onFishClick }) => {
+  console.log('🏗️ Scene - received fishData:', fishData.length, fishData);
+  
   const initialFish = useMemo(() => {
     // Pass complete fish data, just add initialPosition property
-    return fishData.map(f => ({
-      ...f, // Keep all fish data (name, personality, etc.)
-      initialPosition: f.position || [0, 0, 0]
-    }));
+    console.log('🔄 Scene - processing fishData into initialFish:', fishData);
+    const processed = fishData.map(f => {
+      console.log('🐠 Scene - processing fish:', f);
+      const result = {
+        ...f, // Keep all fish data (name, personality, etc.)
+        initialPosition: f.position || [0, 0, 0]
+      };
+      console.log('🐠 Scene - processed result:', result);
+      return result;
+    });
+    console.log('🎯 Scene - final initialFish:', processed);
+    return processed;
   }, [fishData]);
 
+  console.log('📡 Scene - passing initialFish to useRealtimeAquarium:', initialFish);
+  
   // Use real-time aquarium instead of local simulation
   const { boids, isMaster } = useRealtimeAquarium(initialFish);
 

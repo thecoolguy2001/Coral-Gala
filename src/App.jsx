@@ -3,6 +3,8 @@ import Aquarium from './components/Aquarium';
 import InteractionUI from './components/InteractionUI';
 import FallbackBanner from './components/FallbackBanner';
 import useCollection from './hooks/useCollection';
+import { initializeFishCollection } from './firestore/fishInitializer';
+import { useEffect } from 'react';
 
 function App() {
   const { documents: fishData, loading: fishLoading, error: fishError } = useCollection('fish');
@@ -11,6 +13,11 @@ function App() {
   const events = [];
   const eventsError = null;
   // -----------------------------------------
+
+  // Initialize fish collection with default fish when app loads
+  useEffect(() => {
+    initializeFishCollection();
+  }, []);
 
   // Any error from our hooks will be captured here
   const error = fishError || eventsError;

@@ -16,9 +16,15 @@ const useRealtimeAquarium = (fishData) => {
   const lastUpdateTime = useRef(Date.now());
   const heartbeatInterval = useRef(null);
   
+  // Debug logging
+  console.log('🎣 useRealtimeAquarium - received fishData:', fishData.length, fishData);
+  
   // Initialize boids for simulation (if this becomes master)
   const boids = useMemo(() => {
-    return fishData.map((f, index) => {
+    console.log('🔧 useRealtimeAquarium - creating boids from fishData:', fishData);
+    const createdBoids = fishData.map((f, index) => {
+      console.log(`🐟 Processing fish ${index}:`, f);
+      
       const safePosition = f.initialPosition && Array.isArray(f.initialPosition) && f.initialPosition.length >= 3 
         ? f.initialPosition 
         : [0, 0, 0];
@@ -32,13 +38,19 @@ const useRealtimeAquarium = (fishData) => {
       ];
       const velocitySeed = velocitySeeds[index % velocitySeeds.length];
       
-      return {
+      const boid = {
         ...f,
         position: new THREE.Vector3(...safePosition),
         velocity: new THREE.Vector3(...velocitySeed),
         ref: new THREE.Object3D(),
       };
+      
+      console.log(`✅ Created boid for ${f.id || 'unknown'}:`, boid);
+      return boid;
     });
+    
+    console.log('🎯 useRealtimeAquarium - final boids array:', createdBoids);
+    return createdBoids;
   }, [fishData]);
 
   // Try to become master on mount
