@@ -24,10 +24,10 @@ const useFlockingSimulation = (fishData) => {
       const velocitySeed = velocitySeeds[index % velocitySeeds.length];
       
       return {
-        ...f,
+      ...f,
         position: new THREE.Vector3(...safePosition),
         velocity: new THREE.Vector3(...velocitySeed),
-        ref: new THREE.Object3D(), // Used to calculate rotations
+      ref: new THREE.Object3D(), // Used to calculate rotations
       };
     });
   }, [fishData]);

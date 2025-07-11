@@ -2,6 +2,7 @@ import React, { Suspense, useMemo, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import Fish from './Fish';
 import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
+import { getDefaultFish } from '../models/fishModel';
 
 // Error boundary for Three.js errors
 class ThreeErrorBoundary extends React.Component {
@@ -81,8 +82,8 @@ const SimpleFish = ({ position, id }) => {
 const Scene = ({ fishData, events, onStatusChange }) => {
   const initialFish = useMemo(() => {
     return fishData.map(f => ({
-      id: f.id,
-      initialPosition: f.position || [0, 0, 0]
+    id: f.id,
+    initialPosition: f.position || [0, 0, 0]
     }));
   }, [fishData]);
 
@@ -114,14 +115,8 @@ const Scene = ({ fishData, events, onStatusChange }) => {
 const Aquarium = ({ fishData = [], events = [] }) => {
   const [isMaster, setIsMaster] = React.useState(false);
   
-  // Add some default fish if no data is available
-  const defaultFish = [
-    { id: 'fish1', position: [-5, 2, 0] },
-    { id: 'fish2', position: [5, -2, 5] },
-    { id: 'fish3', position: [0, 3, -3] },
-    { id: 'fish4', position: [-3, -1, 2] },
-    { id: 'fish5', position: [4, 0, -1] }
-  ];
+  // Use comprehensive fish data with full stats and personalities
+  const defaultFish = useMemo(() => getDefaultFish(), []);
   
   const activeFishData = fishData.length > 0 ? fishData : defaultFish;
 
