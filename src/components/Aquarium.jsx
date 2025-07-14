@@ -1,7 +1,7 @@
 import React, { Suspense, useMemo, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import Fish from './Fish';
-import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
+import useDeterministicAquarium from '../hooks/useDeterministicAquarium';
 import { getDefaultFish } from '../models/fishModel';
 import FishInfoModal from './FishInfoModal';
 
@@ -43,63 +43,20 @@ class ThreeErrorBoundary extends React.Component {
   }
 }
 
-// Status indicator component
-const SyncStatus = ({ isMaster }) => (
-  <div style={{
-    position: 'absolute',
-    top: '70px',
-    left: '20px',
-    background: 'rgba(0,0,0,0.7)',
-    color: 'white',
-    padding: '8px 12px',
-    borderRadius: '20px',
-    fontSize: '12px',
-    zIndex: 20,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px'
-  }}>
-    <div style={{
-      width: '8px',
-      height: '8px',
-      borderRadius: '50%',
-      backgroundColor: isMaster ? '#00ff00' : '#ffaa00'
-    }} />
-    {isMaster ? '🎯 Running Simulation' : '🔄 Syncing with Others'}
-  </div>
-);
-
 // This new Scene component will live inside the Canvas
-const Scene = ({ fishData, events, onStatusChange, onFishClick }) => {
-  console.log('🏗️ Scene - received fishData:', fishData.length, fishData);
-  
+const Scene = ({ fishData, events, onFishClick }) => {
   const initialFish = useMemo(() => {
     // Pass complete fish data, just add initialPosition property
-    console.log('🔄 Scene - processing fishData into initialFish:', fishData);
-    const processed = fishData.map(f => {
-      console.log('🐠 Scene - processing fish:', f);
-      const result = {
-        ...f, // Keep all fish data (name, personality, etc.)
-        initialPosition: f.position || [0, 0, 0]
-      };
-      console.log('🐠 Scene - processed result:', result);
-      return result;
-    });
-    console.log('🎯 Scene - final initialFish:', processed);
-    return processed;
+    return fishData.map(f => ({
+      ...f, // Keep all fish data (name, personality, etc.)
+      initialPosition: f.position || [0, 0, 0]
+    }));
   }, [fishData]);
-
-  console.log('📡 Scene - passing initialFish to useRealtimeAquarium:', initialFish);
   
-  // Use real-time aquarium instead of local simulation
-  const { boids, isMaster } = useRealtimeAquarium(initialFish);
-
-  // Pass status up to parent
-  useEffect(() => {
-    if (onStatusChange) {
-      onStatusChange(isMaster);
-    }
-  }, [isMaster, onStatusChange]);
+  // Use deterministic aquarium simulation (no user dependency!)
+  const { boids, isDeterministic } = useDeterministicAquarium(initialFish);
+  
+  console.log('🎲 Deterministic aquarium active with', boids.length, 'fish');
 
   useEffect(() => {
     if (events.length > 0) {
@@ -117,7 +74,6 @@ const Scene = ({ fishData, events, onStatusChange, onFishClick }) => {
 };
 
 const Aquarium = ({ fishData = [], events = [] }) => {
-  const [isMaster, setIsMaster] = React.useState(false);
   const [selectedFish, setSelectedFish] = React.useState(null);
   
   // Use comprehensive fish data with full stats and personalities
@@ -125,13 +81,11 @@ const Aquarium = ({ fishData = [], events = [] }) => {
   
   const activeFishData = fishData.length > 0 ? fishData : defaultFish;
   
-  // Debug logging
-  console.log('🐠 Aquarium - fishData from props:', fishData.length, fishData);
-  console.log('🐠 Aquarium - defaultFish:', defaultFish.length, defaultFish);
-  console.log('🐠 Aquarium - activeFishData:', activeFishData.length, activeFishData);
+  // Essential logging only
+  console.log('🐠 Aquarium using', activeFishData.length, 'fish:', activeFishData.map(f => f.name).join(', '));
 
   const handleFishClick = (fish) => {
-    console.log('🎣 Fish clicked:', fish);
+    console.log('🎣 Fish clicked:', fish.name);
     setSelectedFish(fish);
   };
 
@@ -141,7 +95,29 @@ const Aquarium = ({ fishData = [], events = [] }) => {
 
   return (
     <>
-      <SyncStatus isMaster={isMaster} />
+      <div style={{
+        position: 'absolute',
+        top: '20px',
+        left: '20px',
+        background: 'rgba(0,0,0,0.7)',
+        color: 'white',
+        padding: '8px 12px',
+        borderRadius: '20px',
+        fontSize: '12px',
+        zIndex: 20,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px'
+      }}>
+        <div style={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          backgroundColor: '#00ff88'
+        }} />
+        🎲 Deterministic Simulation
+      </div>
+      
       <ThreeErrorBoundary>
         <Canvas 
           camera={{ position: [0, 0, 30], fov: 75 }}
@@ -149,7 +125,7 @@ const Aquarium = ({ fishData = [], events = [] }) => {
         >
           <ambientLight intensity={0.8} />
           <pointLight position={[10, 10, 10]} />
-          <Scene fishData={activeFishData} events={events} onStatusChange={setIsMaster} onFishClick={handleFishClick} />
+          <Scene fishData={activeFishData} events={events} onFishClick={handleFishClick} />
         </Canvas>
       </ThreeErrorBoundary>
       
