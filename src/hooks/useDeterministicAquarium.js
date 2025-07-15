@@ -63,6 +63,9 @@ const useDeterministicAquarium = (fishData) => {
         // Add deterministic personality-based behavior
         personalityFactor: (fish.personality?.playfulness || 50) / 100,
         energyFactor: (fish.energy || 70) / 100,
+        // Add water resistance factor
+        waterResistance: 0.98, // Fish lose momentum in water
+        size: fish.size || 1.0,
       };
 
       console.log(`🐟 Created deterministic boid for ${fish.name}:`, {
@@ -81,12 +84,15 @@ const useDeterministicAquarium = (fishData) => {
     // Use deterministic time progression
     const currentTime = (Date.now() - startTime.current) / 1000; // seconds since start
     
+    // Enhanced aquarium bounds - keep fish within visible area
+    const bounds = new THREE.Vector3(12, 8, 12); // Smaller bounds for better visibility
+    
     // Flocking simulation parameters
-    const separationDistance = 3.0;
-    const alignmentDistance = 5.0;
-    const cohesionDistance = 5.0;
-    const maxForce = 0.05;
-    const bounds = new THREE.Vector3(15, 10, 10);
+    const separationDistance = 2.5;
+    const alignmentDistance = 4.0;
+    const cohesionDistance = 4.0;
+    const maxForce = 0.08;
+    const waterResistance = 0.98; // Global water resistance
 
     boids.forEach((boid, boidIndex) => {
       const separation = new THREE.Vector3();
@@ -102,7 +108,7 @@ const useDeterministicAquarium = (fishData) => {
         
         const dist = boid.position.distanceTo(other.position);
 
-        // Separation
+        // Separation - stronger for closer fish
         if (dist > 0 && dist < separationDistance) {
           const diff = new THREE.Vector3().subVectors(boid.position, other.position);
           diff.normalize();
@@ -111,13 +117,13 @@ const useDeterministicAquarium = (fishData) => {
           separationCount++;
         }
 
-        // Alignment
+        // Alignment - fish try to swim in same direction
         if (dist > 0 && dist < alignmentDistance) {
           alignment.add(other.velocity);
           alignmentCount++;
         }
 
-        // Cohesion
+        // Cohesion - fish try to stay together
         if (dist > 0 && dist < cohesionDistance) {
           cohesion.add(other.position);
           cohesionCount++;
@@ -127,6 +133,7 @@ const useDeterministicAquarium = (fishData) => {
       // Apply flocking forces
       if (separationCount > 0) {
         separation.divideScalar(separationCount);
+        separation.multiplyScalar(maxForce * 1.5); // Stronger separation
       }
       if (alignmentCount > 0) {
         alignment.divideScalar(alignmentCount);
@@ -144,24 +151,47 @@ const useDeterministicAquarium = (fishData) => {
       
       // Add some deterministic wandering based on time and fish personality
       const wanderForce = new THREE.Vector3(
-        Math.sin(currentTime * 0.5 + boidIndex * 2.1) * 0.02,
-        Math.cos(currentTime * 0.3 + boidIndex * 1.7) * 0.02,
-        Math.sin(currentTime * 0.7 + boidIndex * 2.3) * 0.02
+        Math.sin(currentTime * 0.5 + boidIndex * 2.1) * 0.03,
+        Math.cos(currentTime * 0.3 + boidIndex * 1.7) * 0.03,
+        Math.sin(currentTime * 0.7 + boidIndex * 2.3) * 0.03
       );
       wanderForce.multiplyScalar(boid.personalityFactor);
+
+      // Enhanced boundary constraints - keep fish within screen bounds
+      const boundaryForce = new THREE.Vector3();
+      const margin = 1.0; // Keep fish away from edges
+      
+      // X-axis bounds
+      if (boid.position.x > bounds.x - margin) {
+        boundaryForce.x = -maxForce * 2;
+      } else if (boid.position.x < -bounds.x + margin) {
+        boundaryForce.x = maxForce * 2;
+      }
+      
+      // Y-axis bounds
+      if (boid.position.y > bounds.y - margin) {
+        boundaryForce.y = -maxForce * 2;
+      } else if (boid.position.y < -bounds.y + margin) {
+        boundaryForce.y = maxForce * 2;
+      }
+      
+      // Z-axis bounds
+      if (boid.position.z > bounds.z - margin) {
+        boundaryForce.z = -maxForce * 2;
+      } else if (boid.position.z < -bounds.z + margin) {
+        boundaryForce.z = maxForce * 2;
+      }
 
       // Combine all forces
       boid.velocity.add(separation);
       boid.velocity.add(alignment);
       boid.velocity.add(cohesion);
       boid.velocity.add(wanderForce);
+      boid.velocity.add(boundaryForce);
 
-      // Stay within bounds
-      if (boid.position.length() > bounds.length()) {
-        const steerToCenter = new THREE.Vector3().subVectors(new THREE.Vector3(0, 0, 0), boid.position);
-        steerToCenter.clampLength(0, maxForce * 2);
-        boid.velocity.add(steerToCenter);
-      }
+      // Apply water resistance (fish lose momentum in water)
+      boid.velocity.multiplyScalar(waterResistance);
+      boid.velocity.multiplyScalar(boid.waterResistance);
 
       // Apply speed limits based on fish characteristics
       const maxSpeed = boid.originalSpeed * boid.energyFactor;
@@ -169,6 +199,11 @@ const useDeterministicAquarium = (fishData) => {
 
       // Update position
       boid.position.add(boid.velocity.clone().multiplyScalar(delta));
+
+      // Ensure fish stay within bounds (hard constraint)
+      boid.position.x = Math.max(-bounds.x + 0.5, Math.min(bounds.x - 0.5, boid.position.x));
+      boid.position.y = Math.max(-bounds.y + 0.5, Math.min(bounds.y - 0.5, boid.position.y));
+      boid.position.z = Math.max(-bounds.z + 0.5, Math.min(bounds.z - 0.5, boid.position.z));
 
       // Update rotation for rendering
       boid.ref.position.copy(boid.position);
