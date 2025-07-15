@@ -80,35 +80,48 @@
   font-size: 14px;
 }
 
-/* Fish Info Modal Styles */
-.fish-info-modal-overlay {
+/* Apple-Style Fish Modal */
+.fish-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
   padding: 20px;
+  animation: fadeIn 0.3s ease-out;
 }
 
-.fish-info-modal {
-  background: white;
-  border-radius: 20px;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fish-modal {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-radius: 24px;
   width: 100%;
-  max-width: 500px;
-  max-height: 90vh;
+  max-width: 600px;
+  max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  animation: modalSlideIn 0.3s ease-out;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+  animation: modalSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 @keyframes modalSlideIn {
   from {
-    transform: scale(0.9) translateY(-20px);
+    transform: scale(0.95) translateY(20px);
     opacity: 0;
   }
   to {
@@ -117,165 +130,429 @@
   }
 }
 
-.fish-header {
+/* Header */
+.fish-modal-header {
   display: flex;
   align-items: center;
-  padding: 25px 30px;
-  border-bottom: 1px solid #eee;
+  padding: 32px 32px 24px 32px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   position: relative;
 }
 
+.fish-avatar-container {
+  position: relative;
+  margin-right: 20px;
+}
+
 .fish-avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  margin-right: 15px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  font-size: 32px;
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
 }
 
-.fish-title {
+.fish-avatar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%);
+  pointer-events: none;
+}
+
+.fish-status-indicator {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  background: #34C759;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.fish-header-content {
   flex: 1;
 }
 
-.fish-title h2 {
-  margin: 0 0 5px 0;
-  font-size: 24px;
-  color: #333;
+.fish-name {
+  margin: 0 0 4px 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1D1D1F;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
 }
 
 .fish-species {
-  margin: 0 0 5px 0;
-  font-size: 14px;
-  color: #666;
-  font-style: italic;
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  color: #86868B;
+  font-weight: 500;
 }
 
 .fish-nickname {
   margin: 0;
-  font-size: 16px;
-  color: #4CAF50;
-  font-weight: 500;
+  font-size: 18px;
+  color: #007AFF;
+  font-weight: 600;
+  font-style: italic;
 }
 
-.close-btn {
-  background: none;
+.modal-close-btn {
+  background: rgba(0, 0, 0, 0.05);
   border: none;
-  font-size: 24px;
   cursor: pointer;
-  color: #999;
-  padding: 5px;
+  color: #86868B;
+  padding: 12px;
   border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(10px);
+}
+
+.modal-close-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #1D1D1F;
+  transform: scale(1.05);
+}
+
+/* Content */
+.fish-modal-content {
+  padding: 0 32px 32px 32px;
+}
+
+.modal-section {
+  margin-bottom: 32px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+
+.section-icon {
+  font-size: 24px;
   width: 40px;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  background: rgba(0, 122, 255, 0.1);
+  border-radius: 12px;
 }
 
-.close-btn:hover {
-  background: #f0f0f0;
-  color: #333;
+.section-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1D1D1F;
+  letter-spacing: -0.3px;
 }
 
-.fish-content {
-  padding: 0 30px 30px 30px;
-}
-
-.fish-section {
-  margin-bottom: 25px;
-}
-
-.fish-section h3 {
-  margin: 0 0 15px 0;
-  font-size: 18px;
-  color: #333;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.health-stats {
+/* Health Stats */
+.health-stats-grid {
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 
-.stat {
+.health-stat-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+.stat-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.stat-icon {
+  font-size: 20px;
+  margin-right: 12px;
 }
 
 .stat-label {
-  min-width: 70px;
-  font-weight: 500;
-  color: #555;
-}
-
-.stat-bar {
   flex: 1;
-  height: 20px;
-  background: #e0e0e0;
-  border-radius: 10px;
-  overflow: hidden;
-  position: relative;
-}
-
-.stat-fill {
-  height: 100%;
-  border-radius: 10px;
-  transition: width 0.3s ease;
+  font-weight: 600;
+  color: #1D1D1F;
+  font-size: 16px;
 }
 
 .stat-value {
-  min-width: 45px;
-  text-align: right;
+  font-weight: 700;
+  color: #1D1D1F;
+  font-size: 16px;
+}
+
+.stat-progress {
+  height: 8px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.stat-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Personality */
+.personality-content {
+  display: grid;
+  gap: 24px;
+}
+
+.primary-personality {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+.personality-label {
+  display: block;
+  font-size: 14px;
+  color: #86868B;
   font-weight: 500;
-  color: #333;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.personality-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1D1D1F;
+  text-transform: capitalize;
 }
 
 .personality-traits {
-  display: grid;
-  gap: 15px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(10px);
 }
 
-.primary-trait {
-  font-size: 16px;
-  color: #333;
+.traits-label {
+  display: block;
+  font-size: 14px;
+  color: #86868B;
+  font-weight: 500;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.all-traits {
+.traits-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.trait-badge {
-  background: #E3F2FD;
-  color: #1976D2;
-  padding: 4px 12px;
+.trait-pill {
+  background: linear-gradient(135deg, #007AFF, #5856D6);
+  color: white;
+  padding: 8px 16px;
   border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  text-transform: capitalize;
-}
-
-.personality-scores {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
   font-size: 14px;
-  color: #666;
+  font-weight: 600;
+  text-transform: capitalize;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
 }
 
-.fish-info-grid {
+.personality-metrics {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(10px);
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: 16px;
+}
+
+.personality-metric {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.metric-label {
+  min-width: 100px;
+  font-weight: 600;
+  color: #1D1D1F;
+  font-size: 14px;
+}
+
+.metric-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.metric-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #007AFF, #5856D6);
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.metric-value {
+  min-width: 45px;
+  text-align: right;
+  font-weight: 700;
+  color: #1D1D1F;
+  font-size: 14px;
+}
+
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.info-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+.info-label {
+  display: block;
+  font-size: 14px;
+  color: #86868B;
+  font-weight: 500;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1D1D1F;
+}
+
+/* History Grid */
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.history-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+.history-label {
+  display: block;
+  font-size: 14px;
+  color: #86868B;
+  font-weight: 500;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.history-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1D1D1F;
+}
+
+/* Achievements */
+.achievements-container {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+.achievements-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.achievement-badge {
+  background: linear-gradient(135deg, #FF9500, #FF2D92);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
+}
+
+.no-achievements {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: #86868B;
+}
+
+.no-achievements-icon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.no-achievements-text {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Bio */
+.bio-content {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+.fish-bio {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #1D1D1F;
+  font-weight: 400;
 }
 
 .info-item {
@@ -338,25 +615,106 @@
 }
 
 /* Mobile responsiveness */
-@media (max-width: 600px) {
-  .fish-info-modal {
+/* Responsive Design */
+@media (max-width: 768px) {
+  .fish-modal {
     margin: 10px;
-    max-height: 95vh;
+    max-height: 90vh;
+    border-radius: 20px;
   }
-  
-  .fish-header {
-    padding: 20px;
+
+  .fish-modal-header {
+    padding: 24px 24px 20px 24px;
   }
-  
-  .fish-content {
+
+  .fish-modal-content {
+    padding: 0 24px 24px 24px;
+  }
+
+  .fish-name {
+    font-size: 24px;
+  }
+
+  .fish-avatar {
+    width: 60px;
+    height: 60px;
+    font-size: 28px;
+  }
+
+  .info-grid,
+  .history-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .personality-metrics {
+    gap: 12px;
+  }
+
+  .metric-label {
+    min-width: 80px;
+    font-size: 13px;
+  }
+
+  .section-header h2 {
+    font-size: 18px;
+  }
+
+  .section-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fish-modal-overlay {
+    padding: 10px;
+  }
+
+  .fish-modal {
+    margin: 0;
+    border-radius: 16px;
+  }
+
+  .fish-modal-header {
+    padding: 20px 20px 16px 20px;
+  }
+
+  .fish-modal-content {
     padding: 0 20px 20px 20px;
   }
-  
-  .fish-info-grid {
-    grid-template-columns: 1fr;
+
+  .fish-name {
+    font-size: 22px;
   }
-  
-  .personality-scores {
-    grid-template-columns: 1fr;
+
+  .fish-avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 24px;
+  }
+
+  .modal-close-btn {
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+  }
+
+  .health-stat-card,
+  .primary-personality,
+  .personality-traits,
+  .personality-metrics,
+  .info-card,
+  .history-card,
+  .achievements-container,
+  .bio-content {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .trait-pill,
+  .achievement-badge {
+    padding: 6px 12px;
+    font-size: 13px;
   }
 }

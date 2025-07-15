@@ -1,8 +1,7 @@
 import React, { Suspense, useMemo, useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import Fish from './Fish';
-import WaterParticles from './WaterParticles';
-import Bubbles from './Bubbles';
+import WaterEffects from './WaterEffects';
 import useDeterministicAquarium from '../hooks/useDeterministicAquarium';
 import { getDefaultFish } from '../models/fishModel';
 import FishInfoModal from './FishInfoModal';
@@ -70,11 +69,8 @@ const Scene = ({ fishData, events, onFishClick }) => {
 
   return (
     <Suspense fallback={null}>
-      {/* Water particles for realistic water effect */}
-      <WaterParticles />
-      
-      {/* Bubbles for underwater atmosphere */}
-      <Bubbles />
+      {/* Realistic water effects with caustics and light rays */}
+      <WaterEffects />
       
       {/* Fish */}
       {boids.map(boid => (
@@ -116,22 +112,32 @@ const Aquarium = ({ fishData = [], events = [] }) => {
             position: 'relative'
           }}
         >
-          {/* Enhanced lighting for underwater effect */}
-          <ambientLight intensity={0.4} color="#4fc3f7" />
+          {/* Enhanced lighting for realistic underwater effect */}
+          <ambientLight intensity={0.3} color="#4fc3f7" />
           <directionalLight 
-            position={[10, 20, 10]} 
-            intensity={0.6} 
+            position={[0, 25, 0]} 
+            intensity={0.8} 
             color="#ffffff"
             castShadow
           />
+          <directionalLight 
+            position={[15, 15, 15]} 
+            intensity={0.4} 
+            color="#87CEEB"
+          />
           <pointLight 
             position={[-10, 10, -10]} 
-            intensity={0.3} 
+            intensity={0.2} 
             color="#4fc3f7"
+          />
+          <pointLight 
+            position={[10, 5, 10]} 
+            intensity={0.3} 
+            color="#E0F6FF"
           />
           
           {/* Fog for depth effect */}
-          <fog attach="fog" args={['#1e3c72', 20, 100]} />
+          <fog attach="fog" args={['#1e3c72', 25, 80]} />
           
           <Scene fishData={activeFishData} events={events} onFishClick={handleFishClick} />
         </Canvas>
