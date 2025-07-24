@@ -55,6 +55,8 @@ const useDeterministicAquarium = (fishData) => {
       );
       // Assign a personality
       const personality = PERSONALITIES[index % PERSONALITIES.length];
+      // Initialize lastLookDirection to forward
+      const lastLookDirection = new THREE.Vector3(0, 0, 1);
       return {
         ...fish,
         position,
@@ -68,6 +70,7 @@ const useDeterministicAquarium = (fishData) => {
         isDarting: false,
         waterResistance: 0.98,
         size: fish.size || 1.0,
+        lastLookDirection,
       };
     });
   }, [fishData]);
@@ -196,10 +199,14 @@ const useDeterministicAquarium = (fishData) => {
       boid.position.y = Math.max(-bounds.y + 0.5, Math.min(bounds.y - 0.5, boid.position.y));
       boid.position.z = Math.max(-bounds.z + 0.5, Math.min(bounds.z - 0.5, boid.position.z));
 
-      // Update rotation
+      // Update rotation (smoothed look direction)
       boid.ref.position.copy(boid.position);
       if (boid.velocity.length() > 0.01) {
-        boid.ref.lookAt(boid.position.clone().add(boid.velocity));
+        // Smooth the look direction to prevent jitter
+        const newDir = boid.velocity.clone().normalize();
+        boid.lastLookDirection.lerp(newDir, 0.15); // 0.15 = smoothing factor
+        const lookTarget = boid.position.clone().add(boid.lastLookDirection);
+        boid.ref.lookAt(lookTarget);
       }
     });
   });
