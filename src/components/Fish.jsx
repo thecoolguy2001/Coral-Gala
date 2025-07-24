@@ -15,26 +15,25 @@ const Fish = ({ boid, onFishClick }) => {
     // Apply the position and rotation calculated by the simulation
     mesh.current.position.copy(boid.position);
     mesh.current.quaternion.copy(boid.ref.quaternion);
-    
+    // Remove extra undulation to prevent spinning
+    // mesh.current.rotation.z = Math.sin(swimPhase * 1.5) * 0.1;
+
     // Add hover effect
     mesh.current.scale.setScalar(isHovered ? 1.2 : 1.0);
-    
+
     // Swimming animation
     const swimSpeed = boid.velocity.length() * 2;
     setSwimPhase(prev => prev + swimSpeed * delta);
-    
+
     // Tail wagging animation
     if (tailRef.current) {
       tailRef.current.rotation.z = Math.sin(swimPhase * 3) * 0.3;
     }
-    
+
     // Fin flapping animation
     if (finRef.current) {
       finRef.current.rotation.z = Math.sin(swimPhase * 2) * 0.2;
     }
-    
-    // Add gentle body undulation
-    mesh.current.rotation.z = Math.sin(swimPhase * 1.5) * 0.1;
   });
 
   const handleClick = (e) => {
@@ -79,7 +78,6 @@ const Fish = ({ boid, onFishClick }) => {
           metalness={0.1}
         />
       </mesh>
-      
       {/* Fish tail */}
       <mesh 
         ref={tailRef}
@@ -94,7 +92,6 @@ const Fish = ({ boid, onFishClick }) => {
           opacity={0.8}
         />
       </mesh>
-      
       {/* Fish fins */}
       <mesh 
         ref={finRef}
@@ -109,7 +106,6 @@ const Fish = ({ boid, onFishClick }) => {
           opacity={0.7}
         />
       </mesh>
-      
       {/* Fish eye */}
       <mesh 
         position={[0.15, 0.1, 0]}
@@ -122,7 +118,6 @@ const Fish = ({ boid, onFishClick }) => {
           roughness={0.1}
         />
       </mesh>
-      
       {/* Fish eye highlight */}
       <mesh 
         position={[0.18, 0.12, 0]}
