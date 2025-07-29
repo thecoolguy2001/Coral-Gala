@@ -1,10 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { writeEvent } from '../firestore/events';
 import { useStripe } from '@stripe/react-stripe-js';
 
 const InteractionUI = ({ disabled }) => {
   const stripe = useStripe();
   const [isLoading, setIsLoading] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+
+  // Auto-hide after 3 seconds of inactivity
+  useEffect(() => {
+    let timeout;
+    if (isVisible && !isHovering) {
+      timeout = setTimeout(() => {
+        setIsVisible(false);
+      }, 3000);
+    }
+    return () => clearTimeout(timeout);
+  }, [isVisible, isHovering]);
+
+  const handleTriggerAreaMouseEnter = () => {
+    setIsVisible(true);
+    setIsHovering(true);
+  };
+
+  const handleTriggerAreaMouseLeave = () => {
+    setIsHovering(false);
+  };
+
+  const handleUILeave = () => {
+    setIsHovering(false);
+  };
 
   const handleFeed = async () => {
     if (disabled || isLoading) return;
@@ -70,7 +96,19 @@ const InteractionUI = ({ disabled }) => {
 
   return (
     <div className="apple-interaction-ui">
-      <div className="interaction-container">
+      {/* Invisible trigger area */}
+      <div 
+        className="interaction-trigger-area"
+        onMouseEnter={handleTriggerAreaMouseEnter}
+        onMouseLeave={handleTriggerAreaMouseLeave}
+      />
+      
+      {/* Main UI that appears on hover */}
+      <div 
+        className={`interaction-container ${isVisible ? 'visible' : ''}`}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={handleUILeave}
+      >
         <button 
           className={`apple-button feed-button ${disabled ? 'disabled' : ''} ${isLoading ? 'loading' : ''}`}
           onClick={handleFeed} 
