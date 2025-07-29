@@ -9,24 +9,13 @@ const InteractionUI = ({ disabled }) => {
   const [isHovering, setIsHovering] = useState(false);
   const [showHint, setShowHint] = useState(true);
 
-  // Show hint animation on first load
+  // Show hint animation for longer (15 seconds)
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowHint(false);
-    }, 5000); // Hide hint after 5 seconds
+    }, 15000); // Hide hint after 15 seconds
     return () => clearTimeout(timer);
   }, []);
-
-  // Auto-hide after 2 seconds of inactivity
-  useEffect(() => {
-    let timeout;
-    if (isVisible && !isHovering) {
-      timeout = setTimeout(() => {
-        setIsVisible(false);
-      }, 2000);
-    }
-    return () => clearTimeout(timeout);
-  }, [isVisible, isHovering]);
 
   const handleTriggerAreaMouseEnter = () => {
     setIsVisible(true);
@@ -36,10 +25,12 @@ const InteractionUI = ({ disabled }) => {
 
   const handleTriggerAreaMouseLeave = () => {
     setIsHovering(false);
+    // Don't hide immediately when leaving trigger area
   };
 
   const handleUILeave = () => {
     setIsHovering(false);
+    setIsVisible(false); // Hide menu immediately when leaving UI area
   };
 
   const handleFeed = async () => {
