@@ -21,35 +21,16 @@ const InteractionUI = ({ disabled }) => {
       return;
     }
     
-    try {
-      // Call your backend to create a checkout session
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          species: 'Clownfish', // You could make this dynamic
-          price: 500, // $5.00 in cents
-        }),
-      });
+    // This is where you would typically call your backend to create a checkout session.
+    // For this example, we'll assume a session ID is returned from your backend.
+    const sessionId = 'cs_test_YOUR_SESSION_ID'; // Placeholder
 
-      const { sessionId, error } = await response.json();
-      
-      if (error) {
-        console.error('Failed to create checkout session:', error);
-        return;
-      }
+    const { error } = await stripe.redirectToCheckout({
+      sessionId,
+    });
 
-      const { error: stripeError } = await stripe.redirectToCheckout({
-        sessionId,
-      });
-
-      if (stripeError) {
-        console.error('Stripe checkout error:', stripeError.message);
-      }
-    } catch (error) {
-      console.error('Error during checkout:', error);
+    if (error) {
+      console.error('Stripe checkout error:', error.message);
     }
   };
 

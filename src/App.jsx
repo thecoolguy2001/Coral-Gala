@@ -8,7 +8,11 @@ import { useEffect } from 'react';
 
 function App() {
   const { documents: fishData, loading: fishLoading, error: fishError } = useCollection('fish');
-  const { documents: events, error: eventsError } = useCollection('events', 'timestamp', 'desc');
+  // --- TEMPORARILY DISABLED FOR DEBUGGING ---
+  // const { documents: events, error: eventsError } = useCollection('events', 'timestamp', 'desc');
+  const events = [];
+  const eventsError = null;
+  // -----------------------------------------
 
   // Initialize fish collection with default fish when app loads
   useEffect(() => {
