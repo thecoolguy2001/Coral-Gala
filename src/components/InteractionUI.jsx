@@ -7,14 +7,23 @@ const InteractionUI = ({ disabled }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [showHint, setShowHint] = useState(true);
 
-  // Auto-hide after 3 seconds of inactivity
+  // Show hint animation on first load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowHint(false);
+    }, 5000); // Hide hint after 5 seconds
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Auto-hide after 2 seconds of inactivity
   useEffect(() => {
     let timeout;
     if (isVisible && !isHovering) {
       timeout = setTimeout(() => {
         setIsVisible(false);
-      }, 3000);
+      }, 2000);
     }
     return () => clearTimeout(timeout);
   }, [isVisible, isHovering]);
@@ -22,6 +31,7 @@ const InteractionUI = ({ disabled }) => {
   const handleTriggerAreaMouseEnter = () => {
     setIsVisible(true);
     setIsHovering(true);
+    setShowHint(false); // Hide hint once user discovers the area
   };
 
   const handleTriggerAreaMouseLeave = () => {
@@ -102,6 +112,14 @@ const InteractionUI = ({ disabled }) => {
         onMouseEnter={handleTriggerAreaMouseEnter}
         onMouseLeave={handleTriggerAreaMouseLeave}
       />
+      
+      {/* Hint animation */}
+      {showHint && (
+        <div className="interaction-hint">
+          <div className="hint-icon">👆</div>
+          <div className="hint-text">Interact</div>
+        </div>
+      )}
       
       {/* Main UI that appears on hover */}
       <div 

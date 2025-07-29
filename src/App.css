@@ -76,17 +76,69 @@
   position: absolute;
   top: 20px;
   left: 20px;
-  width: 6px;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.6);
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.7);
   border-radius: 50%;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  opacity: 0.3;
+  opacity: 0.4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .interaction-trigger-area:hover::before {
-  opacity: 0.8;
-  transform: scale(1.2);
+  opacity: 1;
+  transform: scale(1.3);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Hint animation for discoverability */
+.interaction-hint {
+  position: absolute;
+  top: 25px;
+  left: 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 2;
+  animation: hintPulse 2s ease-in-out infinite;
+}
+
+.hint-icon {
+  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  animation: hintBounce 1.5s ease-in-out infinite;
+}
+
+.hint-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+@keyframes hintPulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes hintBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 .interaction-container {
@@ -295,8 +347,21 @@
   .interaction-trigger-area::before {
     top: 15px;
     left: 15px;
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
+  }
+  
+  .interaction-hint {
+    top: 20px;
+    left: 20px;
+  }
+  
+  .hint-icon {
+    font-size: 20px;
+  }
+  
+  .hint-text {
+    font-size: 11px;
   }
   
   .interaction-container {
@@ -335,8 +400,21 @@
   .interaction-trigger-area::before {
     top: 12px;
     left: 12px;
-    width: 4px;
-    height: 4px;
+    width: 5px;
+    height: 5px;
+  }
+  
+  .interaction-hint {
+    top: 15px;
+    left: 15px;
+  }
+  
+  .hint-icon {
+    font-size: 18px;
+  }
+  
+  .hint-text {
+    font-size: 10px;
   }
   
   .interaction-container {
