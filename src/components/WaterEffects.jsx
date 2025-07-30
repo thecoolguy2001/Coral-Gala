@@ -258,16 +258,6 @@ const WaterEffects = () => {
 
   return (
     <group>
-      {/* Water ripple refraction background */}
-      <mesh
-        ref={rippleRef}
-        position={[0, 0, -30]}
-        scale={[80, 60, 1]}
-      >
-        <planeGeometry args={[1, 1, 64, 48]} />
-        <primitive object={rippleMaterial} />
-      </mesh>
-      
       {/* Water caustics overlay */}
       <mesh
         ref={causticsRef}
@@ -278,13 +268,6 @@ const WaterEffects = () => {
         <planeGeometry args={[1, 1]} />
         <primitive object={causticsMaterial} />
       </mesh>
-      
-      {/* Bubble trails */}
-      <points
-        ref={bubblesRef}
-        geometry={bubbleGeometry}
-        material={bubbleMaterial}
-      />
     </group>
   );
 };

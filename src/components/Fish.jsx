@@ -160,14 +160,10 @@ const Fish = ({ boid, onFishClick }) => {
         scale={[fishSize, fishSize, fishSize]}
       >
         <coneGeometry args={[0.1, 0.4, 4]} />
-        <meshPhysicalMaterial 
+        <meshStandardMaterial 
           color={fishColor} 
           transparent={true}
           opacity={0.8}
-          transmission={0.3}
-          thickness={0.1}
-          ior={1.33}
-          roughness={0.1}
         />
       </mesh>
       {/* Fish fins */}
@@ -178,14 +174,10 @@ const Fish = ({ boid, onFishClick }) => {
         scale={[fishSize, fishSize, fishSize]}
       >
         <coneGeometry args={[0.05, 0.2, 4]} />
-        <meshPhysicalMaterial 
+        <meshStandardMaterial 
           color={fishColor} 
           transparent={true}
           opacity={0.7}
-          transmission={0.4}
-          thickness={0.05}
-          ior={1.33}
-          roughness={0.0}
         />
       </mesh>
       {/* Fish eye */}
@@ -195,12 +187,9 @@ const Fish = ({ boid, onFishClick }) => {
         scale={[fishSize, fishSize, fishSize]}
       >
         <sphereGeometry args={[0.05, 8, 6]} />
-        <meshPhysicalMaterial 
+        <meshStandardMaterial 
           color="#000000" 
-          roughness={0.0}
-          metalness={0.8}
-          clearcoat={1.0}
-          clearcoatRoughness={0.0}
+          roughness={0.1}
         />
       </mesh>
       {/* Fish eye highlight */}
@@ -210,10 +199,9 @@ const Fish = ({ boid, onFishClick }) => {
         scale={[fishSize, fishSize, fishSize]}
       >
         <sphereGeometry args={[0.02, 8, 6]} />
-        <meshBasicMaterial 
-          color="#ffffff"
-          transparent
-          opacity={0.9}
+        <meshStandardMaterial 
+          color="#ffffff" 
+          roughness={0.1}
         />
       </mesh>
     </group>
