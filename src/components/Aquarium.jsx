@@ -99,9 +99,16 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
                fish.color && 
                fish.id;
       }).map(fish => ({
-        ...fish,
+        ...defaultFish[0], // Start with default fish structure
+        ...fish, // Override with Firebase data
         size: Math.max(0.6, fish.size || 0.6), // Ensure minimum size
-        color: fish.color || '#FF6B35' // Ensure color exists
+        color: fish.color || '#FF6B35', // Ensure color exists
+        // Ensure required nested objects exist
+        personality: fish.personality || defaultFish[0].personality,
+        preferences: fish.preferences || defaultFish[0].preferences,
+        history: fish.history || defaultFish[0].history,
+        states: fish.states || defaultFish[0].states,
+        display: fish.display || defaultFish[0].display
       }));
     }
     
