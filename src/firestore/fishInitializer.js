@@ -62,9 +62,9 @@ export const initializeFishCollection = async () => {
     // Get the default fish
     const defaultFish = getDefaultFish();
     
-    // If we don't have all 4 fish, initialize with defaults
-    if (fishSnapshot.size !== 4) {
-      console.log('🔧 Initializing fish collection with 4 default fish...');
+    // Only initialize if collection is completely empty
+    if (fishSnapshot.size === 0) {
+      console.log('🔧 Fish collection is empty, initializing with 4 default fish...');
       
       // Add each default fish to Firestore
       const promises = defaultFish.map(async (fish) => {

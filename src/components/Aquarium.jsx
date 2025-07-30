@@ -80,7 +80,7 @@ const Scene = ({ fishData, events, onFishClick }) => {
   );
 };
 
-const Aquarium = ({ fishData = [], events = [] }) => {
+const Aquarium = ({ fishData = [], events = [], loading = false }) => {
   const [selectedFish, setSelectedFish] = React.useState(null);
   
   // Use comprehensive fish data with full stats and personalities
@@ -88,24 +88,28 @@ const Aquarium = ({ fishData = [], events = [] }) => {
   
   // Filter out invalid fish data from Firebase and ensure minimum size
   const validFishData = useMemo(() => {
-    if (fishData.length === 0) return defaultFish;
+    // If we have fishData from Firebase, use it (even if empty to avoid duplicates)
+    if (fishData && fishData.length > 0) {
+      return fishData.filter(fish => {
+        // Must have valid name, size, and color
+        return fish && 
+               fish.name && 
+               fish.size && 
+               fish.size >= 0.5 && // Minimum size requirement
+               fish.color && 
+               fish.id;
+      }).map(fish => ({
+        ...fish,
+        size: Math.max(0.6, fish.size || 0.6), // Ensure minimum size
+        color: fish.color || '#FF6B35' // Ensure color exists
+      }));
+    }
     
-    return fishData.filter(fish => {
-      // Must have valid name, size, and color
-      return fish && 
-             fish.name && 
-             fish.size && 
-             fish.size >= 0.5 && // Minimum size requirement
-             fish.color && 
-             fish.id;
-    }).map(fish => ({
-      ...fish,
-      size: Math.max(0.6, fish.size || 0.6), // Ensure minimum size
-      color: fish.color || '#FF6B35' // Ensure color exists
-    }));
-  }, [fishData, defaultFish]);
+    // Only use default fish if no Firebase data and not loading
+    return loading ? [] : defaultFish;
+  }, [fishData, defaultFish, loading]);
   
-  const activeFishData = validFishData.length > 0 ? validFishData : defaultFish;
+  const activeFishData = validFishData;
   
   // Essential logging only
   console.log('🐠 Aquarium using', activeFishData.length, 'fish:', activeFishData.map(f => f.name).join(', '));

@@ -39,7 +39,7 @@ function App() {
     <div className="App">
       <FallbackBanner message={error ? `Firebase Error: ${error}` : null} />
       <InteractionUI disabled={!!error} events={events} />
-      <Aquarium fishData={fishData} />
+      <Aquarium fishData={fishData} loading={fishLoading} />
       {fishLoading && (
         <div style={{
           position: 'absolute',
