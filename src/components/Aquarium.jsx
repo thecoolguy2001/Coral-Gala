@@ -2,6 +2,7 @@ import React, { Suspense, useMemo, useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import Fish from './Fish';
 import WaterEffects from './WaterEffects';
+import TankEnvironment from './TankEnvironment';
 import useDeterministicAquarium from '../hooks/useDeterministicAquarium';
 import { getDefaultFish } from '../models/fishModel';
 import FishInfoModal from './FishInfoModal';
@@ -69,6 +70,9 @@ const Scene = ({ fishData, events, onFishClick }) => {
 
   return (
     <Suspense fallback={null}>
+      {/* Tank environment with floor, walls, and decorations */}
+      <TankEnvironment />
+      
       {/* Realistic water effects with caustics and light rays */}
       <WaterEffects />
       
@@ -105,39 +109,85 @@ const Aquarium = ({ fishData = [], events = [] }) => {
       <ThreeErrorBoundary>
         <Canvas 
           camera={{ position: [0, 0, 30], fov: 75 }}
+          shadows
+          gl={{ 
+            antialias: true, 
+            alpha: true,
+            powerPreference: "high-performance"
+          }}
           style={{ 
             width: '100%', 
             height: '100%', 
-            background: 'linear-gradient(to bottom, #1e3c72, #2a5298, #1e3c72)',
+            background: 'linear-gradient(to bottom, #0a1a2e, #16213e, #1e3c72, #2a5298)',
             position: 'relative'
           }}
         >
-          {/* Enhanced lighting for realistic underwater effect */}
-          <ambientLight intensity={0.3} color="#4fc3f7" />
+          {/* Enhanced underwater lighting with realistic water caustics */}
+          <ambientLight intensity={0.2} color="#1e3c72" />
+          
+          {/* Main sunlight from above - creates realistic underwater lighting */}
           <directionalLight 
-            position={[0, 25, 0]} 
-            intensity={0.8} 
+            position={[0, 30, 0]} 
+            intensity={1.2} 
             color="#ffffff"
             castShadow
-          />
-          <directionalLight 
-            position={[15, 15, 15]} 
-            intensity={0.4} 
-            color="#87CEEB"
-          />
-          <pointLight 
-            position={[-10, 10, -10]} 
-            intensity={0.2} 
-            color="#4fc3f7"
-          />
-          <pointLight 
-            position={[10, 5, 10]} 
-            intensity={0.3} 
-            color="#E0F6FF"
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
+            shadow-camera-near={0.1}
+            shadow-camera-far={100}
+            shadow-camera-left={-50}
+            shadow-camera-right={50}
+            shadow-camera-top={50}
+            shadow-camera-bottom={-50}
           />
           
-          {/* Fog for depth effect */}
-          <fog attach="fog" args={['#1e3c72', 25, 80]} />
+          {/* Angled light rays for depth */}
+          <directionalLight 
+            position={[20, 25, 10]} 
+            intensity={0.6} 
+            color="#87CEEB"
+          />
+          <directionalLight 
+            position={[-15, 20, 5]} 
+            intensity={0.4} 
+            color="#4fc3f7"
+          />
+          
+          {/* Underwater ambient lighting */}
+          <pointLight 
+            position={[0, 10, 0]} 
+            intensity={0.3} 
+            color="#87CEEB"
+            distance={40}
+            decay={2}
+          />
+          <pointLight 
+            position={[25, 5, 15]} 
+            intensity={0.2} 
+            color="#E0F6FF"
+            distance={30}
+            decay={2}
+          />
+          <pointLight 
+            position={[-20, 8, -10]} 
+            intensity={0.25} 
+            color="#4fc3f7"
+            distance={35}
+            decay={2}
+          />
+          
+          {/* Subtle rim lighting for fish */}
+          <spotLight
+            position={[0, 15, 20]}
+            angle={Math.PI / 4}
+            penumbra={0.5}
+            intensity={0.4}
+            color="#ffffff"
+            target-position={[0, 0, 0]}
+          />
+          
+          {/* Enhanced fog with underwater blue tint */}
+          <fog attach="fog" args={['#0d2f5c', 30, 90]} />
           
           <Scene fishData={activeFishData} events={events} onFishClick={handleFishClick} />
         </Canvas>

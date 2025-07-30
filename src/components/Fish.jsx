@@ -67,6 +67,8 @@ const Fish = ({ boid, onFishClick }) => {
         onPointerEnter={handlePointerEnter}
         onPointerLeave={handlePointerLeave}
         scale={[fishSize, fishSize, fishSize]}
+        castShadow
+        receiveShadow
       >
         {/* Fish body */}
         <cylinderGeometry args={[0.2, 0.3, 1.2, 8]} />
@@ -84,6 +86,7 @@ const Fish = ({ boid, onFishClick }) => {
         position={[0, -0.6, 0]}
         rotation={[0, 0, Math.PI / 2]}
         scale={[fishSize, fishSize, fishSize]}
+        castShadow
       >
         <coneGeometry args={[0.1, 0.4, 4]} />
         <meshStandardMaterial 
@@ -98,6 +101,7 @@ const Fish = ({ boid, onFishClick }) => {
         position={[0, 0.2, 0]}
         rotation={[0, 0, Math.PI / 2]}
         scale={[fishSize, fishSize, fishSize]}
+        castShadow
       >
         <coneGeometry args={[0.05, 0.2, 4]} />
         <meshStandardMaterial 
