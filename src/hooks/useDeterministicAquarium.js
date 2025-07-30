@@ -77,7 +77,23 @@ const useDeterministicAquarium = (fishData) => {
 
   useFrame((state, delta) => {
     const currentTime = (Date.now() - startTime.current) / 1000;
-    const bounds = new THREE.Vector3(35, 25, 30); // Much larger bounds for full screen movement
+    
+    // Calculate bounds based on camera and viewport
+    const camera = state.camera;
+    const viewport = state.viewport;
+    
+    // Get the visible area at the fish swimming depth (z=0)
+    const distance = camera.position.z; // Distance from camera to fish plane
+    const vFOV = (camera.fov * Math.PI) / 180; // Convert vertical fov to radians
+    const visibleHeight = 2 * Math.tan(vFOV / 2) * distance;
+    const visibleWidth = visibleHeight * camera.aspect;
+    
+    // Use 80% of visible area to keep fish comfortably on screen
+    const bounds = new THREE.Vector3(
+      visibleWidth * 0.4,  // Half width * 0.8
+      visibleHeight * 0.4, // Half height * 0.8
+      25 // Depth doesn't change based on screen size
+    );
     const separationDistance = 3.0;
     const alignmentDistance = 5.0;
     const cohesionDistance = 8.0;
@@ -264,14 +280,10 @@ const useDeterministicAquarium = (fishData) => {
       // Update position
       boid.position.add(boid.velocity.clone().multiplyScalar(delta));
       
-      // Soft boundary clamping - allow some overflow but apply correction
-      const overflow = 2.0;
-      if (boid.position.x > bounds.x + overflow) boid.position.x = bounds.x + overflow;
-      else if (boid.position.x < -bounds.x - overflow) boid.position.x = -bounds.x - overflow;
-      if (boid.position.y > bounds.y + overflow) boid.position.y = bounds.y + overflow;
-      else if (boid.position.y < -bounds.y - overflow) boid.position.y = -bounds.y - overflow;
-      if (boid.position.z > bounds.z + overflow) boid.position.z = bounds.z + overflow;
-      else if (boid.position.z < -bounds.z - overflow) boid.position.z = -bounds.z - overflow;
+      // Hard boundary clamping - never let fish leave visible area
+      boid.position.x = Math.max(-bounds.x, Math.min(bounds.x, boid.position.x));
+      boid.position.y = Math.max(-bounds.y, Math.min(bounds.y, boid.position.y));
+      boid.position.z = Math.max(-bounds.z, Math.min(bounds.z, boid.position.z));
 
       // Update rotation (smoothed look direction)
       boid.ref.position.copy(boid.position);

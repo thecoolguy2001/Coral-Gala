@@ -86,7 +86,26 @@ const Aquarium = ({ fishData = [], events = [] }) => {
   // Use comprehensive fish data with full stats and personalities
   const defaultFish = useMemo(() => getDefaultFish(), []);
   
-  const activeFishData = fishData.length > 0 ? fishData : defaultFish;
+  // Filter out invalid fish data from Firebase and ensure minimum size
+  const validFishData = useMemo(() => {
+    if (fishData.length === 0) return defaultFish;
+    
+    return fishData.filter(fish => {
+      // Must have valid name, size, and color
+      return fish && 
+             fish.name && 
+             fish.size && 
+             fish.size >= 0.5 && // Minimum size requirement
+             fish.color && 
+             fish.id;
+    }).map(fish => ({
+      ...fish,
+      size: Math.max(0.6, fish.size || 0.6), // Ensure minimum size
+      color: fish.color || '#FF6B35' // Ensure color exists
+    }));
+  }, [fishData, defaultFish]);
+  
+  const activeFishData = validFishData.length > 0 ? validFishData : defaultFish;
   
   // Essential logging only
   console.log('🐠 Aquarium using', activeFishData.length, 'fish:', activeFishData.map(f => f.name).join(', '));
