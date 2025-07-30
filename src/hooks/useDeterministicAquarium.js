@@ -77,11 +77,11 @@ const useDeterministicAquarium = (fishData) => {
 
   useFrame((state, delta) => {
     const currentTime = (Date.now() - startTime.current) / 1000;
-    const bounds = new THREE.Vector3(12, 8, 12);
-    const separationDistance = 2.0;
-    const alignmentDistance = 3.0;
-    const cohesionDistance = 3.0;
-    const maxForce = 0.06;
+    const bounds = new THREE.Vector3(35, 25, 30); // Much larger bounds for full screen movement
+    const separationDistance = 3.0;
+    const alignmentDistance = 5.0;
+    const cohesionDistance = 8.0;
+    const maxForce = 0.08;
     const waterResistance = 0.98;
 
     boids.forEach((boid, boidIndex) => {
@@ -160,44 +160,118 @@ const useDeterministicAquarium = (fishData) => {
         cohesion.sub(boid.velocity).clampLength(0, maxForce * boid.personality.cohesion);
       }
 
-      // Add wandering (per-fish randomness)
-      const wanderStrength = boid.personality.wander;
+      // Add wandering (per-fish randomness) with more natural movement
+      const wanderStrength = boid.personality.wander * 0.03;
       const wanderForce = new THREE.Vector3(
-        (Math.random() - 0.5) * wanderStrength,
-        (Math.random() - 0.5) * wanderStrength * 0.7, // more vertical
-        (Math.random() - 0.5) * wanderStrength
+        Math.sin(currentTime * 0.5 + boidIndex) * wanderStrength,
+        Math.sin(currentTime * 0.3 + boidIndex * 2) * wanderStrength * 0.5, // Less vertical randomness
+        Math.cos(currentTime * 0.4 + boidIndex * 1.5) * wanderStrength
       );
+      
+      // Add depth preference based on fish personality
+      const depthPreference = new THREE.Vector3();
+      if (boid.personality.name === 'shy') {
+        // Shy fish prefer to stay near the bottom or edges
+        if (boid.position.y > -10) depthPreference.y = -0.02;
+        if (Math.abs(boid.position.x) < 20) {
+          depthPreference.x = boid.position.x > 0 ? 0.01 : -0.01;
+        }
+      } else if (boid.personality.name === 'bold') {
+        // Bold fish explore all areas
+        depthPreference.multiplyScalar(0);
+      } else if (boid.personality.name === 'social') {
+        // Social fish prefer middle areas where they can interact
+        if (Math.abs(boid.position.y) > 5) {
+          depthPreference.y = boid.position.y > 0 ? -0.01 : 0.01;
+        }
+      }
+      
+      // Add schooling behavior - fish of same species attract more
+      const schoolingForce = new THREE.Vector3();
+      let schoolCount = 0;
+      boids.forEach((other, otherIndex) => {
+        if (boidIndex === otherIndex || !other.species) return;
+        if (boid.species === other.species) {
+          const dist = boid.position.distanceTo(other.position);
+          if (dist > 0 && dist < 10) {
+            const attraction = new THREE.Vector3().subVectors(other.position, boid.position);
+            attraction.normalize();
+            attraction.multiplyScalar(0.005 / dist);
+            schoolingForce.add(attraction);
+            schoolCount++;
+          }
+        }
+      });
+      if (schoolCount > 0) {
+        schoolingForce.divideScalar(schoolCount);
+      }
 
-      // Boundary force
+      // Gentle boundary force - fish naturally avoid edges
       const boundaryForce = new THREE.Vector3();
-      const margin = 1.0;
-      if (boid.position.x > bounds.x - margin) boundaryForce.x = -maxForce * 2;
-      else if (boid.position.x < -bounds.x + margin) boundaryForce.x = maxForce * 2;
-      if (boid.position.y > bounds.y - margin) boundaryForce.y = -maxForce * 2;
-      else if (boid.position.y < -bounds.y + margin) boundaryForce.y = maxForce * 2;
-      if (boid.position.z > bounds.z - margin) boundaryForce.z = -maxForce * 2;
-      else if (boid.position.z < -bounds.z + margin) boundaryForce.z = maxForce * 2;
+      const margin = 3.0; // Larger margin for gentler avoidance
+      const edgeAvoidance = 0.1;
+      
+      // X boundaries
+      if (boid.position.x > bounds.x - margin) {
+        const strength = (boid.position.x - (bounds.x - margin)) / margin;
+        boundaryForce.x = -edgeAvoidance * strength * strength;
+      } else if (boid.position.x < -bounds.x + margin) {
+        const strength = ((-bounds.x + margin) - boid.position.x) / margin;
+        boundaryForce.x = edgeAvoidance * strength * strength;
+      }
+      
+      // Y boundaries
+      if (boid.position.y > bounds.y - margin) {
+        const strength = (boid.position.y - (bounds.y - margin)) / margin;
+        boundaryForce.y = -edgeAvoidance * strength * strength;
+      } else if (boid.position.y < -bounds.y + margin) {
+        const strength = ((-bounds.y + margin) - boid.position.y) / margin;
+        boundaryForce.y = edgeAvoidance * strength * strength;
+      }
+      
+      // Z boundaries
+      if (boid.position.z > bounds.z - margin) {
+        const strength = (boid.position.z - (bounds.z - margin)) / margin;
+        boundaryForce.z = -edgeAvoidance * strength * strength;
+      } else if (boid.position.z < -bounds.z + margin) {
+        const strength = ((-bounds.z + margin) - boid.position.z) / margin;
+        boundaryForce.z = edgeAvoidance * strength * strength;
+      }
 
       // Combine all forces
       boid.velocity.add(separation);
       boid.velocity.add(alignment);
       boid.velocity.add(cohesion);
       boid.velocity.add(wanderForce);
+      boid.velocity.add(depthPreference);
+      boid.velocity.add(schoolingForce);
       boid.velocity.add(boundaryForce);
 
       // Water resistance
       boid.velocity.multiplyScalar(waterResistance);
       boid.velocity.multiplyScalar(boid.waterResistance);
 
-      // Speed limits
-      const maxSpeed = boid.originalSpeed * (0.7 + Math.random() * 0.6);
+      // Dynamic speed limits based on behavior
+      let speedMultiplier = 1.0;
+      if (boid.isDarting) speedMultiplier = 2.5;
+      else if (boid.isIdling) speedMultiplier = 0.3;
+      else if (boid.personality.name === 'energetic') speedMultiplier = 1.3;
+      else if (boid.personality.name === 'lazy') speedMultiplier = 0.7;
+      
+      const maxSpeed = boid.originalSpeed * speedMultiplier * (0.8 + Math.sin(currentTime * 0.7 + boidIndex) * 0.2);
       boid.velocity.clampLength(0, maxSpeed);
 
       // Update position
       boid.position.add(boid.velocity.clone().multiplyScalar(delta));
-      boid.position.x = Math.max(-bounds.x + 0.5, Math.min(bounds.x - 0.5, boid.position.x));
-      boid.position.y = Math.max(-bounds.y + 0.5, Math.min(bounds.y - 0.5, boid.position.y));
-      boid.position.z = Math.max(-bounds.z + 0.5, Math.min(bounds.z - 0.5, boid.position.z));
+      
+      // Soft boundary clamping - allow some overflow but apply correction
+      const overflow = 2.0;
+      if (boid.position.x > bounds.x + overflow) boid.position.x = bounds.x + overflow;
+      else if (boid.position.x < -bounds.x - overflow) boid.position.x = -bounds.x - overflow;
+      if (boid.position.y > bounds.y + overflow) boid.position.y = bounds.y + overflow;
+      else if (boid.position.y < -bounds.y - overflow) boid.position.y = -bounds.y - overflow;
+      if (boid.position.z > bounds.z + overflow) boid.position.z = bounds.z + overflow;
+      else if (boid.position.z < -bounds.z - overflow) boid.position.z = -bounds.z - overflow;
 
       // Update rotation (smoothed look direction)
       boid.ref.position.copy(boid.position);

@@ -59,7 +59,7 @@ const Fish = ({ boid, onFishClick }) => {
   };
 
   // Get fish color from boid data
-  const fishColor = boid.color || '#ffdd88';
+  const fishColor = boid.color || '#FF6B35';
   const fishSize = boid.size || 1.0;
 
   // Create Fresnel material for glass-tank effect

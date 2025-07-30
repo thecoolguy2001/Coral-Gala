@@ -73,17 +73,17 @@ export const createFish = (overrides = {}) => {
     name: overrides.name || 'Unnamed Fish',
     species: speciesName, // Always use string for species
     age: overrides.age || Math.floor(Math.random() * 12) + 1, // 1-12 months
-    color: overrides.color || speciesObj.colors?.[0] || '#ffdd88',
+    color: overrides.color || speciesObj.colors?.[0] || '#FF6B35', // Use bright orange instead of yellowish-grey
     
     // Physical Properties
-    size: overrides.size || (speciesObj.averageSize * (0.8 + Math.random() * 0.4)), // ±20% variation
+    size: overrides.size || Math.max(0.6, speciesObj.averageSize * (0.8 + Math.random() * 0.4)), // ±20% variation, minimum 0.6
     speed: overrides.speed || (speciesObj.baseSpeed * (0.9 + Math.random() * 0.2)), // ±10% variation
     
-    // Position in tank
+    // Position in tank - spread across full screen
     position: overrides.position || [
-      (Math.random() - 0.5) * 10,
-      (Math.random() - 0.5) * 6,
-      (Math.random() - 0.5) * 10
+      (Math.random() - 0.5) * 60, // Much wider spread
+      (Math.random() - 0.5) * 40, // Taller spread
+      (Math.random() - 0.5) * 50  // Deeper spread
     ],
     
     // Health Stats (0-100)
@@ -267,7 +267,7 @@ export const getDefaultFish = () => [
     id: 'phillip',
     name: 'Phillip',
     species: 'Clownfish', // Use string directly, not object
-    position: [-5, 2, 0],
+    position: [-20, 8, -10],
     age: 8,
     color: '#FF6B35',
     personality: {
@@ -292,7 +292,7 @@ export const getDefaultFish = () => [
     id: 'jojo',
     name: 'Jojo',
     species: 'Angelfish', // Use string directly
-    position: [5, -2, 5],
+    position: [25, -8, 15],
     age: 6,
     color: '#FFD700',
     personality: {
@@ -317,7 +317,7 @@ export const getDefaultFish = () => [
     id: 'marina',
     name: 'Marina',
     species: 'Nemo Fish', // Use string directly
-    position: [0, 3, -3],
+    position: [8, 12, -20],
     age: 4,
     color: '#FF4500',
     personality: {
@@ -342,7 +342,7 @@ export const getDefaultFish = () => [
     id: 'bubbles',
     name: 'Bubbles',
     species: 'Blue Tang', // Use string directly
-    position: [-3, -1, 2],
+    position: [-15, -12, 8],
     age: 10,
     color: '#0066CC',
     personality: {
