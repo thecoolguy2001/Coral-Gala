@@ -49,10 +49,11 @@ class ThreeErrorBoundary extends React.Component {
 // This new Scene component will live inside the Canvas
 const Scene = ({ fishData, events, onFishClick }) => {
   const initialFish = useMemo(() => {
-    // Pass complete fish data, just add initialPosition property
+    // Pass complete fish data, only add initialPosition if position exists
     return fishData.map(f => ({
       ...f, // Keep all fish data (name, personality, etc.)
-      initialPosition: f.position || [0, 0, 0]
+      // Only add initialPosition if fish actually has a position - no default fallback
+      ...(f.position && { initialPosition: f.position })
     }));
   }, [fishData]);
   
