@@ -113,8 +113,8 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
       }));
     }
     
-    // Only use default fish if no Firebase data and not loading
-    return loading ? [] : defaultFish;
+    // Only use default fish if no Firebase data exists at all
+    return [];
   }, [fishData, defaultFish, loading]);
   
   const activeFishData = validFishData;
