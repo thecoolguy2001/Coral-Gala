@@ -15,29 +15,35 @@ const Fish = ({ boid, onFishClick }) => {
     // Apply the position and rotation calculated by the simulation
     mesh.current.position.copy(boid.position);
     mesh.current.quaternion.copy(boid.ref.quaternion);
-    // Remove extra undulation to prevent spinning
-    // mesh.current.rotation.z = Math.sin(swimPhase * 1.5) * 0.1;
+
+    // Apply banking roll
+    if (boid.bankAngle) {
+      mesh.current.rotateOnAxis(new THREE.Vector3(0, 1, 0), boid.bankAngle * 0.02); // subtle adjustment per frame
+    }
 
     // Add hover effect
-    mesh.current.scale.setScalar(isHovered ? 1.2 : 1.0);
+    const targetScale = isHovered ? 1.2 : 1.0;
+    mesh.current.scale.setScalar(THREE.MathUtils.lerp(mesh.current.scale.x, targetScale, 0.15));
 
-    // Swimming animation
-    const swimSpeed = boid.velocity.length() * 2;
-    setSwimPhase(prev => prev + swimSpeed * delta);
+    // Swimming animation speed based on velocity
+    const swimSpeed = THREE.MathUtils.clamp(boid.velocity.length() * 2.2, 0.5, 4.0);
+    setSwimPhase((prev) => prev + swimSpeed * delta);
 
     // Update Fresnel material time
     if (fresnelMaterial) {
       fresnelMaterial.uniforms.time.value = state.clock.elapsedTime;
     }
 
-    // Tail wagging animation
+    // Tail wagging animation amplitude increases with speed
     if (tailRef.current) {
-      tailRef.current.rotation.z = Math.sin(swimPhase * 3) * 0.3;
+      const amplitude = THREE.MathUtils.clamp(swimSpeed * 0.15, 0.1, 0.35);
+      tailRef.current.rotation.z = Math.sin(swimPhase * 3) * amplitude;
     }
 
     // Fin flapping animation
     if (finRef.current) {
-      finRef.current.rotation.z = Math.sin(swimPhase * 2) * 0.2;
+      const finAmplitude = THREE.MathUtils.clamp(swimSpeed * 0.1, 0.05, 0.25);
+      finRef.current.rotation.z = Math.sin(swimPhase * 2.2) * finAmplitude;
     }
   });
 
@@ -70,7 +76,7 @@ const Fish = ({ boid, onFishClick }) => {
         time: { value: 0 },
         fresnelBias: { value: 0.1 },
         fresnelScale: { value: 1.0 },
-        fresnelPower: { value: 2.0 }
+        fresnelPower: { value: 2.0 },
       },
       vertexShader: `
         uniform float time;
@@ -133,15 +139,15 @@ const Fish = ({ boid, onFishClick }) => {
         }
       `,
       transparent: true,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
     });
   }, [fishColor]);
 
   return (
     <group>
       {/* Main fish body */}
-      <mesh 
-        ref={mesh} 
+      <mesh
+        ref={mesh}
         rotation={[0, 0, Math.PI / 2]}
         onClick={handleClick}
         onPointerEnter={handlePointerEnter}
@@ -153,56 +159,34 @@ const Fish = ({ boid, onFishClick }) => {
         <primitive object={fresnelMaterial} />
       </mesh>
       {/* Fish tail */}
-      <mesh 
+      <mesh
         ref={tailRef}
         position={[0, -0.6, 0]}
         rotation={[0, 0, Math.PI / 2]}
         scale={[fishSize, fishSize, fishSize]}
       >
         <coneGeometry args={[0.1, 0.4, 4]} />
-        <meshStandardMaterial 
-          color={fishColor} 
-          transparent={true}
-          opacity={0.8}
-        />
+        <meshStandardMaterial color={fishColor} transparent={true} opacity={0.8} />
       </mesh>
       {/* Fish fins */}
-      <mesh 
+      <mesh
         ref={finRef}
         position={[0, 0.2, 0]}
         rotation={[0, 0, Math.PI / 2]}
         scale={[fishSize, fishSize, fishSize]}
       >
         <coneGeometry args={[0.05, 0.2, 4]} />
-        <meshStandardMaterial 
-          color={fishColor} 
-          transparent={true}
-          opacity={0.7}
-        />
+        <meshStandardMaterial color={fishColor} transparent={true} opacity={0.7} />
       </mesh>
       {/* Fish eye */}
-      <mesh 
-        position={[0.15, 0.1, 0]}
-        rotation={[0, 0, Math.PI / 2]}
-        scale={[fishSize, fishSize, fishSize]}
-      >
+      <mesh position={[0.15, 0.1, 0]} rotation={[0, 0, Math.PI / 2]} scale={[fishSize, fishSize, fishSize]}>
         <sphereGeometry args={[0.05, 8, 6]} />
-        <meshStandardMaterial 
-          color="#000000" 
-          roughness={0.1}
-        />
+        <meshStandardMaterial color="#000000" roughness={0.1} />
       </mesh>
       {/* Fish eye highlight */}
-      <mesh 
-        position={[0.18, 0.12, 0]}
-        rotation={[0, 0, Math.PI / 2]}
-        scale={[fishSize, fishSize, fishSize]}
-      >
+      <mesh position={[0.18, 0.12, 0]} rotation={[0, 0, Math.PI / 2]} scale={[fishSize, fishSize, fishSize]}>
         <sphereGeometry args={[0.02, 8, 6]} />
-        <meshStandardMaterial 
-          color="#ffffff" 
-          roughness={0.1}
-        />
+        <meshStandardMaterial color="#ffffff" roughness={0.1} />
       </mesh>
     </group>
   );
