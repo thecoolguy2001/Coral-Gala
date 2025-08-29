@@ -3,27 +3,28 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 const Fish = ({ boid, onFishClick }) => {
-  const mesh = useRef();
+  const groupRef = useRef();
   const tailRef = useRef();
   const finRef = useRef();
   const [isHovered, setIsHovered] = useState(false);
   const [swimPhase, setSwimPhase] = useState(0);
 
   useFrame((state, delta) => {
-    if (!mesh.current || !boid || !boid.position || !boid.ref) return;
+    if (!groupRef.current || !boid || !boid.position || !boid.ref) return;
 
     // Apply the position and rotation calculated by the simulation
-    mesh.current.position.copy(boid.position);
-    mesh.current.quaternion.copy(boid.ref.quaternion);
+    groupRef.current.position.copy(boid.position);
+    groupRef.current.quaternion.copy(boid.ref.quaternion);
 
     // Apply banking roll
     if (boid.bankAngle) {
-      mesh.current.rotateOnAxis(new THREE.Vector3(0, 1, 0), boid.bankAngle * 0.02); // subtle adjustment per frame
+      groupRef.current.rotateOnAxis(new THREE.Vector3(0, 1, 0), boid.bankAngle * 0.02); // subtle adjustment per frame
     }
 
     // Add hover effect
     const targetScale = isHovered ? 1.2 : 1.0;
-    mesh.current.scale.setScalar(THREE.MathUtils.lerp(mesh.current.scale.x, targetScale, 0.15));
+    const baseScale = boid.size || 1.0;
+    groupRef.current.scale.setScalar(baseScale * THREE.MathUtils.lerp(groupRef.current.scale.x / baseScale, targetScale, 0.15));
 
     // Swimming animation speed based on velocity
     const swimSpeed = THREE.MathUtils.clamp(boid.velocity.length() * 2.2, 0.5, 4.0);
@@ -145,11 +146,10 @@ const Fish = ({ boid, onFishClick }) => {
 
   return (
     <group
-      ref={mesh}
+      ref={groupRef}
       onClick={handleClick}
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
-      scale={[fishSize, fishSize, fishSize]}
     >
       {/* Main fish body */}
       <mesh
