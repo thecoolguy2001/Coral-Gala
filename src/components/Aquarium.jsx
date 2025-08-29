@@ -89,9 +89,12 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
   
   // Filter out invalid fish data from Firebase and ensure minimum size
   const validFishData = useMemo(() => {
+    console.log('🔍 fishData from Firebase:', fishData?.length || 0, 'fish');
+    console.log('🔍 loading state:', loading);
+    
     // If we have fishData from Firebase, use it (even if empty to avoid duplicates)
     if (fishData && fishData.length > 0) {
-      return fishData.filter(fish => {
+      const filtered = fishData.filter(fish => {
         // Must have valid name, size, and color
         return fish && 
                fish.name && 
@@ -111,10 +114,19 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
         states: fish.states || defaultFish[0].states,
         display: fish.display || defaultFish[0].display
       }));
+      console.log('✅ Using Firebase fish data:', filtered.length, 'fish');
+      return filtered;
     }
     
-    // Only use default fish if no Firebase data exists at all
-    return [];
+    // If loading, return empty array to prevent default fish from showing
+    if (loading) {
+      console.log('⏳ Still loading, showing no fish yet');
+      return [];
+    }
+    
+    // Only use default fish if no Firebase data exists at all and not loading
+    console.log('🏠 Using default fish fallback');
+    return defaultFish;
   }, [fishData, defaultFish, loading]);
   
   const activeFishData = validFishData;

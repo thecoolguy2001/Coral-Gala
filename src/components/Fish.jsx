@@ -144,15 +144,16 @@ const Fish = ({ boid, onFishClick }) => {
   }, [fishColor]);
 
   return (
-    <group>
+    <group
+      ref={mesh}
+      onClick={handleClick}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
+      scale={[fishSize, fishSize, fishSize]}
+    >
       {/* Main fish body */}
       <mesh
-        ref={mesh}
         rotation={[0, 0, Math.PI / 2]}
-        onClick={handleClick}
-        onPointerEnter={handlePointerEnter}
-        onPointerLeave={handlePointerLeave}
-        scale={[fishSize, fishSize, fishSize]}
       >
         {/* Fish body */}
         <cylinderGeometry args={[0.2, 0.3, 1.2, 8]} />
@@ -163,7 +164,6 @@ const Fish = ({ boid, onFishClick }) => {
         ref={tailRef}
         position={[0, -0.6, 0]}
         rotation={[0, 0, Math.PI / 2]}
-        scale={[fishSize, fishSize, fishSize]}
       >
         <coneGeometry args={[0.1, 0.4, 4]} />
         <meshStandardMaterial color={fishColor} transparent={true} opacity={0.8} />
@@ -173,18 +173,17 @@ const Fish = ({ boid, onFishClick }) => {
         ref={finRef}
         position={[0, 0.2, 0]}
         rotation={[0, 0, Math.PI / 2]}
-        scale={[fishSize, fishSize, fishSize]}
       >
         <coneGeometry args={[0.05, 0.2, 4]} />
         <meshStandardMaterial color={fishColor} transparent={true} opacity={0.7} />
       </mesh>
       {/* Fish eye */}
-      <mesh position={[0.15, 0.1, 0]} rotation={[0, 0, Math.PI / 2]} scale={[fishSize, fishSize, fishSize]}>
+      <mesh position={[0.15, 0.1, 0]} rotation={[0, 0, Math.PI / 2]}>
         <sphereGeometry args={[0.05, 8, 6]} />
         <meshStandardMaterial color="#000000" roughness={0.1} />
       </mesh>
       {/* Fish eye highlight */}
-      <mesh position={[0.18, 0.12, 0]} rotation={[0, 0, Math.PI / 2]} scale={[fishSize, fishSize, fishSize]}>
+      <mesh position={[0.18, 0.12, 0]} rotation={[0, 0, Math.PI / 2]}>
         <sphereGeometry args={[0.02, 8, 6]} />
         <meshStandardMaterial color="#ffffff" roughness={0.1} />
       </mesh>
