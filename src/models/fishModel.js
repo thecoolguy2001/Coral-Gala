@@ -271,7 +271,7 @@ export const getDefaultFish = () => [
     id: 'phillip',
     name: 'Phillip',
     species: 'Clownfish', // Use string directly, not object
-    position: [-20, 8, -2],
+    position: [-12, 5, -2],
     age: 8,
     color: '#FF6B35',
     personality: {
@@ -296,7 +296,7 @@ export const getDefaultFish = () => [
     id: 'jojo',
     name: 'Jojo',
     species: 'Angelfish', // Use string directly
-    position: [25, -8, 3],
+    position: [15, -6, 3],
     age: 6,
     color: '#FFD700',
     personality: {
@@ -321,7 +321,7 @@ export const getDefaultFish = () => [
     id: 'marina',
     name: 'Marina',
     species: 'Nemo Fish', // Use string directly
-    position: [8, 12, -4],
+    position: [8, 8, -4],
     age: 4,
     color: '#FF4500',
     personality: {
@@ -346,7 +346,7 @@ export const getDefaultFish = () => [
     id: 'bubbles',
     name: 'Bubbles',
     species: 'Blue Tang', // Use string directly
-    position: [-15, -12, 2],
+    position: [-10, -8, 2],
     age: 10,
     color: '#0066CC',
     personality: {
