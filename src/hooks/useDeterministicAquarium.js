@@ -47,12 +47,17 @@ const useDeterministicAquarium = (fishData) => {
   const boids = useMemo(() => {
     const rng = new SeededRandom(42);
     return fishData.map((fish, index) => {
-      // Skip fish without valid positions to prevent rendering at origin
+      // Ensure every fish gets a valid position, generate one if needed
+      let basePosition = fish.position;
       if (!fish.position || !Array.isArray(fish.position) || fish.position.length !== 3) {
-        console.warn('⚠️ Skipping fish without valid position:', fish.name || fish.id);
-        return null;
+        console.warn('⚠️ Fish without valid position, generating random position:', fish.name || fish.id);
+        // Generate a random position within safe bounds
+        basePosition = [
+          rng.range(-15, 15), // X within screen bounds
+          rng.range(-10, 10), // Y within screen bounds  
+          rng.range(-5, 5)    // Z within depth bounds
+        ];
       }
-      const basePosition = fish.position;
       const position = new THREE.Vector3(
         basePosition[0] + rng.range(-0.5, 0.5),
         basePosition[1] + rng.range(-0.5, 0.5),
@@ -85,7 +90,7 @@ const useDeterministicAquarium = (fishData) => {
         lastLookDirection,
         bankAngle: 0,
       };
-    }).filter(boid => boid !== null); // Remove any null entries from invalid fish
+    }); // All fish now get valid positions, no need to filter
   }, [fishData]);
 
   useFrame((state, delta) => {
@@ -107,14 +112,10 @@ const useDeterministicAquarium = (fishData) => {
     const waterResistance = 0.985;
 
     boids.forEach((boid, boidIndex) => {
-      // Compute on-screen bounds for this boid based on its depth to camera
-      const depth = Math.abs(camera.position.z); // Fixed: use absolute camera distance
-      const visibleHeight = 2 * Math.tan(vFOV / 2) * depth;
-      const visibleWidth = visibleHeight * aspect;
-      // keep fish comfortably inside the frame - reduced margins for tighter bounds
-      const halfWidth = (visibleWidth * 0.35);
-      const halfHeight = (visibleHeight * 0.35);
-      const halfDepth = 8; // much flatter depth for 2D-like effect
+      // Use simpler, fixed bounds that work well with the camera position
+      const halfWidth = 20; // Fixed bounds that work well with camera at z=30
+      const halfHeight = 15; 
+      const halfDepth = 8;
 
       // Reset per-frame acceleration
       boid.acceleration.set(0, 0, 0);
@@ -237,39 +238,32 @@ const useDeterministicAquarium = (fishData) => {
       if (schoolCount > 0) schoolingForce.divideScalar(schoolCount);
       boid.acceleration.add(schoolingForce);
 
-      // Gentle boundary avoidance using per-depth screen bounds
+      // Simplified boundary avoidance
       const boundaryForce = new THREE.Vector3();
-      const marginX = Math.max(1.0, 2.0 * boid.size);
-      const marginY = Math.max(1.0, 2.0 * boid.size);
-      const edgeAvoidance = 0.25;
+      const margin = 2.0;
+      const edgeAvoidance = 0.15;
 
-      const rightLimit = halfWidth - marginX;
-      const leftLimit = -halfWidth + marginX;
-      const topLimit = halfHeight - marginY;
-      const bottomLimit = -halfHeight + marginY;
-
-      if (boid.position.x > rightLimit) {
-        const s = (boid.position.x - rightLimit) / Math.max(0.001, halfWidth * 0.2);
-        boundaryForce.x = -edgeAvoidance * s * s;
-      } else if (boid.position.x < leftLimit) {
-        const s = (leftLimit - boid.position.x) / Math.max(0.001, halfWidth * 0.2);
-        boundaryForce.x = edgeAvoidance * s * s;
+      // X boundaries
+      if (boid.position.x > halfWidth - margin) {
+        boundaryForce.x = -edgeAvoidance;
+      } else if (boid.position.x < -halfWidth + margin) {
+        boundaryForce.x = edgeAvoidance;
       }
 
-      if (boid.position.y > topLimit) {
-        const s = (boid.position.y - topLimit) / Math.max(0.001, halfHeight * 0.2);
-        boundaryForce.y = -edgeAvoidance * s * s;
-      } else if (boid.position.y < bottomLimit) {
-        const s = (bottomLimit - boid.position.y) / Math.max(0.001, halfHeight * 0.2);
-        boundaryForce.y = edgeAvoidance * s * s;
+      // Y boundaries  
+      if (boid.position.y > halfHeight - margin) {
+        boundaryForce.y = -edgeAvoidance;
+      } else if (boid.position.y < -halfHeight + margin) {
+        boundaryForce.y = edgeAvoidance;
       }
 
-      // Maintain a comfortable depth range with stronger boundary forces
+      // Z boundaries
       if (boid.position.z > halfDepth - 2) {
-        boundaryForce.z += -0.25 * ((boid.position.z - (halfDepth - 2)) / 2);
+        boundaryForce.z = -edgeAvoidance;
       } else if (boid.position.z < -halfDepth + 2) {
-        boundaryForce.z += 0.25 * (((-halfDepth + 2) - boid.position.z) / 2);
+        boundaryForce.z = edgeAvoidance;
       }
+      
       boid.acceleration.add(boundaryForce);
 
       // Smooth wandering via low-frequency deterministic noise
@@ -320,9 +314,9 @@ const useDeterministicAquarium = (fishData) => {
       // Update position
       boid.position.add(boid.velocity.clone().multiplyScalar(delta));
 
-      // Hard boundary clamping based on per-depth bounds and fish size
-      boid.position.x = THREE.MathUtils.clamp(boid.position.x, leftLimit, rightLimit);
-      boid.position.y = THREE.MathUtils.clamp(boid.position.y, bottomLimit, topLimit);
+      // Hard boundary clamping to ensure fish never go off screen
+      boid.position.x = THREE.MathUtils.clamp(boid.position.x, -halfWidth + 1, halfWidth - 1);
+      boid.position.y = THREE.MathUtils.clamp(boid.position.y, -halfHeight + 1, halfHeight - 1);
       boid.position.z = THREE.MathUtils.clamp(boid.position.z, -halfDepth, halfDepth);
 
       // Update rotation (smoothed look direction) and compute banking based on turn
