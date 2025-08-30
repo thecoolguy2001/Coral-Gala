@@ -314,10 +314,10 @@ const useDeterministicAquarium = (fishData) => {
       // Update position
       boid.position.add(boid.velocity.clone().multiplyScalar(delta));
 
-      // Hard boundary clamping to ensure fish never go off screen
-      boid.position.x = THREE.MathUtils.clamp(boid.position.x, -halfWidth + 1, halfWidth - 1);
-      boid.position.y = THREE.MathUtils.clamp(boid.position.y, -halfHeight + 1, halfHeight - 1);
-      boid.position.z = THREE.MathUtils.clamp(boid.position.z, -halfDepth, halfDepth);
+      // Hard boundary clamping to ensure fish never go off screen  
+      boid.position.x = THREE.MathUtils.clamp(boid.position.x, -halfWidth + 2, halfWidth - 2);
+      boid.position.y = THREE.MathUtils.clamp(boid.position.y, -halfHeight + 2, halfHeight - 2);
+      boid.position.z = THREE.MathUtils.clamp(boid.position.z, -halfDepth + 1, halfDepth - 1);
 
       // Update rotation (smoothed look direction) and compute banking based on turn
       boid.ref.position.copy(boid.position);

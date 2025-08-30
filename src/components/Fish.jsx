@@ -21,14 +21,14 @@ const Fish = ({ boid, onFishClick }) => {
 
   // Clone the scene to avoid sharing between instances
   const fishModel = useMemo(() => {
+    if (!scene) return null;
     const cloned = scene.clone();
     
-    // Set initial model orientation - most fish models face +X direction
-    // We want them to face +Z (forward in our coordinate system)
+    // Set initial model orientation
     cloned.rotation.y = -Math.PI / 2;
     
-    // Scale the model appropriately
-    const modelSize = 0.5; // Adjust this based on your model size
+    // Scale the model
+    const modelSize = 1.0;
     cloned.scale.setScalar(modelSize);
     
     return cloned;
@@ -124,6 +124,8 @@ const Fish = ({ boid, onFishClick }) => {
       });
     }
   }, [fishModel, boid.color]);
+
+  if (!fishModel) return null;
 
   return (
     <group
