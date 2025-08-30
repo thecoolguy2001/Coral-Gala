@@ -21,7 +21,7 @@ export const FISH_SPECIES = {
     favoriteFood: 'algae',
     colors: ['#FF6B35', '#F7931E', '#FFFFFF'],
     traits: [PERSONALITY_TRAITS.PLAYFUL, PERSONALITY_TRAITS.FRIENDLY],
-    modelPath: '/assets/coral_fish.glb'
+    modelPath: '/coral_fish.glb'
   },
   ANGELFISH: {
     name: 'Angelfish',
@@ -30,7 +30,7 @@ export const FISH_SPECIES = {
     favoriteFood: 'flakes',
     colors: ['#FFD700', '#FFA500', '#FFFFFF'],
     traits: [PERSONALITY_TRAITS.CALM, PERSONALITY_TRAITS.CURIOUS],
-    modelPath: '/assets/fish.glb'
+    modelPath: '/fish.glb'
   },
   NEMO: {
     name: 'Nemo Fish',
@@ -39,7 +39,7 @@ export const FISH_SPECIES = {
     favoriteFood: 'brine shrimp',
     colors: ['#FF4500', '#FFFFFF', '#000000'],
     traits: [PERSONALITY_TRAITS.ENERGETIC, PERSONALITY_TRAITS.CURIOUS],
-    modelPath: '/assets/guppy_fish.glb'
+    modelPath: '/guppy_fish.glb'
   },
   TANG: {
     name: 'Blue Tang',
@@ -48,7 +48,7 @@ export const FISH_SPECIES = {
     favoriteFood: 'seaweed',
     colors: ['#0066CC', '#87CEEB', '#FFFFFF'],
     traits: [PERSONALITY_TRAITS.SHY, PERSONALITY_TRAITS.CALM],
-    modelPath: '/assets/koi_fish.glb'
+    modelPath: '/koi_fish.glb'
   }
 };
 

@@ -12,7 +12,7 @@ const Fish = ({ boid, onFishClick }) => {
   // Get the model path based on fish species
   const getModelPath = (species) => {
     const speciesObj = Object.values(FISH_SPECIES).find(s => s.name === species);
-    return speciesObj?.modelPath || '/assets/fish.glb'; // fallback to default fish model
+    return speciesObj?.modelPath || '/fish.glb'; // fallback to default fish model
   };
 
   const modelPath = getModelPath(boid.species);
