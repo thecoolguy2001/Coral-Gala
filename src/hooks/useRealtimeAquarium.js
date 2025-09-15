@@ -181,11 +181,19 @@ const useRealtimeAquarium = (fishData) => {
         boid.velocity.add(steerToCenter);
       }
 
-      boid.velocity.clampLength(0, maxSpeed);
+      // Ensure minimum velocity to prevent fish from stopping completely
+      if (boid.velocity.length() < 0.5) {
+        boid.velocity.normalize().multiplyScalar(0.5);
+      }
+      boid.velocity.clampLength(0.5, maxSpeed);
       boid.position.add(boid.velocity.clone().multiplyScalar(delta));
 
       boid.ref.position.copy(boid.position);
-      boid.ref.lookAt(boid.position.clone().add(boid.velocity));
+      // Only update look direction if velocity is significant
+      if (boid.velocity.length() > 0.1) {
+        const lookTarget = boid.position.clone().add(boid.velocity.clone().normalize());
+        boid.ref.lookAt(lookTarget);
+      }
     });
 
     // Update Firebase with new positions
