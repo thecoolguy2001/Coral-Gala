@@ -25,9 +25,14 @@ const useRealtimeAquarium = (fishData) => {
     const createdBoids = fishData.map((f, index) => {
       console.log(`🐟 Processing fish ${index}:`, f);
       
-      const safePosition = f.initialPosition && Array.isArray(f.initialPosition) && f.initialPosition.length >= 3 
-        ? f.initialPosition 
-        : [0, 0, 0];
+      // Force safe starting positions within visible bounds
+      const safePositions = [
+        [-8, 2, -2],   // Phillip - left side
+        [8, -2, 2],    // Jojo - right side  
+        [0, 4, -1],    // Marina - top center
+        [0, -4, 1]     // Bubbles - bottom center
+      ];
+      const safePosition = safePositions[index] || [0, 0, 0];
       
       const velocitySeeds = [
         [0.5, 0.2, -0.3],
@@ -125,7 +130,7 @@ const useRealtimeAquarium = (fishData) => {
     const cohesionDistance = 5.0;
     const maxSpeed = 2.5;
     const maxForce = 0.05;
-    const bounds = new THREE.Vector3(15, 10, 10);
+    const bounds = new THREE.Vector3(10, 6, 5); // Smaller, safer bounds
 
     boids.forEach(boid => {
       const separation = new THREE.Vector3();
