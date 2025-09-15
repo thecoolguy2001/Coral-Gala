@@ -19,54 +19,43 @@ const useRealtimeAquarium = (fishData) => {
   // Debug logging
   console.log('🎣 useRealtimeAquarium - received fishData:', fishData.length, fishData);
   
-  // Initialize boids for simulation (if this becomes master)
   const boids = useMemo(() => {
-    console.log('🔧 useRealtimeAquarium - creating boids from fishData:', fishData);
-    const createdBoids = fishData.map((f, index) => {
-      console.log(`🐟 Processing fish ${index}:`, f);
-      
-      // Force safe starting positions within visible bounds
+    if (!fishData) return [];
+    return fishData.map((f, index) => {
       const safePositions = [
-        [-8, 2, -2],   // Phillip - left side
-        [8, -2, 2],    // Jojo - right side  
-        [0, 4, -1],    // Marina - top center
-        [0, -4, 1]     // Bubbles - bottom center
+        [-8, 2, -2],
+        [8, -2, 2],
+        [0, 4, -1],
+        [0, -4, 1],
       ];
-      const safePosition = safePositions[index] || [0, 0, 0];
-      
+      const safePosition = f.position || safePositions[index] || [0, 0, 0];
+
       const velocitySeeds = [
         [0.5, 0.2, -0.3],
         [-0.4, 0.6, 0.1],
         [0.3, -0.5, 0.4],
         [-0.2, 0.1, -0.6],
-        [0.6, -0.3, 0.2]
       ];
-      const velocitySeed = velocitySeeds[index % velocitySeeds.length];
-      
-      const boid = {
+      const velocitySeed = f.velocity || velocitySeeds[index % velocitySeeds.length];
+
+      return {
         ...f,
         position: new THREE.Vector3(...safePosition),
         velocity: new THREE.Vector3(...velocitySeed),
         ref: new THREE.Object3D(),
       };
-      
-      console.log(`✅ Created boid for ${f.id || 'unknown'}:`, boid);
-      return boid;
     });
-    
-    console.log('🎯 useRealtimeAquarium - final boids array:', createdBoids);
-    return createdBoids;
   }, [fishData]);
 
-  // Try to become master on mount
   useEffect(() => {
+    if (boids.length === 0) return;
+
     const tryBecomeMaster = async () => {
       const success = await claimSimulationMaster(sessionId.current);
       if (success) {
         console.log('🎯 Became simulation master!');
         setIsMaster(true);
         
-        // Initialize Firebase with complete fish data when becoming master
         const initialPositions = {};
         boids.forEach(boid => {
           initialPositions[boid.id] = boid;
@@ -74,7 +63,6 @@ const useRealtimeAquarium = (fishData) => {
         await updateAllFishPositions(initialPositions);
         console.log('📡 Initialized Firebase with complete fish data');
         
-        // Start heartbeat
         heartbeatInterval.current = setInterval(() => {
           updateMasterHeartbeat();
         }, 5000);
@@ -83,7 +71,6 @@ const useRealtimeAquarium = (fishData) => {
 
     tryBecomeMaster();
 
-    // Listen for master changes
     const unsubscribe = isSimulationMaster((masterDoc) => {
       if (masterDoc && masterDoc.sessionId === sessionId.current) {
         setIsMaster(true);
@@ -91,7 +78,6 @@ const useRealtimeAquarium = (fishData) => {
         setIsMaster(false);
         console.log('👥 Another browser is the simulation master');
       } else {
-        // No master exists, try to claim it
         tryBecomeMaster();
       }
     });
@@ -102,7 +88,7 @@ const useRealtimeAquarium = (fishData) => {
         clearInterval(heartbeatInterval.current);
       }
     };
-  }, [boids]); // Add boids as dependency
+  }, [boids]);
 
   // Subscribe to real-time positions (for non-masters)
   useEffect(() => {
@@ -118,20 +104,18 @@ const useRealtimeAquarium = (fishData) => {
   // Run simulation and update Firebase (masters only)
   useFrame((state, delta) => {
     if (!isMaster) return;
-
-    // Throttle Firebase updates to ~10 FPS
+  
     const now = Date.now();
     if (now - lastUpdateTime.current < 100) return;
     lastUpdateTime.current = now;
-
-    // Run flocking simulation
-    const separationDistance = 3.0;
-    const alignmentDistance = 5.0;
+  
+    const separationDistance = 4.0;
+    const alignmentDistance = 6.0;
     const cohesionDistance = 5.0;
-    const maxSpeed = 2.5;
-    const maxForce = 0.05;
-    const bounds = new THREE.Vector3(10, 6, 5); // Smaller, safer bounds
-
+    const maxSpeed = 3.0;
+    const maxForce = 0.08;
+    const bounds = new THREE.Vector3(12, 8, 6);
+  
     boids.forEach(boid => {
       const separation = new THREE.Vector3();
       const alignment = new THREE.Vector3();
@@ -139,11 +123,11 @@ const useRealtimeAquarium = (fishData) => {
       let separationCount = 0;
       let alignmentCount = 0;
       let cohesionCount = 0;
-
+  
       boids.forEach(other => {
         if (boid === other) return;
         const dist = boid.position.distanceTo(other.position);
-
+  
         if (dist > 0 && dist < separationDistance) {
           const diff = new THREE.Vector3().subVectors(boid.position, other.position);
           diff.normalize();
@@ -151,18 +135,18 @@ const useRealtimeAquarium = (fishData) => {
           separation.add(diff);
           separationCount++;
         }
-
+  
         if (dist > 0 && dist < alignmentDistance) {
           alignment.add(other.velocity);
           alignmentCount++;
         }
-
+  
         if (dist > 0 && dist < cohesionDistance) {
           cohesion.add(other.position);
           cohesionCount++;
         }
       });
-
+  
       if (separationCount > 0) {
         separation.divideScalar(separationCount);
       }
@@ -176,32 +160,28 @@ const useRealtimeAquarium = (fishData) => {
         cohesion.sub(boid.velocity).clampLength(0, maxForce);
       }
       
-      boid.velocity.add(separation);
-      boid.velocity.add(alignment);
-      boid.velocity.add(cohesion);
-
-      // Proper rectangular boundary checking
-      const boundaryForce = new THREE.Vector3();
+      boid.velocity.add(separation.multiplyScalar(1.5));
+      boid.velocity.add(alignment.multiplyScalar(1.0));
+      boid.velocity.add(cohesion.multiplyScalar(1.0));
+  
+      // Boundary bouncing
       if (Math.abs(boid.position.x) > bounds.x) {
-        boundaryForce.x = boid.position.x > 0 ? -maxForce : maxForce;
+        boid.velocity.x *= -1;
       }
       if (Math.abs(boid.position.y) > bounds.y) {
-        boundaryForce.y = boid.position.y > 0 ? -maxForce : maxForce;
+        boid.velocity.y *= -1;
       }
       if (Math.abs(boid.position.z) > bounds.z) {
-        boundaryForce.z = boid.position.z > 0 ? -maxForce : maxForce;
+        boid.velocity.z *= -1;
       }
-      boid.velocity.add(boundaryForce);
-
-      // Ensure minimum velocity to prevent fish from stopping completely
-      if (boid.velocity.length() < 0.5) {
-        boid.velocity.normalize().multiplyScalar(0.5);
+  
+      if (boid.velocity.length() < 1.5) {
+        boid.velocity.normalize().multiplyScalar(1.5);
       }
-      boid.velocity.clampLength(0.5, maxSpeed);
+      boid.velocity.clampLength(1.5, maxSpeed);
       boid.position.add(boid.velocity.clone().multiplyScalar(delta));
-
+  
       boid.ref.position.copy(boid.position);
-      // Only update look direction if velocity is significant
       if (boid.velocity.length() > 0.1) {
         const lookTarget = boid.position.clone().add(boid.velocity.clone().normalize());
         boid.ref.lookAt(lookTarget);
@@ -221,43 +201,18 @@ const useRealtimeAquarium = (fishData) => {
   if (isMaster) {
     return { boids, isMaster: true };
   } else {
-    // Convert Firebase data back to boid format for rendering
-    // Merge real-time position data with original comprehensive fish data
-    const remoteBoids = fishData.map(originalFish => {
-      const firebaseData = realtimePositions[originalFish.id];
-      
+    const remoteBoids = boids.map(boid => {
+      const firebaseData = realtimePositions[boid.id];
       if (firebaseData) {
-        // Merge original comprehensive data with real-time position/velocity
-        const boid = {
-          ...originalFish, // Start with comprehensive fish data
-          ...firebaseData, // Overlay with Firebase data (which should also be comprehensive)
-          id: originalFish.id,
-          position: new THREE.Vector3(...(firebaseData.position || originalFish.initialPosition || [0, 0, 0])),
-          velocity: new THREE.Vector3(...(firebaseData.velocity || [0, 0, 0])),
-          ref: new THREE.Object3D(),
+        return {
+          ...boid,
+          ...firebaseData,
+          position: new THREE.Vector3(...(firebaseData.position || boid.position)),
+          velocity: new THREE.Vector3(...(firebaseData.velocity || boid.velocity)),
         };
-        
-        // Update ref orientation for rendering
-        boid.ref.position.copy(boid.position);
-        boid.ref.lookAt(boid.position.clone().add(boid.velocity));
-        
-        return boid;
-      } else {
-        // No Firebase data yet, use original comprehensive fish data
-        const boid = {
-          ...originalFish,
-          position: new THREE.Vector3(...(originalFish.initialPosition || [0, 0, 0])),
-          velocity: new THREE.Vector3(0, 0, 0),
-          ref: new THREE.Object3D(),
-        };
-        
-        boid.ref.position.copy(boid.position);
-        boid.ref.lookAt(boid.position.clone().add(boid.velocity));
-        
-        return boid;
       }
+      return boid;
     });
-    
     return { boids: remoteBoids, isMaster: false };
   }
 };
