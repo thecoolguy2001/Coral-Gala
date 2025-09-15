@@ -175,11 +175,18 @@ const useRealtimeAquarium = (fishData) => {
       boid.velocity.add(alignment);
       boid.velocity.add(cohesion);
 
-      if (boid.position.length() > bounds.length()) {
-        const steerToCenter = new THREE.Vector3().subVectors(new THREE.Vector3(0,0,0), boid.position);
-        steerToCenter.clampLength(0, maxForce * 2);
-        boid.velocity.add(steerToCenter);
+      // Proper rectangular boundary checking
+      const boundaryForce = new THREE.Vector3();
+      if (Math.abs(boid.position.x) > bounds.x) {
+        boundaryForce.x = boid.position.x > 0 ? -maxForce : maxForce;
       }
+      if (Math.abs(boid.position.y) > bounds.y) {
+        boundaryForce.y = boid.position.y > 0 ? -maxForce : maxForce;
+      }
+      if (Math.abs(boid.position.z) > bounds.z) {
+        boundaryForce.z = boid.position.z > 0 ? -maxForce : maxForce;
+      }
+      boid.velocity.add(boundaryForce);
 
       // Ensure minimum velocity to prevent fish from stopping completely
       if (boid.velocity.length() < 0.5) {
