@@ -112,10 +112,10 @@ const useDeterministicAquarium = (fishData) => {
     const waterResistance = 0.985;
 
     boids.forEach((boid, boidIndex) => {
-      // Use simpler, fixed bounds that work well with the camera position
-      const halfWidth = 20; // Fixed bounds that work well with camera at z=30
-      const halfHeight = 15; 
-      const halfDepth = 8;
+      // Much tighter bounds to keep fish on screen
+      const halfWidth = 12; 
+      const halfHeight = 8; 
+      const halfDepth = 5;
 
       // Reset per-frame acceleration
       boid.acceleration.set(0, 0, 0);
@@ -314,10 +314,10 @@ const useDeterministicAquarium = (fishData) => {
       // Update position
       boid.position.add(boid.velocity.clone().multiplyScalar(delta));
 
-      // Hard boundary clamping to ensure fish never go off screen  
-      boid.position.x = THREE.MathUtils.clamp(boid.position.x, -halfWidth + 2, halfWidth - 2);
-      boid.position.y = THREE.MathUtils.clamp(boid.position.y, -halfHeight + 2, halfHeight - 2);
-      boid.position.z = THREE.MathUtils.clamp(boid.position.z, -halfDepth + 1, halfDepth - 1);
+      // Hard boundary clamping - force fish to stay on screen
+      boid.position.x = THREE.MathUtils.clamp(boid.position.x, -halfWidth, halfWidth);
+      boid.position.y = THREE.MathUtils.clamp(boid.position.y, -halfHeight, halfHeight);
+      boid.position.z = THREE.MathUtils.clamp(boid.position.z, -halfDepth, halfDepth);
 
       // Update rotation (smoothed look direction) and compute banking based on turn
       boid.ref.position.copy(boid.position);

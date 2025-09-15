@@ -2,7 +2,7 @@ import React, { Suspense, useMemo, useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import Fish from './Fish';
 import WaterEffects from './WaterEffects';
-import useDeterministicAquarium from '../hooks/useDeterministicAquarium';
+import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
 import { getDefaultFish } from '../models/fishModel';
 import FishInfoModal from './FishInfoModal';
 
@@ -57,10 +57,10 @@ const Scene = ({ fishData, events, onFishClick }) => {
     }));
   }, [fishData]);
   
-  // Use deterministic aquarium simulation (no user dependency!)
-  const { boids, isDeterministic } = useDeterministicAquarium(initialFish);
+  // Use realtime Firebase-synchronized aquarium simulation
+  const { boids, isMaster } = useRealtimeAquarium(initialFish);
   
-  console.log('🎲 Deterministic aquarium active with', boids.length, 'fish');
+  console.log('🔥 Firebase realtime aquarium active with', boids.length, 'fish', isMaster ? '(MASTER)' : '(FOLLOWER)');
 
   useEffect(() => {
     if (events.length > 0) {
@@ -156,27 +156,27 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
           }}
         >
           {/* Enhanced lighting for realistic underwater effect */}
-          <ambientLight intensity={0.3} color="#4fc3f7" />
+          <ambientLight intensity={0.6} color="#ffffff" />
           <directionalLight 
             position={[0, 25, 0]} 
-            intensity={0.8} 
+            intensity={1.2} 
             color="#ffffff"
             castShadow
           />
           <directionalLight 
             position={[15, 15, 15]} 
-            intensity={0.4} 
-            color="#87CEEB"
+            intensity={0.8} 
+            color="#ffffff"
           />
           <pointLight 
             position={[-10, 10, -10]} 
-            intensity={0.2} 
-            color="#4fc3f7"
+            intensity={0.6} 
+            color="#ffffff"
           />
           <pointLight 
             position={[10, 5, 10]} 
-            intensity={0.3} 
-            color="#E0F6FF"
+            intensity={0.6} 
+            color="#ffffff"
           />
           
           {/* Fog for depth effect */}
