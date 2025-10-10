@@ -57,14 +57,45 @@ const Fish = ({ boid, onFishClick }) => {
     const swimSpeed = THREE.MathUtils.clamp(boid.velocity.length() * 2.2, 0.5, 4.0);
     setSwimPhase((prev) => prev + swimSpeed * delta);
 
-    // Add subtle swimming animation to the model
+    // Realistic fish swimming animation
     if (modelRef.current) {
-      const swimWobble = Math.sin(swimPhase * 2) * 0.05;
-      const tailWag = Math.sin(swimPhase * 3) * 0.1;
+      const time = swimPhase;
+      const speed = boid.velocity.length();
       
-      // Apply subtle body movement
-      modelRef.current.rotation.z = swimWobble;
-      modelRef.current.rotation.x = tailWag * 0.5;
+      // Body undulation - wave motion from head to tail
+      const bodyWave = Math.sin(time * 4) * 0.08 * (speed / 3.0);
+      const tailWave = Math.sin(time * 4 + Math.PI * 0.8) * 0.25 * (speed / 3.0);
+      
+      // Tail fin powerful side-to-side motion
+      const tailBeat = Math.sin(time * 6) * 0.4 * Math.min(speed / 2.0, 1.0);
+      
+      // Pectoral fin movement for steering
+      const pectoralFin = Math.sin(time * 3 + Math.PI * 0.5) * 0.15;
+      
+      // Vertical undulation for realistic swimming
+      const verticalUndulation = Math.sin(time * 2.5) * 0.03 * speed;
+      
+      // Apply body undulation
+      modelRef.current.rotation.z = bodyWave;
+      modelRef.current.rotation.y = tailBeat * 0.3;
+      
+      // Apply tail movement
+      modelRef.current.rotation.x = tailWave + verticalUndulation;
+      
+      // Add subtle side-to-side body sway
+      const bodySway = Math.sin(time * 1.8) * 0.02 * speed;
+      modelRef.current.position.y = bodySway;
+      
+      // Animate individual parts if the model has them
+      modelRef.current.traverse((child) => {
+        if (child.name && child.name.toLowerCase().includes('tail')) {
+          child.rotation.z = tailBeat;
+          child.rotation.y = tailWave * 1.5;
+        }
+        if (child.name && child.name.toLowerCase().includes('fin')) {
+          child.rotation.x = pectoralFin;
+        }
+      });
     }
   });
 
@@ -99,25 +130,51 @@ const Fish = ({ boid, onFishClick }) => {
             child.material = originalMaterial.map(mat => {
               const newMat = mat.clone();
               if (newMat.color) {
+                // Mix the original color with fish color for more realistic look
                 newMat.color.copy(fishColor);
+                newMat.color.multiplyScalar(1.2); // Brighten the colors
               }
-              // Make materials slightly transparent and glossy for underwater effect
+              
+              // Enhanced underwater fish materials
               newMat.transparent = true;
-              newMat.opacity = 0.9;
-              newMat.metalness = 0.1;
-              newMat.roughness = 0.3;
+              newMat.opacity = 0.95;
+              newMat.metalness = 0.15; // Slightly more metallic for fish scales
+              newMat.roughness = 0.25; // Smoother for wet fish look
+              
+              // Add iridescence for fish scales effect
+              if (newMat.iridescence !== undefined) {
+                newMat.iridescence = 0.3;
+                newMat.iridescenceIOR = 1.3;
+              }
+              
+              // Make fish appear more vibrant underwater
+              newMat.envMapIntensity = 0.5;
+              
               return newMat;
             });
           } else {
             const newMat = originalMaterial.clone();
             if (newMat.color) {
+              // Mix the original color with fish color for more realistic look
               newMat.color.copy(fishColor);
+              newMat.color.multiplyScalar(1.2); // Brighten the colors
             }
-            // Make materials slightly transparent and glossy for underwater effect
+            
+            // Enhanced underwater fish materials
             newMat.transparent = true;
-            newMat.opacity = 0.9;
-            newMat.metalness = 0.1;
-            newMat.roughness = 0.3;
+            newMat.opacity = 0.95;
+            newMat.metalness = 0.15; // Slightly more metallic for fish scales
+            newMat.roughness = 0.25; // Smoother for wet fish look
+            
+            // Add iridescence for fish scales effect
+            if (newMat.iridescence !== undefined) {
+              newMat.iridescence = 0.3;
+              newMat.iridescenceIOR = 1.3;
+            }
+            
+            // Make fish appear more vibrant underwater
+            newMat.envMapIntensity = 0.5;
+            
             child.material = newMat;
           }
         }

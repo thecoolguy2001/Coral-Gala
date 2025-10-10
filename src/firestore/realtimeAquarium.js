@@ -81,13 +81,16 @@ export const updateAllFishPositions = async (fishData) => {
         lastUpdated: serverTimestamp(),
       });
       
-      console.log(`🧹 Sanitized fish data for ${fishId}:`, sanitizedFish);
       batch.push(setDoc(doc(db, REALTIME_COLLECTION, fishId), sanitizedFish));
     });
     
     await Promise.all(batch);
   } catch (error) {
-    console.error('Error updating fish positions:', error);
+    console.error('🔥 Firebase error updating fish positions:', error);
+    // Don't spam errors - only log every 10th error
+    if (Math.random() < 0.1) {
+      console.warn('Firebase connection may be down. Fish will continue locally.');
+    }
   }
 };
 

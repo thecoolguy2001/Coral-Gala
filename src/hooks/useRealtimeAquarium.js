@@ -19,16 +19,20 @@ const useRealtimeAquarium = (fishData) => {
   // Debug logging
   console.log('🎣 useRealtimeAquarium - received fishData:', fishData.length, fishData);
   
-  const boids = useMemo(() => {
-    if (!fishData) return [];
-    return fishData.map((f, index) => {
+  const [boids, setBoids] = useState([]);
+
+  useEffect(() => {
+    if (!fishData) return;
+
+    const newBoids = fishData.map((f, index) => {
+      const realtimePosition = realtimePositions[f.id]?.position;
       const safePositions = [
         [-8, 2, -2],
         [8, -2, 2],
         [0, 4, -1],
         [0, -4, 1],
       ];
-      const safePosition = f.position || safePositions[index] || [0, 0, 0];
+      const safePosition = realtimePosition || f.position || safePositions[index] || [0, 0, 0];
 
       const velocitySeeds = [
         [0.5, 0.2, -0.3],
@@ -36,7 +40,7 @@ const useRealtimeAquarium = (fishData) => {
         [0.3, -0.5, 0.4],
         [-0.2, 0.1, -0.6],
       ];
-      const velocitySeed = f.velocity || velocitySeeds[index % velocitySeeds.length];
+      const velocitySeed = realtimePositions[f.id]?.velocity || f.velocity || velocitySeeds[index % velocitySeeds.length];
 
       return {
         ...f,
@@ -45,7 +49,9 @@ const useRealtimeAquarium = (fishData) => {
         ref: new THREE.Object3D(),
       };
     });
-  }, [fishData]);
+
+    setBoids(newBoids);
+  }, [fishData, realtimePositions]);
 
   useEffect(() => {
     if (boids.length === 0) return;
@@ -95,7 +101,10 @@ const useRealtimeAquarium = (fishData) => {
     if (!isMaster) {
       console.log('🔄 Subscribing to real-time fish positions...');
       const unsubscribe = subscribeToFishPositions((positions) => {
-        setRealtimePositions(positions);
+        // Only update if we actually received data
+        if (positions && Object.keys(positions).length > 0) {
+          setRealtimePositions(positions);
+        }
       });
       return unsubscribe;
     }
@@ -175,6 +184,16 @@ const useRealtimeAquarium = (fishData) => {
         boid.velocity.z *= -1;
       }
   
+      // Ensure fish always keep moving
+      if (boid.velocity.length() < 0.1) {
+        // Give fish a random direction if they get stuck
+        boid.velocity.set(
+          (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 2
+        ).normalize().multiplyScalar(1.5);
+      }
+      
       if (boid.velocity.length() < 1.5) {
         boid.velocity.normalize().multiplyScalar(1.5);
       }
@@ -201,19 +220,7 @@ const useRealtimeAquarium = (fishData) => {
   if (isMaster) {
     return { boids, isMaster: true };
   } else {
-    const remoteBoids = boids.map(boid => {
-      const firebaseData = realtimePositions[boid.id];
-      if (firebaseData) {
-        return {
-          ...boid,
-          ...firebaseData,
-          position: new THREE.Vector3(...(firebaseData.position || boid.position)),
-          velocity: new THREE.Vector3(...(firebaseData.velocity || boid.velocity)),
-        };
-      }
-      return boid;
-    });
-    return { boids: remoteBoids, isMaster: false };
+    return { boids, isMaster: false };
   }
 };
 
