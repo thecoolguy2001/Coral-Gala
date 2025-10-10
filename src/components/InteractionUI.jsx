@@ -6,7 +6,6 @@ const InteractionUI = ({ disabled }) => {
   const stripe = useStripe();
   const [isLoading, setIsLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
   const [showHint, setShowHint] = useState(true);
 
   // Show hint animation for longer (15 seconds)
@@ -19,17 +18,14 @@ const InteractionUI = ({ disabled }) => {
 
   const handleTriggerAreaMouseEnter = () => {
     setIsVisible(true);
-    setIsHovering(true);
     setShowHint(false); // Hide hint once user discovers the area
   };
 
   const handleTriggerAreaMouseLeave = () => {
-    setIsHovering(false);
     // Don't hide immediately when leaving trigger area
   };
 
   const handleUILeave = () => {
-    setIsHovering(false);
     setIsVisible(false); // Hide menu immediately when leaving UI area
   };
 
@@ -113,9 +109,8 @@ const InteractionUI = ({ disabled }) => {
       )}
       
       {/* Main UI that appears on hover */}
-      <div 
+      <div
         className={`interaction-container ${isVisible ? 'visible' : ''}`}
-        onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={handleUILeave}
       >
         <button 

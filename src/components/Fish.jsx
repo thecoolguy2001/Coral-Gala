@@ -26,9 +26,9 @@ const Fish = ({ boid, onFishClick }) => {
     
     // Set initial model orientation
     cloned.rotation.y = -Math.PI / 2;
-    
-    // Scale the model - make fish bigger and more visible
-    const modelSize = 3.0;
+
+    // Scale the model - reasonable size for visibility (was 3.0, too large)
+    const modelSize = 0.8;
     cloned.scale.setScalar(modelSize);
     
     return cloned;

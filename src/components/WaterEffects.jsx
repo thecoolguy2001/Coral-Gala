@@ -3,7 +3,6 @@ import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 const WaterEffects = () => {
-  const rippleRef = useRef();
   const causticsRef = useRef();
   const bubblesRef = useRef();
   const { size, clock, viewport } = useThree();
@@ -142,29 +141,29 @@ const WaterEffects = () => {
     });
   }, [size]);
 
-  // Bubble particles
-  const bubbleGeometry = useMemo(() => {
+  // Bubble particles geometry
+  const bubblesData = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(200 * 3);
     const scales = new Float32Array(200);
     const velocities = new Float32Array(200 * 3);
-    
+
     for (let i = 0; i < 200; i++) {
       positions[i * 3] = (Math.random() - 0.5) * 60;
       positions[i * 3 + 1] = (Math.random() - 0.5) * 40 - 10;
       positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
-      
+
       scales[i] = Math.random() * 0.5 + 0.1;
-      
+
       velocities[i * 3] = (Math.random() - 0.5) * 0.01;
       velocities[i * 3 + 1] = Math.random() * 0.02 + 0.01;
       velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.008;
     }
-    
+
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('scale', new THREE.BufferAttribute(scales, 1));
     geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
-    
+
     return geometry;
   }, []);
 
@@ -268,6 +267,9 @@ const WaterEffects = () => {
         <planeGeometry args={[1, 1]} />
         <primitive object={causticsMaterial} />
       </mesh>
+
+      {/* Bubble particles */}
+      <points ref={bubblesRef} geometry={bubblesData} material={bubbleMaterial} />
     </group>
   );
 };

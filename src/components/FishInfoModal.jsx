@@ -26,6 +26,7 @@ const FishInfoModal = ({ fish, onClose }) => {
       const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
       return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString();
     } catch (error) {
+      console.error('Error formatting timestamp:', error);
       return 'Recently';
     }
   };

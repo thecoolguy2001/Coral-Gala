@@ -1,49 +1,9 @@
 import { db } from '../firebase';
-import { collection, doc, setDoc, onSnapshot, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, serverTimestamp, query } from 'firebase/firestore';
+import { sanitizeFishData } from '../utils/firebaseHelpers';
 
 const REALTIME_COLLECTION = 'realtime-aquarium';
 const SIMULATION_MASTER_DOC = 'simulation-master';
-
-/**
- * Sanitizes fish data for Firebase storage
- */
-const sanitizeFishData = (fish) => {
-  const sanitized = {};
-  
-  // Go through each property and handle appropriately
-  Object.keys(fish).forEach(key => {
-    const value = fish[key];
-    
-    // Skip undefined values and Three.js objects
-    if (value === undefined || key === 'ref') {
-      return;
-    }
-    
-    // Handle nested objects
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      // Handle Three.js Vector3 objects
-      if (value.toArray && typeof value.toArray === 'function') {
-        sanitized[key] = value.toArray();
-        return;
-      }
-      
-      // Handle nested objects recursively
-      const nestedSanitized = {};
-      Object.keys(value).forEach(nestedKey => {
-        const nestedValue = value[nestedKey];
-        if (nestedValue !== undefined) {
-          nestedSanitized[nestedKey] = nestedValue;
-        }
-      });
-      sanitized[key] = nestedSanitized;
-    } else {
-      // Handle primitive values and arrays
-      sanitized[key] = value;
-    }
-  });
-  
-  return sanitized;
-};
 
 /**
  * Updates a fish's position in the real-time aquarium

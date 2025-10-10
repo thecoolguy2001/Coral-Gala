@@ -96,11 +96,6 @@ const useDeterministicAquarium = (fishData) => {
   useFrame((state, delta) => {
     const currentTime = (Date.now() - startTime.current) / 1000;
 
-    // Calculate FOV and aspect once per frame
-    const camera = state.camera;
-    const vFOV = (camera.fov * Math.PI) / 180; // radians
-    const aspect = camera.aspect;
-
     // Tunable parameters
     const separationDistance = 2.5;
     const alignmentDistance = 6.0;

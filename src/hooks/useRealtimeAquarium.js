@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { 
@@ -22,37 +22,64 @@ const useRealtimeAquarium = (fishData) => {
   const [boids, setBoids] = useState([]);
 
   useEffect(() => {
-    if (!fishData) return;
+    if (!fishData || fishData.length === 0) return;
 
     const newBoids = fishData.map((f, index) => {
       const realtimePosition = realtimePositions[f.id]?.position;
-      const safePositions = [
-        [-10, 3, 0],
-        [10, -3, 0],
-        [0, 5, 0],
-        [0, -5, 0],
-        [-5, 0, 0],
-        [5, 0, 0],
-      ];
-      const safePosition = realtimePosition || f.position || safePositions[index % safePositions.length] || [0, 0, 0];
 
-      const velocitySeeds = [
-        [1.0, 0.3, 0.0],
-        [-1.0, 0.5, 0.0],
-        [0.5, -1.0, 0.0],
-        [-0.5, 1.0, 0.0],
-        [0.8, 0.0, 0.0],
-        [-0.8, 0.0, 0.0],
-      ];
-      const velocitySeed = realtimePositions[f.id]?.velocity || f.velocity || velocitySeeds[index % velocitySeeds.length];
+      // Ensure we have proper position data
+      let positionArray;
+      if (realtimePosition && Array.isArray(realtimePosition) && realtimePosition.length === 3) {
+        positionArray = realtimePosition;
+      } else if (f.position && Array.isArray(f.position) && f.position.length === 3) {
+        positionArray = f.position;
+      } else {
+        // Fallback positions spread across the visible area
+        const safePositions = [
+          [-10, 3, 0],
+          [10, -3, 0],
+          [0, 5, 0],
+          [0, -5, 0],
+          [-5, 0, 0],
+          [5, 0, 0],
+        ];
+        positionArray = safePositions[index % safePositions.length];
+      }
+
+      // Ensure we have proper velocity data
+      let velocityArray;
+      const realtimeVelocity = realtimePositions[f.id]?.velocity;
+      if (realtimeVelocity && Array.isArray(realtimeVelocity) && realtimeVelocity.length === 3) {
+        velocityArray = realtimeVelocity;
+      } else if (f.velocity && Array.isArray(f.velocity) && f.velocity.length === 3) {
+        velocityArray = f.velocity;
+      } else {
+        // Initial velocity seeds to ensure fish move from the start
+        const velocitySeeds = [
+          [1.0, 0.3, 0.0],
+          [-1.0, 0.5, 0.0],
+          [0.5, -1.0, 0.0],
+          [-0.5, 1.0, 0.0],
+          [0.8, 0.0, 0.0],
+          [-0.8, 0.0, 0.0],
+        ];
+        velocityArray = velocitySeeds[index % velocitySeeds.length];
+      }
 
       return {
         ...f,
-        position: new THREE.Vector3(...safePosition),
-        velocity: new THREE.Vector3(...velocitySeed),
+        position: new THREE.Vector3(...positionArray),
+        velocity: new THREE.Vector3(...velocityArray),
         ref: new THREE.Object3D(),
       };
     });
+
+    console.log('🐠 Initialized boids:', newBoids.map(b => ({
+      id: b.id,
+      name: b.name,
+      position: [b.position.x.toFixed(1), b.position.y.toFixed(1), b.position.z.toFixed(1)],
+      velocity: [b.velocity.x.toFixed(1), b.velocity.y.toFixed(1), b.velocity.z.toFixed(1)]
+    })));
 
     setBoids(newBoids);
   }, [fishData, realtimePositions]);

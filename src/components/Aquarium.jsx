@@ -1,10 +1,12 @@
-import React, { Suspense, useMemo, useEffect, useRef } from 'react';
+import React, { Suspense, useMemo, useEffect, lazy } from 'react';
 import { Canvas } from '@react-three/fiber';
 import Fish from './Fish';
 import WaterEffects from './WaterEffects';
 import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
 import { getDefaultFish } from '../models/fishModel';
-import FishInfoModal from './FishInfoModal';
+
+// Lazy load modal since it's only shown when user clicks a fish
+const FishInfoModal = lazy(() => import('./FishInfoModal'));
 
 // Error boundary for Three.js errors
 class ThreeErrorBoundary extends React.Component {
@@ -13,7 +15,7 @@ class ThreeErrorBoundary extends React.Component {
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError() {
     return { hasError: true };
   }
 
@@ -133,6 +135,7 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
   
   // Essential logging only
   console.log('🐠 Aquarium using', activeFishData.length, 'fish:', activeFishData.map(f => f.name).join(', '));
+  console.log('🐠 Fish positions:', activeFishData.map(f => `${f.name}: [${f.position}]`).join(', '));
 
   const handleFishClick = (fish) => {
     console.log('🎣 Fish clicked:', fish.name);
@@ -146,11 +149,11 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
   return (
     <>
       <ThreeErrorBoundary>
-        <Canvas 
-          camera={{ position: [0, 0, 30], fov: 75 }}
-          style={{ 
-            width: '100%', 
-            height: '100%', 
+        <Canvas
+          camera={{ position: [0, 0, 25], fov: 75 }}
+          style={{
+            width: '100%',
+            height: '100%',
             background: 'linear-gradient(to bottom, #1e3c72, #2a5298, #1e3c72)',
             position: 'relative'
           }}
@@ -185,12 +188,14 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
           <Scene fishData={activeFishData} events={events} onFishClick={handleFishClick} />
         </Canvas>
       </ThreeErrorBoundary>
-      
+
       {selectedFish && (
-        <FishInfoModal 
-          fish={selectedFish} 
-          onClose={handleCloseModal} 
-        />
+        <Suspense fallback={null}>
+          <FishInfoModal
+            fish={selectedFish}
+            onClose={handleCloseModal}
+          />
+        </Suspense>
       )}
     </>
   );
