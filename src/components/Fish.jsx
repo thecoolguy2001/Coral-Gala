@@ -60,40 +60,34 @@ const Fish = ({ boid, onFishClick }) => {
     // Realistic fish swimming animation
     if (modelRef.current) {
       const time = swimPhase;
-      const speed = boid.velocity.length();
+      const speed = Math.max(boid.velocity.length(), 0.5);
       
-      // Body undulation - wave motion from head to tail
-      const bodyWave = Math.sin(time * 4) * 0.08 * (speed / 3.0);
-      const tailWave = Math.sin(time * 4 + Math.PI * 0.8) * 0.25 * (speed / 3.0);
+      // Simple but effective whole-body fish animation
+      const swimWave = Math.sin(time * 5) * 0.15 * speed;
+      const tailWag = Math.sin(time * 6 + Math.PI * 0.5) * 0.3 * speed;
       
-      // Tail fin powerful side-to-side motion
-      const tailBeat = Math.sin(time * 6) * 0.4 * Math.min(speed / 2.0, 1.0);
+      // Apply swimming motion to entire fish model
+      modelRef.current.rotation.z = swimWave;
+      modelRef.current.rotation.y = tailWag * 0.5;
       
-      // Pectoral fin movement for steering
-      const pectoralFin = Math.sin(time * 3 + Math.PI * 0.5) * 0.15;
+      // Add subtle vertical bobbing
+      const bobbing = Math.sin(time * 3) * 0.1;
+      modelRef.current.position.y = bobbing;
       
-      // Vertical undulation for realistic swimming
-      const verticalUndulation = Math.sin(time * 2.5) * 0.03 * speed;
-      
-      // Apply body undulation
-      modelRef.current.rotation.z = bodyWave;
-      modelRef.current.rotation.y = tailBeat * 0.3;
-      
-      // Apply tail movement
-      modelRef.current.rotation.x = tailWave + verticalUndulation;
-      
-      // Add subtle side-to-side body sway
-      const bodySway = Math.sin(time * 1.8) * 0.02 * speed;
-      modelRef.current.position.y = bodySway;
-      
-      // Animate individual parts if the model has them
+      // Try to animate specific parts by mesh name or position
       modelRef.current.traverse((child) => {
-        if (child.name && child.name.toLowerCase().includes('tail')) {
-          child.rotation.z = tailBeat;
-          child.rotation.y = tailWave * 1.5;
-        }
-        if (child.name && child.name.toLowerCase().includes('fin')) {
-          child.rotation.x = pectoralFin;
+        if (child.isMesh) {
+          // Animate back parts of fish more (likely tail)
+          if (child.position && child.position.x < -0.5) {
+            child.rotation.z = tailWag;
+          }
+          
+          // Find and animate by common fish part names
+          const name = child.name ? child.name.toLowerCase() : '';
+          if (name.includes('tail') || name.includes('fin') || name.includes('back')) {
+            child.rotation.z = tailWag * 1.5;
+            child.rotation.y = swimWave * 2;
+          }
         }
       });
     }

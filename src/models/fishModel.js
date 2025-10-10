@@ -83,11 +83,11 @@ export const createFish = (overrides = {}) => {
     size: overrides.size || Math.max(0.6, speciesObj.averageSize * (0.8 + Math.random() * 0.4)), // ±20% variation, minimum 0.6
     speed: overrides.speed || (speciesObj.baseSpeed * (0.9 + Math.random() * 0.2)), // ±10% variation
     
-    // Position in tank - spread across full screen with minimal depth
+    // Position in tank - spread across screen with shallow depth for 2D feel
     position: overrides.position || [
-      (Math.random() - 0.5) * 60, // Much wider spread
-      (Math.random() - 0.5) * 40, // Taller spread
-      (Math.random() - 0.5) * 8   // Very shallow depth
+      (Math.random() - 0.5) * 20, // Reasonable width spread
+      (Math.random() - 0.5) * 15, // Reasonable height spread
+      (Math.random() - 0.5) * 2   // Very shallow depth for 2D feel
     ],
     
     // Health Stats (0-100)
@@ -271,7 +271,7 @@ export const getDefaultFish = () => [
     id: 'phillip',
     name: 'Phillip',
     species: 'Clownfish', // Use string directly, not object
-    position: [-12, 5, -2],
+    position: [-8, 3, 0],
     age: 8,
     color: '#FF6B35',
     personality: {
@@ -296,7 +296,7 @@ export const getDefaultFish = () => [
     id: 'jojo',
     name: 'Jojo',
     species: 'Angelfish', // Use string directly
-    position: [15, -6, 3],
+    position: [8, -3, 0],
     age: 6,
     color: '#FFD700',
     personality: {
@@ -321,7 +321,7 @@ export const getDefaultFish = () => [
     id: 'marina',
     name: 'Marina',
     species: 'Nemo Fish', // Use string directly
-    position: [8, 8, -4],
+    position: [0, 5, 0],
     age: 4,
     color: '#FF4500',
     personality: {
@@ -346,7 +346,7 @@ export const getDefaultFish = () => [
     id: 'bubbles',
     name: 'Bubbles',
     species: 'Blue Tang', // Use string directly
-    position: [-10, -8, 2],
+    position: [-5, -3, 0],
     age: 10,
     color: '#0066CC',
     personality: {

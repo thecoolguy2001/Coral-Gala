@@ -27,18 +27,22 @@ const useRealtimeAquarium = (fishData) => {
     const newBoids = fishData.map((f, index) => {
       const realtimePosition = realtimePositions[f.id]?.position;
       const safePositions = [
-        [-8, 2, -2],
-        [8, -2, 2],
-        [0, 4, -1],
-        [0, -4, 1],
+        [-10, 3, 0],
+        [10, -3, 0],
+        [0, 5, 0],
+        [0, -5, 0],
+        [-5, 0, 0],
+        [5, 0, 0],
       ];
-      const safePosition = realtimePosition || f.position || safePositions[index] || [0, 0, 0];
+      const safePosition = realtimePosition || f.position || safePositions[index % safePositions.length] || [0, 0, 0];
 
       const velocitySeeds = [
-        [0.5, 0.2, -0.3],
-        [-0.4, 0.6, 0.1],
-        [0.3, -0.5, 0.4],
-        [-0.2, 0.1, -0.6],
+        [1.0, 0.3, 0.0],
+        [-1.0, 0.5, 0.0],
+        [0.5, -1.0, 0.0],
+        [-0.5, 1.0, 0.0],
+        [0.8, 0.0, 0.0],
+        [-0.8, 0.0, 0.0],
       ];
       const velocitySeed = realtimePositions[f.id]?.velocity || f.velocity || velocitySeeds[index % velocitySeeds.length];
 
@@ -121,9 +125,9 @@ const useRealtimeAquarium = (fishData) => {
     const separationDistance = 4.0;
     const alignmentDistance = 6.0;
     const cohesionDistance = 5.0;
-    const maxSpeed = 3.0;
+    const maxSpeed = 2.0;
     const maxForce = 0.08;
-    const bounds = new THREE.Vector3(12, 8, 6);
+    const bounds = new THREE.Vector3(15, 10, 2); // Much flatter Z bounds for 2D-ish movement
   
     boids.forEach(boid => {
       const separation = new THREE.Vector3();
@@ -172,6 +176,9 @@ const useRealtimeAquarium = (fishData) => {
       boid.velocity.add(separation.multiplyScalar(1.5));
       boid.velocity.add(alignment.multiplyScalar(1.0));
       boid.velocity.add(cohesion.multiplyScalar(1.0));
+      
+      // Constrain Z movement to keep fish more 2D
+      boid.velocity.z *= 0.3;
   
       // Boundary bouncing
       if (Math.abs(boid.position.x) > bounds.x) {
@@ -188,16 +195,16 @@ const useRealtimeAquarium = (fishData) => {
       if (boid.velocity.length() < 0.1) {
         // Give fish a random direction if they get stuck
         boid.velocity.set(
-          (Math.random() - 0.5) * 2,
-          (Math.random() - 0.5) * 2,
-          (Math.random() - 0.5) * 2
-        ).normalize().multiplyScalar(1.5);
+          (Math.random() - 0.5) * 4,
+          (Math.random() - 0.5) * 3,
+          (Math.random() - 0.5) * 0.5
+        ).normalize().multiplyScalar(1.2);
       }
       
-      if (boid.velocity.length() < 1.5) {
-        boid.velocity.normalize().multiplyScalar(1.5);
+      if (boid.velocity.length() < 1.0) {
+        boid.velocity.normalize().multiplyScalar(1.2);
       }
-      boid.velocity.clampLength(1.5, maxSpeed);
+      boid.velocity.clampLength(1.0, maxSpeed);
       boid.position.add(boid.velocity.clone().multiplyScalar(delta));
   
       boid.ref.position.copy(boid.position);
