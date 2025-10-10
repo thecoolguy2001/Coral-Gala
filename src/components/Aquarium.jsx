@@ -70,16 +70,25 @@ const Scene = ({ fishData, events, onFishClick }) => {
     }
   }, [events]);
 
+  console.log(`🎬 Scene rendering ${boids.length} fish:`, boids.map(b => `${b.name} at [${b.position.x.toFixed(1)}, ${b.position.y.toFixed(1)}, ${b.position.z.toFixed(1)}]`));
+
   return (
-    <Suspense fallback={null}>
+    <>
       {/* Realistic water effects with caustics and light rays */}
       <WaterEffects />
-      
-      {/* Fish */}
-      {boids.map(boid => (
-        <Fish key={boid.id} boid={boid} onFishClick={onFishClick} />
-      ))}
-    </Suspense>
+
+      {/* Fish - Remove Suspense to debug if that's blocking rendering */}
+      {boids.length > 0 ? (
+        boids.map(boid => (
+          <Fish key={boid.id} boid={boid} onFishClick={onFishClick} />
+        ))
+      ) : (
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color="red" />
+        </mesh>
+      )}
+    </>
   );
 };
 
@@ -136,6 +145,8 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
   // Essential logging only
   console.log('🐠 Aquarium using', activeFishData.length, 'fish:', activeFishData.map(f => f.name).join(', '));
   console.log('🐠 Fish positions:', activeFishData.map(f => `${f.name}: [${f.position}]`).join(', '));
+  console.log('🐠 Loading state:', loading);
+  console.log('🐠 fishData from props:', fishData?.length || 0);
 
   const handleFishClick = (fish) => {
     console.log('🎣 Fish clicked:', fish.name);
