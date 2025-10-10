@@ -34,14 +34,14 @@ const useRealtimeAquarium = (fishData) => {
       } else if (f.position && Array.isArray(f.position) && f.position.length === 3) {
         positionArray = f.position;
       } else {
-        // Fallback positions spread across the visible area
+        // Fallback positions spread across the visible area (smaller bounds)
         const safePositions = [
-          [-10, 3, 0],
-          [10, -3, 0],
-          [0, 5, 0],
-          [0, -5, 0],
-          [-5, 0, 0],
-          [5, 0, 0],
+          [-5, 2, 0],
+          [5, -2, 0],
+          [0, 3, 0],
+          [0, -3, 0],
+          [-3, 0, 0],
+          [3, 0, 0],
         ];
         positionArray = safePositions[index % safePositions.length];
       }
@@ -154,7 +154,7 @@ const useRealtimeAquarium = (fishData) => {
     const cohesionDistance = 5.0;
     const maxSpeed = 2.0;
     const maxForce = 0.08;
-    const bounds = new THREE.Vector3(12, 8, 6);
+    const bounds = new THREE.Vector3(8, 6, 4); // Smaller bounds to keep fish visible
   
     boids.forEach(boid => {
       const separation = new THREE.Vector3();
