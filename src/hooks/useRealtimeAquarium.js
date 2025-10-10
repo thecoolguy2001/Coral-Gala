@@ -127,7 +127,7 @@ const useRealtimeAquarium = (fishData) => {
     const cohesionDistance = 5.0;
     const maxSpeed = 2.0;
     const maxForce = 0.08;
-    const bounds = new THREE.Vector3(15, 10, 2); // Much flatter Z bounds for 2D-ish movement
+    const bounds = new THREE.Vector3(12, 8, 6);
   
     boids.forEach(boid => {
       const separation = new THREE.Vector3();

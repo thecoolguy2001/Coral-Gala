@@ -28,7 +28,7 @@ const Fish = ({ boid, onFishClick }) => {
     cloned.rotation.y = -Math.PI / 2;
     
     // Scale the model - make fish bigger and more visible
-    const modelSize = 1.0; // Reduced from 3.0 to prevent fish being too big
+    const modelSize = 3.0;
     cloned.scale.setScalar(modelSize);
     
     return cloned;
@@ -185,11 +185,6 @@ const Fish = ({ boid, onFishClick }) => {
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
     >
-      {/* Debug sphere to see where fish are positioned */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[0.5, 8, 8]} />
-        <meshBasicMaterial color="red" wireframe />
-      </mesh>
       <primitive ref={modelRef} object={fishModel} />
     </group>
   );
