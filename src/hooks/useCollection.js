@@ -34,7 +34,6 @@ const useCollection = (collectionName, orderByField, orderByDirection = 'desc') 
         });
         setDocuments(docs);
         setLoading(false);
-        console.log(`Loaded ${docs.length} documents from ${collectionName} collection`);
       },
       (err) => {
         console.error('Firestore error:', err);

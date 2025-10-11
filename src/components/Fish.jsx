@@ -13,16 +13,11 @@ const Fish = ({ boid, onFishClick }) => {
   // Get the model path based on fish species
   const getModelPath = (species) => {
     const speciesObj = Object.values(FISH_SPECIES).find(s => s.name === species);
-    const path = speciesObj?.modelPath || '/fish.glb';
-    console.log(`🐠 Fish ${boid.name} (${species}) loading model from: ${path}`);
-    return path;
+    return speciesObj?.modelPath || '/fish.glb';
   };
 
   const modelPath = getModelPath(boid.species);
-  const { scene, error } = useGLTF(modelPath);
-
-  // Log model loading status
-  console.log(`🎨 Model for ${boid.name}:`, { scene: !!scene, error, modelPath });
+  const { scene } = useGLTF(modelPath);
 
   // Clone the scene to avoid sharing between instances
   const fishModel = useMemo(() => {
@@ -181,24 +176,7 @@ const Fish = ({ boid, onFishClick }) => {
     }
   }, [fishModel, boid.color]);
 
-  if (!fishModel) {
-    console.warn(`⚠️ No fish model for ${boid.name}! Rendering fallback sphere.`);
-    // Render a simple sphere as fallback to see if ANYTHING is rendering
-    return (
-      <mesh
-        ref={groupRef}
-        position={boid.position}
-        onClick={handleClick}
-        onPointerEnter={handlePointerEnter}
-        onPointerLeave={handlePointerLeave}
-      >
-        <sphereGeometry args={[0.5, 16, 16]} />
-        <meshStandardMaterial color={boid.color || '#FF6B35'} />
-      </mesh>
-    );
-  }
-
-  console.log(`✅ Rendering fish model for ${boid.name} at position:`, boid.position);
+  if (!fishModel) return null;
 
   return (
     <group

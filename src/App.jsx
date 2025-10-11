@@ -18,19 +18,6 @@ function App() {
   // Any error from our hooks will be captured here
   const error = fishError || eventsError;
 
-  // Show loading state
-  if (fishLoading) {
-    console.log('Loading fish data...');
-  }
-
-  // Log the current state for debugging
-  console.log('App state:', {
-    fishData: fishData.length,
-    fishLoading,
-    fishError,
-    error
-  });
-
   return (
     <div className="App">
       <FallbackBanner message={error ? `Firebase Error: ${error}` : null} />

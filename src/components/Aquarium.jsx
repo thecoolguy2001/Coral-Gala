@@ -61,33 +61,13 @@ const Scene = ({ fishData, events, onFishClick }) => {
   
   // Use realtime Firebase-synchronized aquarium simulation
   const { boids, isMaster } = useRealtimeAquarium(initialFish);
-  
-  console.log('🔥 Firebase realtime aquarium active with', boids.length, 'fish', isMaster ? '(MASTER)' : '(FOLLOWER)');
-
-  useEffect(() => {
-    if (events.length > 0) {
-      console.log('New event received:', events[0]);
-    }
-  }, [events]);
-
-  console.log(`🎬 Scene rendering ${boids.length} fish:`, boids.map(b => `${b.name} at [${b.position.x.toFixed(1)}, ${b.position.y.toFixed(1)}, ${b.position.z.toFixed(1)}]`));
 
   return (
     <>
-      {/* Realistic water effects with caustics and light rays */}
       <WaterEffects />
-
-      {/* Fish - Remove Suspense to debug if that's blocking rendering */}
-      {boids.length > 0 ? (
-        boids.map(boid => (
-          <Fish key={boid.id} boid={boid} onFishClick={onFishClick} />
-        ))
-      ) : (
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color="red" />
-        </mesh>
-      )}
+      {boids.map(boid => (
+        <Fish key={boid.id} boid={boid} onFishClick={onFishClick} />
+      ))}
     </>
   );
 };
@@ -100,9 +80,6 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
   
   // Filter out invalid fish data from Firebase and ensure minimum size
   const validFishData = useMemo(() => {
-    console.log('🔍 fishData from Firebase:', fishData?.length || 0, 'fish');
-    console.log('🔍 loading state:', loading);
-    
     // If we have fishData from Firebase, use it (even if empty to avoid duplicates)
     if (fishData && fishData.length > 0) {
       const filtered = fishData.filter(fish => {
@@ -125,31 +102,22 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
         states: fish.states || defaultFish[0].states,
         display: fish.display || defaultFish[0].display
       }));
-      console.log('✅ Using Firebase fish data:', filtered.length, 'fish');
       return filtered;
     }
-    
+
     // If loading, return empty array to prevent default fish from showing
     if (loading) {
-      console.log('⏳ Still loading, showing no fish yet');
       return [];
     }
-    
+
     // Only use default fish if no Firebase data exists at all and not loading
-    console.log('🏠 Using default fish fallback');
     return defaultFish;
   }, [fishData, defaultFish, loading]);
   
   const activeFishData = validFishData;
   
-  // Essential logging only
-  console.log('🐠 Aquarium using', activeFishData.length, 'fish:', activeFishData.map(f => f.name).join(', '));
-  console.log('🐠 Fish positions:', activeFishData.map(f => `${f.name}: [${f.position}]`).join(', '));
-  console.log('🐠 Loading state:', loading);
-  console.log('🐠 fishData from props:', fishData?.length || 0);
 
   const handleFishClick = (fish) => {
-    console.log('🎣 Fish clicked:', fish.name);
     setSelectedFish(fish);
   };
 

@@ -16,9 +16,6 @@ const useRealtimeAquarium = (fishData) => {
   const lastUpdateTime = useRef(Date.now());
   const heartbeatInterval = useRef(null);
   
-  // Debug logging
-  console.log('🎣 useRealtimeAquarium - received fishData:', fishData.length, fishData);
-  
   const [boids, setBoids] = useState([]);
 
   useEffect(() => {
@@ -74,13 +71,6 @@ const useRealtimeAquarium = (fishData) => {
       };
     });
 
-    console.log('🐠 Initialized boids:', newBoids.map(b => ({
-      id: b.id,
-      name: b.name,
-      position: [b.position.x.toFixed(1), b.position.y.toFixed(1), b.position.z.toFixed(1)],
-      velocity: [b.velocity.x.toFixed(1), b.velocity.y.toFixed(1), b.velocity.z.toFixed(1)]
-    })));
-
     setBoids(newBoids);
   }, [fishData, realtimePositions]);
 
@@ -90,16 +80,14 @@ const useRealtimeAquarium = (fishData) => {
     const tryBecomeMaster = async () => {
       const success = await claimSimulationMaster(sessionId.current);
       if (success) {
-        console.log('🎯 Became simulation master!');
         setIsMaster(true);
-        
+
         const initialPositions = {};
         boids.forEach(boid => {
           initialPositions[boid.id] = boid;
         });
         await updateAllFishPositions(initialPositions);
-        console.log('📡 Initialized Firebase with complete fish data');
-        
+
         heartbeatInterval.current = setInterval(() => {
           updateMasterHeartbeat();
         }, 5000);
@@ -113,7 +101,6 @@ const useRealtimeAquarium = (fishData) => {
         setIsMaster(true);
       } else if (masterDoc && masterDoc.sessionId !== sessionId.current) {
         setIsMaster(false);
-        console.log('👥 Another browser is the simulation master');
       } else {
         tryBecomeMaster();
       }
@@ -130,9 +117,7 @@ const useRealtimeAquarium = (fishData) => {
   // Subscribe to real-time positions (for non-masters)
   useEffect(() => {
     if (!isMaster) {
-      console.log('🔄 Subscribing to real-time fish positions...');
       const unsubscribe = subscribeToFishPositions((positions) => {
-        // Only update if we actually received data
         if (positions && Object.keys(positions).length > 0) {
           setRealtimePositions(positions);
         }
