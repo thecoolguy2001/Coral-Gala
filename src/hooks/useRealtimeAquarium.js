@@ -89,9 +89,10 @@ const useRealtimeAquarium = (fishData) => {
         });
         await updateAllFishPositions(initialPositions);
 
+        // Send heartbeat every 30 seconds to reduce Firebase writes
         heartbeatInterval.current = setInterval(() => {
           updateMasterHeartbeat();
-        }, 5000);
+        }, 30000);
       }
     };
 
@@ -127,12 +128,37 @@ const useRealtimeAquarium = (fishData) => {
     }
   }, [isMaster]);
 
-  // Run simulation and update Firebase (masters only)
+  // Non-master browsers: smooth interpolation of positions from Firebase
   useFrame((state, delta) => {
-    if (!isMaster) return;
-  
+    if (!isMaster) {
+      // Smoothly interpolate towards Firebase positions for non-masters
+      boids.forEach(boid => {
+        const realtimePos = realtimePositions[boid.id]?.position;
+        if (realtimePos && Array.isArray(realtimePos) && realtimePos.length === 3) {
+          const targetPos = new THREE.Vector3(...realtimePos);
+          boid.position.lerp(targetPos, 0.05); // Smooth interpolation
+
+          boid.ref.position.copy(boid.position);
+
+          // Update rotation to face movement direction
+          const realtimeVel = realtimePositions[boid.id]?.velocity;
+          if (realtimeVel && Array.isArray(realtimeVel) && realtimeVel.length === 3) {
+            const velocity = new THREE.Vector3(...realtimeVel);
+            if (velocity.length() > 0.1) {
+              const lookTarget = boid.position.clone().add(velocity.normalize());
+              boid.ref.lookAt(lookTarget);
+            }
+          }
+        }
+      });
+      return;
+    }
+
+    // Master browser: run simulation and update Firebase
     const now = Date.now();
-    if (now - lastUpdateTime.current < 100) return;
+    // Reduced Firebase write frequency to avoid quota limits
+    // Update every 2 seconds instead of every 100ms (reduced from 10/sec to 0.5/sec)
+    if (now - lastUpdateTime.current < 2000) return;
     lastUpdateTime.current = now;
   
     const separationDistance = 4.0;
