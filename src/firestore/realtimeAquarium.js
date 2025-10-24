@@ -27,9 +27,10 @@ export const updateFishPosition = async (fishId, position, velocity) => {
 /**
  * Updates multiple fish positions at once (more efficient)
  */
+let lastWriteError = null;
 export const updateAllFishPositions = async (fishData) => {
   if (!db) return;
-  
+
   try {
     const batch = [];
     Object.entries(fishData).forEach(([fishId, fish]) => {
@@ -40,12 +41,28 @@ export const updateAllFishPositions = async (fishData) => {
         velocity: fish.velocity?.toArray ? fish.velocity.toArray() : fish.velocity,
         lastUpdated: serverTimestamp(),
       });
-      
+
       batch.push(setDoc(doc(db, REALTIME_COLLECTION, fishId), sanitizedFish));
     });
-    
+
     await Promise.all(batch);
+
+    // Clear error if write succeeds
+    if (lastWriteError) {
+      console.log('✅ Firebase writes restored');
+      lastWriteError = null;
+    }
   } catch (error) {
+    // Check if this is a quota error
+    if (error.code === 'resource-exhausted') {
+      if (!lastWriteError || Date.now() - lastWriteError > 60000) {
+        console.warn('⚠️ Firebase quota exceeded. Fish will continue locally. Quota resets at midnight Pacific Time.');
+        lastWriteError = Date.now();
+      }
+      // Stop trying to write to Firebase until quota resets
+      return;
+    }
+
     console.error('🔥 Firebase error updating fish positions:', error);
     // Don't spam errors - only log every 10th error
     if (Math.random() < 0.1) {

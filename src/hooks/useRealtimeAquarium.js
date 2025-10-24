@@ -82,12 +82,10 @@ const useRealtimeAquarium = (fishData) => {
       const success = await claimSimulationMaster(sessionId.current);
       if (success) {
         setIsMaster(true);
+        console.log('🎯 This browser is now the simulation master');
 
-        const initialPositions = {};
-        boids.forEach(boid => {
-          initialPositions[boid.id] = boid;
-        });
-        await updateAllFishPositions(initialPositions);
+        // Don't write initial positions - let the simulation loop handle it
+        // This prevents a burst of writes when claiming master
 
         // Send heartbeat every 30 seconds to reduce Firebase writes
         heartbeatInterval.current = setInterval(() => {
@@ -156,9 +154,10 @@ const useRealtimeAquarium = (fishData) => {
 
     // Master browser: run simulation and update Firebase
     const now = Date.now();
-    // Reduced Firebase write frequency to avoid quota limits
-    // Update every 2 seconds instead of every 100ms (reduced from 10/sec to 0.5/sec)
-    if (now - lastUpdateTime.current < 2000) return;
+    // TEMPORARY: Massively reduced Firebase write frequency to let quota reset
+    // Update every 30 seconds instead of every 100ms
+    // TODO: Change back to 2000-5000ms once quota resets (after midnight Pacific Time)
+    if (now - lastUpdateTime.current < 30000) return;
     lastUpdateTime.current = now;
   
     const separationDistance = 4.0;
