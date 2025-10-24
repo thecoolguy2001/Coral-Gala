@@ -117,9 +117,13 @@ const Fish = ({ boid, onFishClick }) => {
       
       fishModel.traverse((child) => {
         if (child.isMesh && child.material) {
+          // Enable shadows for realistic rendering
+          child.castShadow = true;
+          child.receiveShadow = true;
+
           // Clone the material to avoid affecting other instances
           const originalMaterial = child.material;
-          
+
           if (Array.isArray(originalMaterial)) {
             child.material = originalMaterial.map(mat => {
               const newMat = mat.clone();
@@ -184,6 +188,8 @@ const Fish = ({ boid, onFishClick }) => {
       onClick={handleClick}
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
+      castShadow
+      receiveShadow
     >
       <primitive ref={modelRef} object={fishModel} />
     </group>

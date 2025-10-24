@@ -18,7 +18,7 @@ const TankContainer = ({ isOutsideView }) => {
   const frameThickness = FRAME_THICKNESS;
 
   return (
-    <group ref={tankRef} visible={isOutsideView}>
+    <group ref={tankRef}>
       {/* Glass Walls - front, back, left, right, bottom */}
       {/* Front Glass */}
       <mesh position={[0, 0, tankDepth / 2]}>
@@ -89,10 +89,26 @@ const TankContainer = ({ isOutsideView }) => {
         />
       </mesh>
 
-      {/* Tank Frame - Top Rim (black plastic like real tanks) */}
-      <mesh position={[0, tankHeight / 2 + frameThickness / 2, 0]}>
-        <boxGeometry args={[tankWidth + frameThickness * 2, frameThickness, tankDepth + frameThickness * 2]} />
-        <meshStandardMaterial color="#0a0a0a" roughness={0.6} metalness={0.1} />
+      {/* Tank Frame - Top Rim (open top - only the rim edges, no top cover) */}
+      {/* Front rim */}
+      <mesh position={[0, tankHeight / 2 + frameThickness / 2, tankDepth / 2 + frameThickness / 2]}>
+        <boxGeometry args={[tankWidth + frameThickness * 2, frameThickness, frameThickness]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
+      </mesh>
+      {/* Back rim */}
+      <mesh position={[0, tankHeight / 2 + frameThickness / 2, -tankDepth / 2 - frameThickness / 2]}>
+        <boxGeometry args={[tankWidth + frameThickness * 2, frameThickness, frameThickness]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
+      </mesh>
+      {/* Left rim */}
+      <mesh position={[-tankWidth / 2 - frameThickness / 2, tankHeight / 2 + frameThickness / 2, 0]}>
+        <boxGeometry args={[frameThickness, frameThickness, tankDepth]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
+      </mesh>
+      {/* Right rim */}
+      <mesh position={[tankWidth / 2 + frameThickness / 2, tankHeight / 2 + frameThickness / 2, 0]}>
+        <boxGeometry args={[frameThickness, frameThickness, tankDepth]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
       </mesh>
 
       {/* Bottom Frame */}
@@ -114,55 +130,112 @@ const TankContainer = ({ isOutsideView }) => {
         </mesh>
       ))}
 
-      {/* Decorations - Fish Center Live style */}
-      {/* Gravel/Substrate at bottom */}
-      <mesh position={[0, -tankHeight / 2 + 0.5, 0]}>
+      {/* Decorations - Ultra-realistic with light interaction */}
+      {/* Gravel/Substrate at bottom - realistic texture */}
+      <mesh position={[0, -tankHeight / 2 + 0.5, 0]} receiveShadow>
         <boxGeometry args={[tankWidth - 1, 1, tankDepth - 1]} />
-        <meshStandardMaterial color="#4a4a4a" roughness={0.9} />
+        <meshStandardMaterial
+          color="#3a3a3a"
+          roughness={0.95}
+          metalness={0.0}
+        />
       </mesh>
 
-      {/* Rock decoration (left side) */}
-      <mesh position={[-12, -tankHeight / 2 + 2, -5]}>
-        <dodecahedronGeometry args={[2.5, 0]} />
-        <meshStandardMaterial color="#5a5a5a" roughness={0.8} />
+      {/* Rock decorations with realistic materials that catch light */}
+      {/* Large rock (left side) */}
+      <mesh position={[-12, -tankHeight / 2 + 2, -5]} castShadow receiveShadow>
+        <dodecahedronGeometry args={[2.5, 1]} />
+        <meshStandardMaterial
+          color="#6a5a52"
+          roughness={0.7}
+          metalness={0.1}
+        />
       </mesh>
 
-      {/* Another rock (right side) */}
-      <mesh position={[10, -tankHeight / 2 + 1.5, 3]}>
-        <dodecahedronGeometry args={[2, 0]} />
-        <meshStandardMaterial color="#6a6a6a" roughness={0.8} />
+      {/* Medium rock (right side) */}
+      <mesh position={[10, -tankHeight / 2 + 1.5, 3]} castShadow receiveShadow>
+        <dodecahedronGeometry args={[2, 1]} />
+        <meshStandardMaterial
+          color="#7a6a62"
+          roughness={0.6}
+          metalness={0.15}
+        />
       </mesh>
 
-      {/* Small rock cluster (center-back) */}
+      {/* Small rock cluster (center-back) - catches caustic light beautifully */}
       <group position={[0, -tankHeight / 2 + 1, -7]}>
-        <mesh position={[-1, 0, 0]}>
-          <dodecahedronGeometry args={[1.2, 0]} />
-          <meshStandardMaterial color="#5a5a5a" roughness={0.8} />
+        <mesh position={[-1, 0, 0]} castShadow receiveShadow>
+          <dodecahedronGeometry args={[1.2, 1]} />
+          <meshStandardMaterial
+            color="#5a4a42"
+            roughness={0.65}
+            metalness={0.12}
+          />
         </mesh>
-        <mesh position={[1.2, 0.3, 0.5]}>
-          <dodecahedronGeometry args={[0.9, 0]} />
-          <meshStandardMaterial color="#6a6a6a" roughness={0.8} />
+        <mesh position={[1.2, 0.3, 0.5]} castShadow receiveShadow>
+          <dodecahedronGeometry args={[0.9, 1]} />
+          <meshStandardMaterial
+            color="#6a5a52"
+            roughness={0.7}
+            metalness={0.1}
+          />
         </mesh>
       </group>
 
-      {/* Simple plant decoration (back left) */}
+      {/* Coral-like plant (back left) - realistic material */}
       <group position={[-8, -tankHeight / 2 + 1, -6]}>
         {[0, 1, 2, 3, 4].map((i) => (
-          <mesh key={i} position={[Math.sin(i) * 0.5, i * 1.5, Math.cos(i) * 0.5]}>
+          <mesh key={i} position={[Math.sin(i) * 0.5, i * 1.5, Math.cos(i) * 0.5]} castShadow receiveShadow>
             <cylinderGeometry args={[0.3, 0.1, 2, 8]} />
-            <meshStandardMaterial color="#2d5016" roughness={0.7} />
+            <meshStandardMaterial
+              color="#2d5016"
+              roughness={0.5}
+              metalness={0.0}
+              emissive="#1a3010"
+              emissiveIntensity={0.1}
+            />
           </mesh>
         ))}
       </group>
 
-      {/* Simple plant decoration (back right) */}
+      {/* Coral-like plant (back right) - catches light */}
       <group position={[7, -tankHeight / 2 + 1, -4]}>
         {[0, 1, 2, 3].map((i) => (
-          <mesh key={i} position={[Math.sin(i + 1) * 0.4, i * 1.2, Math.cos(i + 1) * 0.4]}>
+          <mesh key={i} position={[Math.sin(i + 1) * 0.4, i * 1.2, Math.cos(i + 1) * 0.4]} castShadow receiveShadow>
             <cylinderGeometry args={[0.25, 0.1, 1.5, 8]} />
-            <meshStandardMaterial color="#3a6618" roughness={0.7} />
+            <meshStandardMaterial
+              color="#3a6618"
+              roughness={0.45}
+              metalness={0.05}
+              emissive="#1a3010"
+              emissiveIntensity={0.15}
+            />
           </mesh>
         ))}
+      </group>
+
+      {/* Additional coral cluster (center) - reflects caustics */}
+      <group position={[0, -tankHeight / 2 + 1.5, 0]}>
+        {[0, 1, 2].map((i) => {
+          const angle = (i / 3) * Math.PI * 2;
+          return (
+            <mesh
+              key={i}
+              position={[Math.cos(angle) * 1.5, i * 0.8, Math.sin(angle) * 1.5]}
+              castShadow
+              receiveShadow
+            >
+              <coneGeometry args={[0.4, 1.5, 6]} />
+              <meshStandardMaterial
+                color="#8a4a42"
+                roughness={0.4}
+                metalness={0.2}
+                emissive="#4a2a22"
+                emissiveIntensity={0.2}
+              />
+            </mesh>
+          );
+        })}
       </group>
     </group>
   );

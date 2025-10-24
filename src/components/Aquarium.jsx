@@ -1,11 +1,13 @@
 import React, { Suspense, useMemo, lazy } from 'react';
 import { Canvas } from '@react-three/fiber';
 import Fish from './Fish';
-import WaterEffects from './WaterEffects';
 import TankContainer from './TankContainer';
-import CameraController from './CameraController';
+import WaterSurface from './WaterSurface';
+import BubbleJet from './BubbleJet';
+import RealisticCaustics from './RealisticCaustics';
 import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
 import { getDefaultFish } from '../models/fishModel';
+import { TANK_DEPTH } from '../constants/tankDimensions';
 
 // Lazy load modal since it's only shown when user clicks a fish
 const FishInfoModal = lazy(() => import('./FishInfoModal'));
@@ -50,8 +52,8 @@ class ThreeErrorBoundary extends React.Component {
 
 
 
-// This new Scene component will live inside the Canvas
-const Scene = ({ fishData, onFishClick, isOutsideView }) => {
+// Scene component - realistic aquarium view
+const Scene = ({ fishData, onFishClick }) => {
   const initialFish = useMemo(() => {
     // Pass complete fish data, only add initialPosition if position exists
     return fishData.map(f => ({
@@ -66,9 +68,50 @@ const Scene = ({ fishData, onFishClick, isOutsideView }) => {
 
   return (
     <>
-      <CameraController isOutsideView={isOutsideView} />
-      <TankContainer isOutsideView={isOutsideView} />
-      <WaterEffects isOutsideView={isOutsideView} />
+      {/* Realistic overhead aquarium lighting */}
+      <ambientLight intensity={0.3} color="#e6f2ff" />
+
+      {/* Main overhead light (like aquarium hood light) */}
+      <directionalLight
+        position={[0, 30, 0]}
+        intensity={1.5}
+        color="#ffffff"
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-left={-25}
+        shadow-camera-right={25}
+        shadow-camera-top={25}
+        shadow-camera-bottom={-25}
+      />
+
+      {/* Subtle front light for visibility */}
+      <directionalLight
+        position={[0, 5, 25]}
+        intensity={0.4}
+        color="#d6e8ff"
+      />
+
+      {/* Back light to create depth */}
+      <pointLight
+        position={[0, 0, -15]}
+        intensity={0.3}
+        color="#b3d9ff"
+      />
+
+      {/* Tank structure */}
+      <TankContainer />
+
+      {/* Water surface at top */}
+      <WaterSurface />
+
+      {/* Bubble jet from filter (top-left) */}
+      <BubbleJet />
+
+      {/* Realistic light caustics */}
+      <RealisticCaustics />
+
+      {/* Fish swimming in the tank */}
       {boids.map(boid => (
         <Fish key={boid.id} boid={boid} onFishClick={onFishClick} />
       ))}
@@ -76,7 +119,7 @@ const Scene = ({ fishData, onFishClick, isOutsideView }) => {
   );
 };
 
-const Aquarium = ({ fishData = [], events = [], loading = false, isOutsideView = false }) => {
+const Aquarium = ({ fishData = [], events = [], loading = false }) => {
   const [selectedFish, setSelectedFish] = React.useState(null);
   
   // Use comprehensive fish data with full stats and personalities
@@ -129,52 +172,23 @@ const Aquarium = ({ fishData = [], events = [], loading = false, isOutsideView =
     setSelectedFish(null);
   };
 
-  // Background changes based on view mode
-  const canvasBackground = isOutsideView
-    ? 'linear-gradient(to bottom, #0a0a0a, #1a1a1a, #0a0a0a)' // Dark room for outside view
-    : 'linear-gradient(to bottom, #1e3c72, #2a5298, #1e3c72)'; // Underwater blue for inside view
+  // Camera positioned right at front glass for realistic close-up view
+  const cameraPosition = [0, 0, TANK_DEPTH / 2 + 15];
 
   return (
     <>
       <ThreeErrorBoundary>
         <Canvas
-          camera={{ position: [0, 0, 25], fov: 75 }}
+          camera={{ position: cameraPosition, fov: 60 }}
+          shadows
           style={{
             width: '100%',
             height: '100%',
-            background: canvasBackground,
-            position: 'relative',
-            transition: 'background 1s ease-in-out'
+            background: 'linear-gradient(to bottom, #0a0a0a, #1a1a2a, #0a0a0a)',
+            position: 'relative'
           }}
         >
-          {/* Enhanced lighting for realistic underwater effect */}
-          <ambientLight intensity={0.6} color="#ffffff" />
-          <directionalLight 
-            position={[0, 25, 0]} 
-            intensity={1.2} 
-            color="#ffffff"
-            castShadow
-          />
-          <directionalLight 
-            position={[15, 15, 15]} 
-            intensity={0.8} 
-            color="#ffffff"
-          />
-          <pointLight 
-            position={[-10, 10, -10]} 
-            intensity={0.6} 
-            color="#ffffff"
-          />
-          <pointLight 
-            position={[10, 5, 10]} 
-            intensity={0.6} 
-            color="#ffffff"
-          />
-          
-          {/* Fog for depth effect */}
-          <fog attach="fog" args={['#1e3c72', 25, 80]} />
-
-          <Scene fishData={activeFishData} onFishClick={handleFishClick} isOutsideView={isOutsideView} />
+          <Scene fishData={activeFishData} onFishClick={handleFishClick} />
         </Canvas>
       </ThreeErrorBoundary>
 
