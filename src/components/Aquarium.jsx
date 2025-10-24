@@ -68,7 +68,7 @@ const Scene = ({ fishData, onFishClick, isOutsideView }) => {
     <>
       <CameraController isOutsideView={isOutsideView} />
       <TankContainer isOutsideView={isOutsideView} />
-      <WaterEffects />
+      <WaterEffects isOutsideView={isOutsideView} />
       {boids.map(boid => (
         <Fish key={boid.id} boid={boid} onFishClick={onFishClick} />
       ))}

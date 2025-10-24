@@ -1,8 +1,9 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import { BOUNDS, TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH } from '../constants/tankDimensions';
 
-const WaterEffects = () => {
+const WaterEffects = ({ isOutsideView = false }) => {
   const causticsRef = useRef();
   const bubblesRef = useRef();
   const { size, clock, viewport } = useThree();
@@ -141,17 +142,22 @@ const WaterEffects = () => {
     });
   }, [size]);
 
-  // Bubble particles geometry
+  // Bubble particles geometry - constrained to tank if in outside view
   const bubblesData = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(200 * 3);
     const scales = new Float32Array(200);
     const velocities = new Float32Array(200 * 3);
 
+    // Use tank bounds for bubble spawning area
+    const spawnWidth = isOutsideView ? BOUNDS.x * 2 : 60;
+    const spawnHeight = isOutsideView ? BOUNDS.y * 2 : 40;
+    const spawnDepth = isOutsideView ? BOUNDS.z * 2 : 50;
+
     for (let i = 0; i < 200; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 60;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 40 - 10;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
+      positions[i * 3] = (Math.random() - 0.5) * spawnWidth;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * spawnHeight - (isOutsideView ? 0 : 10);
+      positions[i * 3 + 2] = (Math.random() - 0.5) * spawnDepth;
 
       scales[i] = Math.random() * 0.5 + 0.1;
 
@@ -165,7 +171,7 @@ const WaterEffects = () => {
     geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
 
     return geometry;
-  }, []);
+  }, [isOutsideView]);
 
   const bubbleMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
@@ -237,20 +243,37 @@ const WaterEffects = () => {
     if (bubblesRef.current) {
       const positions = bubblesRef.current.geometry.attributes.position.array;
       const velocities = bubblesRef.current.geometry.attributes.velocity.array;
-      
+
+      // Use tank bounds for bubble containment
+      const topBound = isOutsideView ? BOUNDS.y : 25;
+      const bottomBound = isOutsideView ? -BOUNDS.y : -25;
+      const spawnWidth = isOutsideView ? BOUNDS.x * 2 : 60;
+      const spawnDepth = isOutsideView ? BOUNDS.z * 2 : 50;
+
       for (let i = 0; i < positions.length; i += 3) {
         positions[i] += velocities[i];
         positions[i + 1] += velocities[i + 1];
         positions[i + 2] += velocities[i + 2];
-        
+
+        // Constrain bubbles within tank walls when in outside view
+        if (isOutsideView) {
+          // Keep bubbles within X bounds
+          if (positions[i] > BOUNDS.x) positions[i] = BOUNDS.x;
+          if (positions[i] < -BOUNDS.x) positions[i] = -BOUNDS.x;
+
+          // Keep bubbles within Z bounds
+          if (positions[i + 2] > BOUNDS.z) positions[i + 2] = BOUNDS.z;
+          if (positions[i + 2] < -BOUNDS.z) positions[i + 2] = -BOUNDS.z;
+        }
+
         // Reset bubbles that reach the top
-        if (positions[i + 1] > 25) {
-          positions[i + 1] = -25;
-          positions[i] = (Math.random() - 0.5) * 60;
-          positions[i + 2] = (Math.random() - 0.5) * 50;
+        if (positions[i + 1] > topBound) {
+          positions[i + 1] = bottomBound;
+          positions[i] = (Math.random() - 0.5) * spawnWidth;
+          positions[i + 2] = (Math.random() - 0.5) * spawnDepth;
         }
       }
-      
+
       bubblesRef.current.geometry.attributes.position.needsUpdate = true;
     }
   });

@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, GLASS_THICKNESS, FRAME_THICKNESS } from '../constants/tankDimensions';
 
 /**
  * TankContainer - Renders the physical aquarium tank structure
@@ -9,12 +10,12 @@ import * as THREE from 'three';
 const TankContainer = ({ isOutsideView }) => {
   const tankRef = useRef();
 
-  // Tank dimensions (realistic home aquarium proportions)
-  const tankWidth = 40;
-  const tankHeight = 25;
-  const tankDepth = 20;
-  const glassThickness = 0.3;
-  const frameThickness = 0.8;
+  // Use shared tank dimensions
+  const tankWidth = TANK_WIDTH;
+  const tankHeight = TANK_HEIGHT;
+  const tankDepth = TANK_DEPTH;
+  const glassThickness = GLASS_THICKNESS;
+  const frameThickness = FRAME_THICKNESS;
 
   return (
     <group ref={tankRef} visible={isOutsideView}>

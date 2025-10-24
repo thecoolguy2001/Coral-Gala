@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { 
-  claimSimulationMaster, 
-  isSimulationMaster, 
-  updateAllFishPositions, 
+import { BOUNDS } from '../constants/tankDimensions';
+import {
+  claimSimulationMaster,
+  isSimulationMaster,
+  updateAllFishPositions,
   subscribeToFishPositions,
-  updateMasterHeartbeat 
+  updateMasterHeartbeat
 } from '../firestore/realtimeAquarium';
 
 const useRealtimeAquarium = (fishData) => {
@@ -31,14 +32,14 @@ const useRealtimeAquarium = (fishData) => {
       } else if (f.position && Array.isArray(f.position) && f.position.length === 3) {
         positionArray = f.position;
       } else {
-        // Fallback positions spread across the visible area (smaller bounds)
+        // Fallback positions spread across the tank interior
         const safePositions = [
-          [-5, 2, 0],
-          [5, -2, 0],
-          [0, 3, 0],
-          [0, -3, 0],
-          [-3, 0, 0],
-          [3, 0, 0],
+          [-BOUNDS.x * 0.5, BOUNDS.y * 0.3, 0],
+          [BOUNDS.x * 0.5, -BOUNDS.y * 0.3, 0],
+          [0, BOUNDS.y * 0.5, 0],
+          [0, -BOUNDS.y * 0.5, 0],
+          [-BOUNDS.x * 0.3, 0, 0],
+          [BOUNDS.x * 0.3, 0, 0],
         ];
         positionArray = safePositions[index % safePositions.length];
       }
@@ -139,7 +140,8 @@ const useRealtimeAquarium = (fishData) => {
     const cohesionDistance = 5.0;
     const maxSpeed = 2.0;
     const maxForce = 0.08;
-    const bounds = new THREE.Vector3(8, 6, 4); // Smaller bounds to keep fish visible
+    // Use tank interior dimensions for boundaries
+    const bounds = new THREE.Vector3(BOUNDS.x, BOUNDS.y, BOUNDS.z);
   
     boids.forEach(boid => {
       const separation = new THREE.Vector3();
