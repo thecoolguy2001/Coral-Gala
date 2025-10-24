@@ -1,7 +1,9 @@
-import React, { Suspense, useMemo, useEffect, lazy } from 'react';
+import React, { Suspense, useMemo, lazy } from 'react';
 import { Canvas } from '@react-three/fiber';
 import Fish from './Fish';
 import WaterEffects from './WaterEffects';
+import TankContainer from './TankContainer';
+import CameraController from './CameraController';
 import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
 import { getDefaultFish } from '../models/fishModel';
 
@@ -49,7 +51,7 @@ class ThreeErrorBoundary extends React.Component {
 
 
 // This new Scene component will live inside the Canvas
-const Scene = ({ fishData, events, onFishClick }) => {
+const Scene = ({ fishData, onFishClick, isOutsideView }) => {
   const initialFish = useMemo(() => {
     // Pass complete fish data, only add initialPosition if position exists
     return fishData.map(f => ({
@@ -58,12 +60,14 @@ const Scene = ({ fishData, events, onFishClick }) => {
       ...(f.position && { initialPosition: f.position })
     }));
   }, [fishData]);
-  
+
   // Use realtime Firebase-synchronized aquarium simulation
-  const { boids, isMaster } = useRealtimeAquarium(initialFish);
+  const { boids } = useRealtimeAquarium(initialFish);
 
   return (
     <>
+      <CameraController isOutsideView={isOutsideView} />
+      <TankContainer isOutsideView={isOutsideView} />
       <WaterEffects />
       {boids.map(boid => (
         <Fish key={boid.id} boid={boid} onFishClick={onFishClick} />
@@ -72,7 +76,7 @@ const Scene = ({ fishData, events, onFishClick }) => {
   );
 };
 
-const Aquarium = ({ fishData = [], events = [], loading = false }) => {
+const Aquarium = ({ fishData = [], events = [], loading = false, isOutsideView = false }) => {
   const [selectedFish, setSelectedFish] = React.useState(null);
   
   // Use comprehensive fish data with full stats and personalities
@@ -125,6 +129,11 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
     setSelectedFish(null);
   };
 
+  // Background changes based on view mode
+  const canvasBackground = isOutsideView
+    ? 'linear-gradient(to bottom, #0a0a0a, #1a1a1a, #0a0a0a)' // Dark room for outside view
+    : 'linear-gradient(to bottom, #1e3c72, #2a5298, #1e3c72)'; // Underwater blue for inside view
+
   return (
     <>
       <ThreeErrorBoundary>
@@ -133,8 +142,9 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
           style={{
             width: '100%',
             height: '100%',
-            background: 'linear-gradient(to bottom, #1e3c72, #2a5298, #1e3c72)',
-            position: 'relative'
+            background: canvasBackground,
+            position: 'relative',
+            transition: 'background 1s ease-in-out'
           }}
         >
           {/* Enhanced lighting for realistic underwater effect */}
@@ -163,8 +173,8 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
           
           {/* Fog for depth effect */}
           <fog attach="fog" args={['#1e3c72', 25, 80]} />
-          
-          <Scene fishData={activeFishData} events={events} onFishClick={handleFishClick} />
+
+          <Scene fishData={activeFishData} onFishClick={handleFishClick} isOutsideView={isOutsideView} />
         </Canvas>
       </ThreeErrorBoundary>
 

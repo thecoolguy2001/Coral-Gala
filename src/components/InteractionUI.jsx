@@ -48,10 +48,11 @@ const InteractionUI = ({ disabled }) => {
 
   const handlePet = async () => {
     if (disabled || isLoading) return;
-    
+
     setIsLoading(true);
     try {
-      await writeEvent('pet', { fishId: 'some_fish_id' });
+      // Pet event affects the entire aquarium (shared global experience)
+      await writeEvent('pet', { affection: 5 });
       // Add haptic feedback simulation
       if (navigator.vibrate) {
         navigator.vibrate([50, 30, 50]);
