@@ -84,8 +84,8 @@ const WaterSurface = () => {
           vWorldPosition = (modelMatrix * vec4(pos, 1.0)).xyz;
 
           // Calculate new normal for proper lighting
-          vec3 tangent1 = vec3(1.0, 0.0, (wave1 + wave3) * edgeFactor);
-          vec3 tangent2 = vec3(0.0, 1.0, (wave2 + wave4) * edgeFactor);
+          vec3 tangent1 = vec3(1.0, 0.0, wave3 * edgeFactor);
+          vec3 tangent2 = vec3(0.0, 1.0, wave4 * edgeFactor);
           vNormal = normalize(cross(tangent1, tangent2));
 
           gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
