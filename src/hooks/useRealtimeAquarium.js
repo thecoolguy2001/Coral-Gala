@@ -219,16 +219,26 @@ const useRealtimeAquarium = (fishData) => {
       // Constrain Z movement to keep fish more 2D
       boid.velocity.z *= 0.3;
   
-      // Boundary bouncing
-      if (Math.abs(boid.position.x) > bounds.x) {
-        boid.velocity.x *= -1;
+      // Smooth boundary containment - gradual steering instead of hard clamp
+      const margin = 2.0; // Start turning before hitting wall
+
+      if (Math.abs(boid.position.x) > bounds.x - margin) {
+        const force = (Math.abs(boid.position.x) - (bounds.x - margin)) / margin;
+        boid.velocity.x -= Math.sign(boid.position.x) * force * 0.5;
       }
-      if (Math.abs(boid.position.y) > bounds.y) {
-        boid.velocity.y *= -1;
+      if (Math.abs(boid.position.y) > bounds.y - margin) {
+        const force = (Math.abs(boid.position.y) - (bounds.y - margin)) / margin;
+        boid.velocity.y -= Math.sign(boid.position.y) * force * 0.5;
       }
-      if (Math.abs(boid.position.z) > bounds.z) {
-        boid.velocity.z *= -1;
+      if (Math.abs(boid.position.z) > bounds.z - margin) {
+        const force = (Math.abs(boid.position.z) - (bounds.z - margin)) / margin;
+        boid.velocity.z -= Math.sign(boid.position.z) * force * 0.5;
       }
+
+      // Hard clamp as safety (fish should never reach this)
+      boid.position.x = Math.max(-bounds.x, Math.min(bounds.x, boid.position.x));
+      boid.position.y = Math.max(-bounds.y, Math.min(bounds.y, boid.position.y));
+      boid.position.z = Math.max(-bounds.z, Math.min(bounds.z, boid.position.z));
   
       // Ensure fish always keep moving
       if (boid.velocity.length() < 0.1) {

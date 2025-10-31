@@ -130,108 +130,253 @@ const TankContainer = ({ isOutsideView }) => {
         </mesh>
       ))}
 
-      {/* Decorations - Ultra-realistic with light interaction */}
-      {/* Gravel/Substrate at bottom - realistic texture */}
-      <mesh position={[0, -tankHeight / 2 + 0.5, 0]} receiveShadow>
-        <boxGeometry args={[tankWidth - 1, 1, tankDepth - 1]} />
+      {/* MODERN AQUASCAPING - Professional Contemporary Design */}
+
+      {/* Fine sand substrate with natural variation */}
+      <mesh position={[0, -tankHeight / 2 + 0.3, 0]} receiveShadow>
+        <boxGeometry args={[tankWidth - 1, 0.6, tankDepth - 1]} />
         <meshStandardMaterial
-          color="#3a3a3a"
-          roughness={0.95}
+          color="#d4c8b8"
+          roughness={0.9}
           metalness={0.0}
         />
       </mesh>
 
-      {/* Rock decorations with realistic materials that catch light */}
-      {/* Large rock (left side) */}
-      <mesh position={[-12, -tankHeight / 2 + 2, -5]} castShadow receiveShadow>
-        <dodecahedronGeometry args={[2.5, 1]} />
-        <meshStandardMaterial
-          color="#6a5a52"
-          roughness={0.7}
-          metalness={0.1}
-        />
-      </mesh>
-
-      {/* Medium rock (right side) */}
-      <mesh position={[10, -tankHeight / 2 + 1.5, 3]} castShadow receiveShadow>
-        <dodecahedronGeometry args={[2, 1]} />
-        <meshStandardMaterial
-          color="#7a6a62"
-          roughness={0.6}
-          metalness={0.15}
-        />
-      </mesh>
-
-      {/* Small rock cluster (center-back) - catches caustic light beautifully */}
-      <group position={[0, -tankHeight / 2 + 1, -7]}>
-        <mesh position={[-1, 0, 0]} castShadow receiveShadow>
-          <dodecahedronGeometry args={[1.2, 1]} />
+      {/* MODERN DRIFTWOOD PIECE - Natural organic form (left side) */}
+      <group position={[-10, -tankHeight / 2 + 1, -3]}>
+        {/* Main trunk - horizontal piece */}
+        <mesh rotation={[0, 0, -0.3]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.8, 1.2, 8, 8]} />
           <meshStandardMaterial
-            color="#5a4a42"
-            roughness={0.65}
-            metalness={0.12}
+            color="#5a4538"
+            roughness={0.8}
+            metalness={0.0}
           />
         </mesh>
-        <mesh position={[1.2, 0.3, 0.5]} castShadow receiveShadow>
-          <dodecahedronGeometry args={[0.9, 1]} />
+        {/* Branch 1 */}
+        <mesh position={[2, 2, 0.5]} rotation={[0.5, 0.3, 0.8]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.4, 0.6, 4, 8]} />
           <meshStandardMaterial
-            color="#6a5a52"
-            roughness={0.7}
-            metalness={0.1}
+            color="#4a3528"
+            roughness={0.85}
+            metalness={0.0}
+          />
+        </mesh>
+        {/* Branch 2 */}
+        <mesh position={[-1, 1.5, -0.5]} rotation={[-0.4, -0.2, -0.6]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.3, 0.5, 3, 8]} />
+          <meshStandardMaterial
+            color="#4a3528"
+            roughness={0.85}
+            metalness={0.0}
           />
         </mesh>
       </group>
 
-      {/* Coral-like plant (back left) - realistic material */}
-      <group position={[-8, -tankHeight / 2 + 1, -6]}>
-        {[0, 1, 2, 3, 4].map((i) => (
-          <mesh key={i} position={[Math.sin(i) * 0.5, i * 1.5, Math.cos(i) * 0.5]} castShadow receiveShadow>
-            <cylinderGeometry args={[0.3, 0.1, 2, 8]} />
-            <meshStandardMaterial
-              color="#2d5016"
-              roughness={0.5}
-              metalness={0.0}
-              emissive="#1a3010"
-              emissiveIntensity={0.1}
-            />
-          </mesh>
-        ))}
-      </group>
-
-      {/* Coral-like plant (back right) - catches light */}
-      <group position={[7, -tankHeight / 2 + 1, -4]}>
-        {[0, 1, 2, 3].map((i) => (
-          <mesh key={i} position={[Math.sin(i + 1) * 0.4, i * 1.2, Math.cos(i + 1) * 0.4]} castShadow receiveShadow>
-            <cylinderGeometry args={[0.25, 0.1, 1.5, 8]} />
-            <meshStandardMaterial
-              color="#3a6618"
-              roughness={0.45}
-              metalness={0.05}
-              emissive="#1a3010"
-              emissiveIntensity={0.15}
-            />
-          </mesh>
-        ))}
-      </group>
-
-      {/* Additional coral cluster (center) - reflects caustics */}
-      <group position={[0, -tankHeight / 2 + 1.5, 0]}>
-        {[0, 1, 2].map((i) => {
-          const angle = (i / 3) * Math.PI * 2;
+      {/* MODERN JAVA FERN - Realistic leaf structure (attached to driftwood) */}
+      <group position={[-10, -tankHeight / 2 + 2, -3]}>
+        {[...Array(8)].map((_, i) => {
+          const angle = (i / 8) * Math.PI * 0.8 - 0.4;
+          const height = 3 + Math.random() * 1.5;
           return (
             <mesh
               key={i}
-              position={[Math.cos(angle) * 1.5, i * 0.8, Math.sin(angle) * 1.5]}
+              position={[Math.sin(angle) * 1, height / 2, Math.cos(angle) * 0.5]}
+              rotation={[0, angle, Math.PI / 6]}
               castShadow
               receiveShadow
             >
-              <coneGeometry args={[0.4, 1.5, 6]} />
+              <boxGeometry args={[0.1, height, 0.8]} />
               <meshStandardMaterial
-                color="#8a4a42"
+                color="#1a4d2e"
+                roughness={0.7}
+                metalness={0.0}
+                transparent={true}
+                opacity={0.85}
+              />
+            </mesh>
+          );
+        })}
+      </group>
+
+      {/* OPTIMIZED: Branching coral - reduced branches */}
+      <group position={[8, -tankHeight / 2 + 1, -5]}>
+        {/* Base */}
+        <mesh castShadow receiveShadow>
+          <cylinderGeometry args={[1, 1.5, 1.5, 8]} />
+          <meshStandardMaterial
+            color="#7a5f8a"
+            roughness={0.6}
+            metalness={0.1}
+            emissive="#4a2f5a"
+            emissiveIntensity={0.3}
+          />
+        </mesh>
+        {/* Branches - reduced from 12 to 6 */}
+        {[...Array(6)].map((_, i) => {
+          const angle = (i / 6) * Math.PI * 2;
+          const radius = 1.2;
+          const branchHeight = 2.5;
+          return (
+            <mesh
+              key={i}
+              position={[
+                Math.cos(angle) * radius,
+                branchHeight / 2,
+                Math.sin(angle) * radius
+              ]}
+              rotation={[0.3, angle, 0]}
+              castShadow
+              receiveShadow
+            >
+              <cylinderGeometry args={[0.08, 0.15, branchHeight, 6]} />
+              <meshStandardMaterial
+                color="#8a6f9a"
+                roughness={0.5}
+                metalness={0.15}
+                emissive="#5a3f6a"
+                emissiveIntensity={0.4}
+              />
+            </mesh>
+          );
+        })}
+      </group>
+
+      {/* MODERN ANUBIAS PLANT - Broad leaves (right foreground) */}
+      <group position={[11, -tankHeight / 2 + 0.8, 2]}>
+        {/* Leaves - modern broad design */}
+        {[...Array(6)].map((_, i) => {
+          const angle = (i / 6) * Math.PI * 2;
+          return (
+            <group
+              key={i}
+              position={[Math.cos(angle) * 0.8, 1.2, Math.sin(angle) * 0.8]}
+              rotation={[Math.PI / 3, angle, 0]}
+            >
+              {/* Leaf blade */}
+              <mesh castShadow receiveShadow>
+                <sphereGeometry args={[1.2, 16, 16]} />
+                <meshStandardMaterial
+                  color="#2d5a3d"
+                  roughness={0.6}
+                  metalness={0.05}
+                  side={THREE.DoubleSide}
+                />
+              </mesh>
+              {/* Leaf stem */}
+              <mesh position={[0, -0.8, 0]} rotation={[0.5, 0, 0]}>
+                <cylinderGeometry args={[0.08, 0.12, 1.5, 8]} />
+                <meshStandardMaterial
+                  color="#3a6a4d"
+                  roughness={0.7}
+                  metalness={0.0}
+                />
+              </mesh>
+            </group>
+          );
+        })}
+      </group>
+
+      {/* MODERN ROCK FORMATION - Natural layered stone (center-back) */}
+      <group position={[0, -tankHeight / 2 + 1, -7]}>
+        {/* Large base stone */}
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[5, 2, 3]} />
+          <meshStandardMaterial
+            color="#6a7a8a"
+            roughness={0.75}
+            metalness={0.1}
+          />
+        </mesh>
+        {/* Stacked stone 1 */}
+        <mesh position={[-1.2, 1.5, 0.5]} rotation={[0, 0.3, 0.1]} castShadow receiveShadow>
+          <boxGeometry args={[2.5, 1.5, 2]} />
+          <meshStandardMaterial
+            color="#7a8a9a"
+            roughness={0.7}
+            metalness={0.12}
+          />
+        </mesh>
+        {/* Stacked stone 2 */}
+        <mesh position={[1.5, 1.2, -0.3]} rotation={[0, -0.4, -0.05]} castShadow receiveShadow>
+          <boxGeometry args={[2, 1.2, 2.5]} />
+          <meshStandardMaterial
+            color="#5a6a7a"
+            roughness={0.78}
+            metalness={0.08}
+          />
+        </mesh>
+      </group>
+
+      {/* OPTIMIZED: Bubble coral - reduced spheres */}
+      <group position={[-13, -tankHeight / 2 + 0.8, 4]}>
+        {[...Array(8)].map((_, i) => {
+          const angle = (i / 8) * Math.PI * 2;
+          const radius = 0.6;
+          const size = 0.35;
+          return (
+            <mesh
+              key={i}
+              position={[
+                Math.cos(angle) * radius,
+                0.4,
+                Math.sin(angle) * radius
+              ]}
+              castShadow
+              receiveShadow
+            >
+              <sphereGeometry args={[size, 8, 8]} />
+              <meshStandardMaterial
+                color="#ff6b9d"
+                roughness={0.3}
+                metalness={0.2}
+                emissive="#ff4d7d"
+                emissiveIntensity={0.5}
+                transparent={true}
+                opacity={0.9}
+              />
+            </mesh>
+          );
+        })}
+      </group>
+
+      {/* OPTIMIZED: Sea anemone - reduced tentacles */}
+      <group position={[5, -tankHeight / 2 + 0.8, 1]}>
+        {/* Anemone base */}
+        <mesh castShadow receiveShadow>
+          <cylinderGeometry args={[0.8, 1, 0.8, 12]} />
+          <meshStandardMaterial
+            color="#8a4a6a"
+            roughness={0.5}
+            metalness={0.15}
+          />
+        </mesh>
+        {/* Tentacles - reduced from 24 to 12 */}
+        {[...Array(12)].map((_, i) => {
+          const angle = (i / 12) * Math.PI * 2;
+          const radius = 0.6;
+          const tentacleLength = 1.8;
+          return (
+            <mesh
+              key={i}
+              position={[
+                Math.cos(angle) * radius,
+                tentacleLength / 2 + 0.3,
+                Math.sin(angle) * radius
+              ]}
+              rotation={[0.6, angle, 0]}
+              castShadow
+              receiveShadow
+            >
+              <cylinderGeometry args={[0.05, 0.12, tentacleLength, 6]} />
+              <meshStandardMaterial
+                color="#fa8ab6"
                 roughness={0.4}
                 metalness={0.2}
-                emissive="#4a2a22"
-                emissiveIntensity={0.2}
+                emissive="#fa6a96"
+                emissiveIntensity={0.6}
+                transparent={true}
+                opacity={0.85}
               />
             </mesh>
           );

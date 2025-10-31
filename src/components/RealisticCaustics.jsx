@@ -77,7 +77,7 @@ const RealisticCaustics = () => {
           color += vec3(1.0, 0.95, 0.7) * caustics * 0.4;
 
           // Fade based on depth (Y position)
-          float depthFade = smoothstep(-${TANK_HEIGHT / 2}.0, ${TANK_HEIGHT / 2}.0, vPosition.y);
+          float depthFade = smoothstep(-12.5, 12.5, vPosition.y);
           color *= 0.5 + depthFade * 0.5;
 
           gl_FragColor = vec4(color, caustics * 0.8);

@@ -128,51 +128,53 @@ const Fish = ({ boid, onFishClick }) => {
             child.material = originalMaterial.map(mat => {
               const newMat = mat.clone();
               if (newMat.color) {
-                // Mix the original color with fish color for more realistic look
+                // Apply vibrant fish color for maximum visibility
                 newMat.color.copy(fishColor);
-                newMat.color.multiplyScalar(1.2); // Brighten the colors
+                newMat.color.multiplyScalar(1.5); // Significantly brighten colors
               }
-              
-              // Enhanced underwater fish materials
-              newMat.transparent = true;
-              newMat.opacity = 0.95;
-              newMat.metalness = 0.15; // Slightly more metallic for fish scales
-              newMat.roughness = 0.25; // Smoother for wet fish look
-              
-              // Add iridescence for fish scales effect
+
+              // PROFESSIONAL FISH MATERIAL - Fully opaque for visibility
+              newMat.transparent = false; // No transparency - fish are solid
+              newMat.metalness = 0.25; // Enhanced metallic shimmer for scales
+              newMat.roughness = 0.4; // Balanced for realistic wet appearance
+
+              // Enhanced iridescence for fish scale shimmer
               if (newMat.iridescence !== undefined) {
-                newMat.iridescence = 0.3;
-                newMat.iridescenceIOR = 1.3;
+                newMat.iridescence = 0.5;
+                newMat.iridescenceIOR = 1.4;
               }
-              
-              // Make fish appear more vibrant underwater
-              newMat.envMapIntensity = 0.5;
-              
+
+              // Increase vibrancy and light response
+              newMat.envMapIntensity = 0.8;
+              newMat.emissive = fishColor.clone().multiplyScalar(0.1); // Subtle glow
+              newMat.emissiveIntensity = 0.15;
+
               return newMat;
             });
           } else {
             const newMat = originalMaterial.clone();
             if (newMat.color) {
-              // Mix the original color with fish color for more realistic look
+              // Apply vibrant fish color for maximum visibility
               newMat.color.copy(fishColor);
-              newMat.color.multiplyScalar(1.2); // Brighten the colors
+              newMat.color.multiplyScalar(1.5); // Significantly brighten colors
             }
-            
-            // Enhanced underwater fish materials
-            newMat.transparent = true;
-            newMat.opacity = 0.95;
-            newMat.metalness = 0.15; // Slightly more metallic for fish scales
-            newMat.roughness = 0.25; // Smoother for wet fish look
-            
-            // Add iridescence for fish scales effect
+
+            // PROFESSIONAL FISH MATERIAL - Fully opaque for visibility
+            newMat.transparent = false; // No transparency - fish are solid
+            newMat.metalness = 0.25; // Enhanced metallic shimmer for scales
+            newMat.roughness = 0.4; // Balanced for realistic wet appearance
+
+            // Enhanced iridescence for fish scale shimmer
             if (newMat.iridescence !== undefined) {
-              newMat.iridescence = 0.3;
-              newMat.iridescenceIOR = 1.3;
+              newMat.iridescence = 0.5;
+              newMat.iridescenceIOR = 1.4;
             }
-            
-            // Make fish appear more vibrant underwater
-            newMat.envMapIntensity = 0.5;
-            
+
+            // Increase vibrancy and light response
+            newMat.envMapIntensity = 0.8;
+            newMat.emissive = fishColor.clone().multiplyScalar(0.1); // Subtle glow
+            newMat.emissiveIntensity = 0.15;
+
             child.material = newMat;
           }
         }

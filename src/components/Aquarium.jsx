@@ -3,7 +3,9 @@ import { Canvas } from '@react-three/fiber';
 import Fish from './Fish';
 import TankContainer from './TankContainer';
 import WaterSurface from './WaterSurface';
+import WaterVolume from './WaterVolume';
 import BubbleJet from './BubbleJet';
+import HOBFilter from './HOBFilter';
 import RealisticCaustics from './RealisticCaustics';
 import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
 import { getDefaultFish } from '../models/fishModel';
@@ -68,13 +70,15 @@ const Scene = ({ fishData, onFishClick }) => {
 
   return (
     <>
-      {/* Realistic overhead aquarium lighting */}
-      <ambientLight intensity={0.3} color="#e6f2ff" />
+      {/* PROFESSIONAL AQUARIUM LIGHTING SYSTEM */}
 
-      {/* Main overhead light (like aquarium hood light) */}
+      {/* Enhanced ambient light - provides base illumination (was 0.3, now 0.6) */}
+      <ambientLight intensity={0.6} color="#f0f4f8" />
+
+      {/* Primary overhead light - simulates aquarium hood light (increased from 1.5 to 2.5) */}
       <directionalLight
         position={[0, 30, 0]}
-        intensity={1.5}
+        intensity={2.5}
         color="#ffffff"
         castShadow
         shadow-mapSize-width={2048}
@@ -85,36 +89,63 @@ const Scene = ({ fishData, onFishClick }) => {
         shadow-camera-bottom={-25}
       />
 
-      {/* Subtle front light for visibility */}
+      {/* Front key light - main visibility light (increased from 0.4 to 1.2, less blue) */}
       <directionalLight
         position={[0, 5, 25]}
-        intensity={0.4}
-        color="#d6e8ff"
+        intensity={1.2}
+        color="#ffffff"
       />
 
-      {/* Back light to create depth */}
+      {/* Back rim light - creates depth and edge definition (increased from 0.3 to 0.8) */}
       <pointLight
-        position={[0, 0, -15]}
-        intensity={0.3}
-        color="#b3d9ff"
+        position={[0, 5, -15]}
+        intensity={0.8}
+        color="#e8f0ff"
       />
 
-      {/* Tank structure */}
+      {/* Side fill lights - reduce harsh shadows and improve fish visibility */}
+      <pointLight
+        position={[-20, 8, 0]}
+        intensity={0.6}
+        color="#fff8f0"
+      />
+      <pointLight
+        position={[20, 8, 0]}
+        intensity={0.6}
+        color="#fff8f0"
+      />
+
+      {/* Underwater accent light - warm tone for realism */}
+      <pointLight
+        position={[0, -8, 5]}
+        intensity={0.4}
+        color="#ffecd6"
+      />
+
+      {/* Render in correct order for transparency */}
+
+      {/* 1. Tank structure (opaque base) */}
       <TankContainer />
 
-      {/* Water surface at top */}
-      <WaterSurface />
-
-      {/* Bubble jet from filter (top-left) */}
-      <BubbleJet />
-
-      {/* Realistic light caustics */}
+      {/* 2. Realistic light caustics */}
       <RealisticCaustics />
 
-      {/* Fish swimming in the tank */}
+      {/* 3. Fish swimming in the tank */}
       {boids.map(boid => (
         <Fish key={boid.id} boid={boid} onFishClick={onFishClick} />
       ))}
+
+      {/* 4. HOB (Hang-On-Back) filter equipment */}
+      <HOBFilter />
+
+      {/* 5. Bubble jet aerator (must render after fish) */}
+      <BubbleJet />
+
+      {/* 6. Volumetric water with refraction (subtle overlay) */}
+      <WaterVolume />
+
+      {/* 7. Water surface at top (render last for proper blending) */}
+      <WaterSurface />
     </>
   );
 };
@@ -172,20 +203,28 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
     setSelectedFish(null);
   };
 
-  // Camera positioned right at front glass for realistic close-up view
-  const cameraPosition = [0, 0, TANK_DEPTH / 2 + 15];
+  // Camera positioned slightly above center, zoomed out, angled gently downward
+  const cameraPosition = [0, 3, TANK_DEPTH / 2 + 20];
+  const cameraLookAt = [0, -1, 0]; // Looking slightly downward for balanced view
 
   return (
     <>
       <ThreeErrorBoundary>
         <Canvas
-          camera={{ position: cameraPosition, fov: 60 }}
+          camera={{
+            position: cameraPosition,
+            fov: 65, // Slightly wider field of view
+          }}
           shadows
           style={{
             width: '100%',
             height: '100%',
             background: 'linear-gradient(to bottom, #0a0a0a, #1a1a2a, #0a0a0a)',
             position: 'relative'
+          }}
+          onCreated={({ camera }) => {
+            // Point camera upward at angle
+            camera.lookAt(...cameraLookAt);
           }}
         >
           <Scene fishData={activeFishData} onFishClick={handleFishClick} />

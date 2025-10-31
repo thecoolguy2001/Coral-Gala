@@ -8,6 +8,7 @@ import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH } from '../constants/tankDimensions
  * Positioned at top-left corner like a real aquarium filter
  */
 const BubbleJet = () => {
+  console.log('✅ BubbleJet component loaded');
   const bubblesRef = useRef();
 
   // Create bubble particles
@@ -63,7 +64,7 @@ const BubbleJet = () => {
           pos.z += cos(time * 2.5 + position.x * 0.2) * 0.15;
 
           // Calculate alpha based on height (fade out at top)
-          vAlpha = 1.0 - smoothstep(${TANK_HEIGHT / 2 - 2}.0, ${TANK_HEIGHT / 2}.0, pos.y);
+          vAlpha = 1.0 - smoothstep(10.5, 12.5, pos.y);
 
           vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
           gl_PointSize = scale * (400.0 / -mvPosition.z);
@@ -84,12 +85,12 @@ const BubbleJet = () => {
           vec3 bubbleColor = vec3(0.9, 0.95, 1.0);
           bubbleColor += vec3(1.0) * highlight * 0.5;
 
-          float alpha = (1.0 - smoothstep(0.3, 0.5, dist)) * vAlpha * 0.7;
+          float alpha = (1.0 - smoothstep(0.3, 0.5, dist)) * vAlpha * 0.9;
           gl_FragColor = vec4(bubbleColor, alpha);
         }
       `,
       transparent: true,
-      blending: THREE.AdditiveBlending,
+      blending: THREE.NormalBlending,
       depthWrite: false,
     });
   }, []);
