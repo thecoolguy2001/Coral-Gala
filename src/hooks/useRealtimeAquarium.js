@@ -198,23 +198,12 @@ const useRealtimeAquarium = (fishData) => {
       lastUpdateTime.current = now;
     }
 
-    // SMOOTH fish swimming - gentle wandering with very gradual boundary avoidance
+    // OPTIMIZED fish swimming - simple and performant (no nested loops)
     const swimSpeed = 1.0;
     const turnStrength = 0.015;
-    const margin = 8.0; // Large margin - start turning VERY early
+    const margin = 8.0;
 
-    boids.forEach((boid, index) => {
-      // Simple avoidance - only from very close fish
-      boids.forEach(other => {
-        if (boid === other) return;
-        const dist = boid.position.distanceTo(other.position);
-        if (dist < 2.5 && dist > 0) {
-          const away = new THREE.Vector3().subVectors(boid.position, other.position);
-          away.normalize().multiplyScalar(0.08);
-          boid.velocity.add(away);
-        }
-      });
-
+    boids.forEach((boid) => {
       // Gentle random wandering for natural movement
       boid.velocity.x += (Math.random() - 0.5) * turnStrength;
       boid.velocity.y += (Math.random() - 0.5) * turnStrength * 0.4;

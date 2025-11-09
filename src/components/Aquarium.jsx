@@ -70,91 +70,19 @@ const Scene = ({ fishData, onFishClick }) => {
 
   return (
     <>
-      {/* PROFESSIONAL AQUARIUM LIGHTING SYSTEM - ENHANCED FOR VISIBILITY */}
+      {/* OPTIMIZED LIGHTING - Simple and performant */}
+      <ambientLight intensity={1.8} />
+      <directionalLight position={[10, 20, 10]} intensity={1.5} />
 
-      {/* Strong ambient light - base illumination */}
-      <ambientLight intensity={1.2} color="#f0f4f8" />
-
-      {/* Primary overhead light - simulates aquarium hood light */}
-      <directionalLight
-        position={[0, 30, 0]}
-        intensity={3.5}
-        color="#ffffff"
-        castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-camera-left={-30}
-        shadow-camera-right={30}
-        shadow-camera-top={30}
-        shadow-camera-bottom={-30}
-      />
-
-      {/* Front key light - main visibility light */}
-      <directionalLight
-        position={[0, 10, 30]}
-        intensity={2.0}
-        color="#ffffff"
-      />
-
-      {/* Back rim light - creates depth and edge definition */}
-      <pointLight
-        position={[0, 10, -20]}
-        intensity={1.5}
-        color="#e8f0ff"
-      />
-
-      {/* Side fill lights - reduce harsh shadows and improve fish visibility */}
-      <pointLight
-        position={[-25, 10, 0]}
-        intensity={1.2}
-        color="#fff8f0"
-      />
-      <pointLight
-        position={[25, 10, 0]}
-        intensity={1.2}
-        color="#fff8f0"
-      />
-
-      {/* Underwater accent lights - warm tone for realism */}
-      <pointLight
-        position={[0, -8, 8]}
-        intensity={0.8}
-        color="#ffecd6"
-      />
-      <pointLight
-        position={[-15, 0, 0]}
-        intensity={0.6}
-        color="#b0d0ff"
-      />
-      <pointLight
-        position={[15, 0, 0]}
-        intensity={0.6}
-        color="#b0d0ff"
-      />
-
-      {/* Render in correct order for transparency */}
-
-      {/* 1. Tank structure (opaque base) */}
+      {/* Render order for transparency */}
       <TankContainer />
 
-      {/* 2. Realistic light caustics */}
-      <RealisticCaustics />
-
-      {/* 3. Fish swimming in the tank */}
       {boids.map(boid => (
         <Fish key={boid.id} boid={boid} onFishClick={onFishClick} />
       ))}
 
-      {/* 4. HOB (Hang-On-Back) filter equipment */}
-      <HOBFilter />
-
-      {/* 5. Bubble jet aerator (must render after fish) */}
       <BubbleJet />
-
-      {/* 6. Volumetric water with refraction (subtle overlay) */}
       <WaterVolume />
-
-      {/* 7. Water surface at top (render last for proper blending) */}
       <WaterSurface />
     </>
   );
@@ -223,9 +151,8 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
         <Canvas
           camera={{
             position: cameraPosition,
-            fov: 65, // Slightly wider field of view
+            fov: 65,
           }}
-          shadows
           style={{
             width: '100%',
             height: '100%',
