@@ -43,7 +43,7 @@ const WaterSurface = () => {
           vec2 edgeDist = abs(vUv - center) * 2.0;
           vDistanceFromEdge = max(edgeDist.x, edgeDist.y);
 
-          // Apply waves (stronger in center, subtle at edges)
+          // Edge factor for wave intensity
           float edgeFactor = 1.0 - smoothstep(0.85, 1.0, vDistanceFromEdge);
 
           // REALISTIC AQUARIUM WATER - Multiple layers with natural bouncing
@@ -75,7 +75,6 @@ const WaterSurface = () => {
           float totalWave = swell1 + swell2 + wave1 + wave2 + cap1 + cap2 + filterRipple + bubbleWave;
 
           // Apply waves (stronger in center, subtle at edges)
-          float edgeFactor = 1.0 - smoothstep(0.85, 1.0, vDistanceFromEdge);
           pos.z += totalWave * edgeFactor;
 
           // Meniscus effect - water curves up at edges

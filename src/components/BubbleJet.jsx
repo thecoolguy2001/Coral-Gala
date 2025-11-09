@@ -65,8 +65,7 @@ const BubbleJet = () => {
           pos.z += cos(time * 2.5 + position.x * 0.2) * 0.15;
 
           // Calculate alpha based on height (fade out near water surface)
-          // Water level is at ${WATER_LEVEL}, fade starts 2 units below
-          vAlpha = 1.0 - smoothstep(${WATER_LEVEL - 2.0}, ${WATER_LEVEL - 0.5}, pos.y);
+          vAlpha = 1.0 - smoothstep(9.0, 10.5, pos.y);
 
           vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
           gl_PointSize = scale * (400.0 / -mvPosition.z);

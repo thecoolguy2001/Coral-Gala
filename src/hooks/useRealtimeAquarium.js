@@ -198,70 +198,84 @@ const useRealtimeAquarium = (fishData) => {
       lastUpdateTime.current = now;
     }
 
-    // SIMPLE fish swimming - no complex boids, just gentle wandering
-    const swimSpeed = 0.8;
-    const turnStrength = 0.02;
-    const margin = 5.0;
+    // SMOOTH fish swimming - gentle wandering with very gradual boundary avoidance
+    const swimSpeed = 1.0;
+    const turnStrength = 0.015;
+    const margin = 8.0; // Large margin - start turning VERY early
 
     boids.forEach((boid, index) => {
       // Simple avoidance - only from very close fish
       boids.forEach(other => {
         if (boid === other) return;
         const dist = boid.position.distanceTo(other.position);
-        if (dist < 3.0 && dist > 0) {
+        if (dist < 2.5 && dist > 0) {
           const away = new THREE.Vector3().subVectors(boid.position, other.position);
-          away.normalize().multiplyScalar(0.1);
+          away.normalize().multiplyScalar(0.08);
           boid.velocity.add(away);
         }
       });
 
-      // Gentle random wandering
+      // Gentle random wandering for natural movement
       boid.velocity.x += (Math.random() - 0.5) * turnStrength;
-      boid.velocity.y += (Math.random() - 0.5) * turnStrength * 0.5;
-      boid.velocity.z += (Math.random() - 0.5) * turnStrength * 0.3;
+      boid.velocity.y += (Math.random() - 0.5) * turnStrength * 0.4;
+      boid.velocity.z += (Math.random() - 0.5) * turnStrength * 0.2;
 
-      // Keep fish mostly horizontal
-      boid.velocity.z *= 0.5;
-      boid.velocity.y *= 0.7;
+      // VERY GENTLE boundary forces - just nudge the direction slightly
+      // Calculate distance from boundaries
+      const distFromLeftWall = boid.position.x - (-BOUNDS.x);
+      const distFromRightWall = BOUNDS.x - boid.position.x;
+      const distFromBottom = boid.position.y - BOUNDS.yMin;
+      const distFromTop = BOUNDS.yMax - boid.position.y;
+      const distFromBackWall = boid.position.z - (-BOUNDS.z);
+      const distFromFrontWall = BOUNDS.z - boid.position.z;
 
-      // Boundary avoidance - STRONG forces to keep fish inside
-      if (boid.position.x < -BOUNDS.x + margin) {
-        boid.velocity.x += ((-BOUNDS.x + margin) - boid.position.x) * 0.05;
+      // Only apply forces within margin, and make them VERY gentle
+      if (distFromLeftWall < margin) {
+        const force = (1.0 - distFromLeftWall / margin) * 0.01; // Very weak force
+        boid.velocity.x += force;
       }
-      if (boid.position.x > BOUNDS.x - margin) {
-        boid.velocity.x -= (boid.position.x - (BOUNDS.x - margin)) * 0.05;
+      if (distFromRightWall < margin) {
+        const force = (1.0 - distFromRightWall / margin) * 0.01;
+        boid.velocity.x -= force;
+      }
+      if (distFromBottom < margin) {
+        const force = (1.0 - distFromBottom / margin) * 0.01;
+        boid.velocity.y += force;
+      }
+      if (distFromTop < margin) {
+        const force = (1.0 - distFromTop / margin) * 0.01;
+        boid.velocity.y -= force;
+      }
+      if (distFromBackWall < margin) {
+        const force = (1.0 - distFromBackWall / margin) * 0.01;
+        boid.velocity.z += force;
+      }
+      if (distFromFrontWall < margin) {
+        const force = (1.0 - distFromFrontWall / margin) * 0.01;
+        boid.velocity.z -= force;
       }
 
-      if (boid.position.y < BOUNDS.yMin + margin) {
-        boid.velocity.y += ((BOUNDS.yMin + margin) - boid.position.y) * 0.05;
-      }
-      if (boid.position.y > BOUNDS.yMax - margin) {
-        boid.velocity.y -= (boid.position.y - (BOUNDS.yMax - margin)) * 0.05;
-      }
-
-      if (boid.position.z < -BOUNDS.z + margin) {
-        boid.velocity.z += ((-BOUNDS.z + margin) - boid.position.z) * 0.05;
-      }
-      if (boid.position.z > BOUNDS.z - margin) {
-        boid.velocity.z -= (boid.position.z - (BOUNDS.z - margin)) * 0.05;
+      // Maintain constant speed (normalize then scale)
+      const currentSpeed = boid.velocity.length();
+      if (currentSpeed > 0.01) {
+        boid.velocity.normalize().multiplyScalar(swimSpeed);
       }
 
-      // Maintain constant speed
-      boid.velocity.normalize().multiplyScalar(swimSpeed);
-
-      // Update position
+      // Update position smoothly
       boid.position.add(boid.velocity.clone().multiplyScalar(delta));
 
-      // ABSOLUTE hard clamp - fish CANNOT escape
+      // Gentle clamp as last resort (should rarely trigger now)
       boid.position.x = Math.max(-BOUNDS.x, Math.min(BOUNDS.x, boid.position.x));
       boid.position.y = Math.max(BOUNDS.yMin, Math.min(BOUNDS.yMax, boid.position.y));
       boid.position.z = Math.max(-BOUNDS.z, Math.min(BOUNDS.z, boid.position.z));
 
       boid.ref.position.copy(boid.position);
 
-      // Smooth rotation
-      const lookTarget = boid.position.clone().add(boid.velocity.normalize());
-      boid.ref.lookAt(lookTarget);
+      // Smooth rotation toward swimming direction
+      if (boid.velocity.length() > 0.01) {
+        const lookTarget = boid.position.clone().add(boid.velocity.normalize());
+        boid.ref.lookAt(lookTarget);
+      }
     });
 
     // Only update Firebase periodically, not every frame
