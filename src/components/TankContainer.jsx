@@ -382,6 +382,162 @@ const TankContainer = ({ isOutsideView }) => {
           );
         })}
       </group>
+
+      {/* BRIGHT ORANGE TUBE CORAL - front right */}
+      <group position={[14, -tankHeight / 2 + 0.8, 6]}>
+        {[...Array(8)].map((_, i) => {
+          const xOffset = (Math.random() - 0.5) * 1.5;
+          const zOffset = (Math.random() - 0.5) * 1.5;
+          const height = 2.5 + Math.random() * 1.5;
+          return (
+            <mesh
+              key={i}
+              position={[xOffset, height / 2, zOffset]}
+              castShadow
+              receiveShadow
+            >
+              <cylinderGeometry args={[0.15, 0.2, height, 8]} />
+              <meshStandardMaterial
+                color="#ff6600"
+                roughness={0.4}
+                metalness={0.3}
+                emissive="#ff4400"
+                emissiveIntensity={0.7}
+              />
+            </mesh>
+          );
+        })}
+      </group>
+
+      {/* BLUE STAGHORN CORAL - mid-left */}
+      <group position={[-8, -tankHeight / 2 + 1.5, -2]}>
+        {[...Array(10)].map((_, i) => {
+          const angle = (i / 10) * Math.PI * 2;
+          const radius = 0.8 + Math.random() * 0.4;
+          const height = 2.5 + Math.random() * 1.0;
+          return (
+            <mesh
+              key={i}
+              position={[
+                Math.cos(angle) * radius,
+                height / 2,
+                Math.sin(angle) * radius
+              ]}
+              rotation={[0.2, angle, 0]}
+              castShadow
+              receiveShadow
+            >
+              <cylinderGeometry args={[0.08, 0.12, height, 6]} />
+              <meshStandardMaterial
+                color="#0099ff"
+                roughness={0.5}
+                metalness={0.2}
+                emissive="#0066cc"
+                emissiveIntensity={0.5}
+              />
+            </mesh>
+          );
+        })}
+      </group>
+
+      {/* YELLOW BRAIN CORAL - center front */}
+      <group position={[3, -tankHeight / 2 + 0.8, 7]}>
+        {[...Array(15)].map((_, i) => {
+          const angle = (i / 15) * Math.PI * 2;
+          const layer = Math.floor(i / 5);
+          const radius = 0.8 - layer * 0.25;
+          return (
+            <mesh
+              key={i}
+              position={[
+                Math.cos(angle) * radius,
+                0.3 + layer * 0.2,
+                Math.sin(angle) * radius
+              ]}
+              castShadow
+              receiveShadow
+            >
+              <sphereGeometry args={[0.25, 8, 8]} />
+              <meshStandardMaterial
+                color="#ffdd00"
+                roughness={0.6}
+                metalness={0.1}
+                emissive="#ddaa00"
+                emissiveIntensity={0.4}
+              />
+            </mesh>
+          );
+        })}
+      </group>
+
+      {/* PURPLE FAN CORAL - back left */}
+      <group position={[-10, -tankHeight / 2 + 2, -8]}>
+        {[...Array(5)].map((_, i) => {
+          const xSpread = (i - 2) * 0.8;
+          return (
+            <mesh
+              key={i}
+              position={[xSpread, 1.5, 0]}
+              rotation={[0, 0, Math.PI / 2]}
+              castShadow
+              receiveShadow
+            >
+              <cylinderGeometry args={[0.02, 0.05, 3, 8]} />
+              <meshStandardMaterial
+                color="#aa00ff"
+                roughness={0.4}
+                metalness={0.2}
+                emissive="#7700bb"
+                emissiveIntensity={0.6}
+              />
+            </mesh>
+          );
+        })}
+        {/* Fan blades */}
+        <mesh position={[0, 1.5, 0]} rotation={[0, 0, 0]} castShadow receiveShadow>
+          <boxGeometry args={[4, 3, 0.1]} />
+          <meshStandardMaterial
+            color="#cc55ff"
+            roughness={0.3}
+            metalness={0.1}
+            emissive="#9933cc"
+            emissiveIntensity={0.5}
+            transparent={true}
+            opacity={0.8}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      </group>
+
+      {/* NEON GREEN MUSHROOM CORAL - mid-right */}
+      <group position={[10, -tankHeight / 2 + 0.8, -1]}>
+        {[...Array(6)].map((_, i) => {
+          const angle = (i / 6) * Math.PI * 2;
+          const radius = 0.6;
+          return (
+            <mesh
+              key={i}
+              position={[
+                Math.cos(angle) * radius,
+                0.3,
+                Math.sin(angle) * radius
+              ]}
+              rotation={[0, 0, 0]}
+              castShadow
+              receiveShadow
+            >
+              <cylinderGeometry args={[0.5, 0.2, 0.5, 16]} />
+              <meshStandardMaterial
+                color="#00ff88"
+                roughness={0.4}
+                metalness={0.2}
+                emissive="#00cc66"
+                emissiveIntensity={0.8}
+              />
+            </mesh>
+          );
+        })}
+      </group>
     </group>
   );
 };

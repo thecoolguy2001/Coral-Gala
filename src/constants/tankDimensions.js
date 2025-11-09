@@ -26,13 +26,23 @@ const SUBSTRATE_HEIGHT = 0.6;
 const SUBSTRATE_Y_POSITION = -TANK_HEIGHT / 2 + 0.3;
 const SUBSTRATE_TOP = SUBSTRATE_Y_POSITION + SUBSTRATE_HEIGHT / 2;
 
-// Boid simulation bounds - fish swim area
-// Fish must stay: above substrate AND below water surface
+// Fish swim boundaries - STRICT CONTAINMENT
+// Fish MUST stay well within visible tank area
+const FISH_Y_MIN = SUBSTRATE_TOP + 1.0;  // 1 unit above substrate
+const FISH_Y_MAX = WATER_LEVEL - 2.0;    // 2 units below water surface
+
 export const BOUNDS = {
-  x: INTERIOR_WIDTH / 2 - 1.0,           // Stay 1 unit from side walls
-  y: {
-    min: SUBSTRATE_TOP + 0.5,             // 0.5 units above substrate top (-11.6)
-    max: WATER_LEVEL - 1.0                // 1 unit below water surface (10)
-  },
-  z: INTERIOR_DEPTH / 2 - 1.0            // Stay 1 unit from front/back walls
+  x: INTERIOR_WIDTH / 2 - 2.0,    // 2 units from side walls = 17.7
+  yMin: FISH_Y_MIN,                // -11.4
+  yMax: FISH_Y_MAX,                // 9.0
+  z: INTERIOR_DEPTH / 2 - 2.0     // 2 units from front/back = 7.7
 };
+
+// Log bounds for debugging
+console.log('🐠 FISH BOUNDS:', {
+  x: `±${BOUNDS.x}`,
+  y: `${BOUNDS.yMin} to ${BOUNDS.yMax}`,
+  z: `±${BOUNDS.z}`,
+  tankDimensions: { width: TANK_WIDTH, height: TANK_HEIGHT, depth: TANK_DEPTH },
+  waterLevel: WATER_LEVEL
+});

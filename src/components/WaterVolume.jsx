@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH } from '../constants/tankDimensions';
+import { TANK_WIDTH, TANK_DEPTH, WATER_LEVEL } from '../constants/tankDimensions';
 
 /**
  * WaterVolume - Volumetric water effects with realistic refraction
@@ -59,8 +59,8 @@ const WaterVolume = () => {
           finalColor += vec3(0.3, 0.5, 0.7) * refraction * 0.08;
           finalColor += vec3(0.6, 0.8, 1.0) * godRay;
 
-          // Light transparency
-          float alpha = 0.06;
+          // INCREASED VISIBILITY - Make water actually visible
+          float alpha = 0.25;
 
           gl_FragColor = vec4(finalColor, alpha);
         }
@@ -78,17 +78,18 @@ const WaterVolume = () => {
     }
   });
 
-  // Interior water volume dimensions (slightly smaller than tank)
+  // Interior water volume - fill from substrate to water surface
   const volumeWidth = TANK_WIDTH - 1;
-  const volumeHeight = TANK_HEIGHT - 1;
+  const waterHeight = WATER_LEVEL - (-TANK_HEIGHT / 2 + 0.6); // From substrate top to water level
   const volumeDepth = TANK_DEPTH - 1;
+  const waterYPosition = (-TANK_HEIGHT / 2 + 0.6 + WATER_LEVEL) / 2; // Center between substrate and surface
 
   return (
     <mesh
       ref={waterVolumeRef}
-      position={[0, 0, 0]}
+      position={[0, waterYPosition, 0]}
     >
-      <boxGeometry args={[volumeWidth, volumeHeight, volumeDepth]} />
+      <boxGeometry args={[volumeWidth, waterHeight, volumeDepth]} />
       <primitive object={waterVolumeMaterial} />
     </mesh>
   );

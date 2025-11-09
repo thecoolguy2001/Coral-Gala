@@ -28,10 +28,14 @@ const useRealtimeAquarium = (fishData) => {
       // Helper function to validate position is within bounds
       const isValidPosition = (pos) => {
         if (!Array.isArray(pos) || pos.length !== 3) return false;
-        return Math.abs(pos[0]) <= BOUNDS.x &&
-               pos[1] >= BOUNDS.y.min &&
-               pos[1] <= BOUNDS.y.max &&
+        const valid = Math.abs(pos[0]) <= BOUNDS.x &&
+               pos[1] >= BOUNDS.yMin &&
+               pos[1] <= BOUNDS.yMax &&
                Math.abs(pos[2]) <= BOUNDS.z;
+        if (!valid) {
+          console.warn('⚠️ Invalid fish position detected:', pos, 'Bounds:', BOUNDS);
+        }
+        return valid;
       };
 
       // Ensure we have proper position data
@@ -42,17 +46,18 @@ const useRealtimeAquarium = (fishData) => {
         positionArray = f.position;
       } else {
         // Fallback positions spread across the tank interior (well within bounds)
-        const yRange = BOUNDS.y.max - BOUNDS.y.min;
-        const yMid = (BOUNDS.y.max + BOUNDS.y.min) / 2;
+        const yRange = BOUNDS.yMax - BOUNDS.yMin;
+        const yMid = (BOUNDS.yMax + BOUNDS.yMin) / 2;
         const safePositions = [
-          [-BOUNDS.x * 0.4, yMid + yRange * 0.2, 0],
-          [BOUNDS.x * 0.4, yMid - yRange * 0.2, 0],
+          [-BOUNDS.x * 0.5, yMid + yRange * 0.2, 0],
+          [BOUNDS.x * 0.5, yMid - yRange * 0.2, 0],
           [0, yMid + yRange * 0.3, BOUNDS.z * 0.3],
           [0, yMid, -BOUNDS.z * 0.3],
-          [-BOUNDS.x * 0.3, yMid - yRange * 0.1, BOUNDS.z * 0.2],
-          [BOUNDS.x * 0.3, yMid + yRange * 0.1, -BOUNDS.z * 0.2],
+          [-BOUNDS.x * 0.4, yMid - yRange * 0.1, BOUNDS.z * 0.2],
+          [BOUNDS.x * 0.4, yMid + yRange * 0.1, -BOUNDS.z * 0.2],
         ];
         positionArray = safePositions[index % safePositions.length];
+        console.log(`🐠 Fish ${f.name} spawned at:`, positionArray);
       }
 
       // Ensure we have proper velocity data
@@ -147,14 +152,15 @@ const useRealtimeAquarium = (fishData) => {
           // Validate target position is within bounds before interpolating
           const isValidTarget =
             Math.abs(realtimePos[0]) <= BOUNDS.x &&
-            realtimePos[1] >= BOUNDS.y.min &&
-            realtimePos[1] <= BOUNDS.y.max &&
+            realtimePos[1] >= BOUNDS.yMin &&
+            realtimePos[1] <= BOUNDS.yMax &&
             Math.abs(realtimePos[2]) <= BOUNDS.z;
 
           if (!isValidTarget) {
             // Don't interpolate to invalid positions - clamp current position instead
+            console.warn('⚠️ Rejecting invalid Firebase position for', boid.id, realtimePos);
             boid.position.x = Math.max(-BOUNDS.x, Math.min(BOUNDS.x, boid.position.x));
-            boid.position.y = Math.max(BOUNDS.y.min, Math.min(BOUNDS.y.max, boid.position.y));
+            boid.position.y = Math.max(BOUNDS.yMin, Math.min(BOUNDS.yMax, boid.position.y));
             boid.position.z = Math.max(-BOUNDS.z, Math.min(BOUNDS.z, boid.position.z));
             boid.ref.position.copy(boid.position);
             return;
@@ -172,7 +178,7 @@ const useRealtimeAquarium = (fishData) => {
 
           // Clamp position after interpolation to ensure it stays in bounds
           boid.position.x = Math.max(-BOUNDS.x, Math.min(BOUNDS.x, boid.position.x));
-          boid.position.y = Math.max(BOUNDS.y.min, Math.min(BOUNDS.y.max, boid.position.y));
+          boid.position.y = Math.max(BOUNDS.yMin, Math.min(BOUNDS.yMax, boid.position.y));
           boid.position.z = Math.max(-BOUNDS.z, Math.min(BOUNDS.z, boid.position.z));
 
           boid.ref.position.copy(boid.position);
@@ -265,13 +271,13 @@ const useRealtimeAquarium = (fishData) => {
       }
 
       // Y bounds (asymmetric - different top and bottom)
-      if (boid.position.y < BOUNDS.y.min + margin) {
-        const force = (BOUNDS.y.min + margin - boid.position.y) / margin;
-        boid.velocity.y += force * 0.8; // Push upward
+      if (boid.position.y < BOUNDS.yMin + margin) {
+        const force = (BOUNDS.yMin + margin - boid.position.y) / margin;
+        boid.velocity.y += force * 1.2; // Push upward strongly
       }
-      if (boid.position.y > BOUNDS.y.max - margin) {
-        const force = (boid.position.y - (BOUNDS.y.max - margin)) / margin;
-        boid.velocity.y -= force * 0.8; // Push downward
+      if (boid.position.y > BOUNDS.yMax - margin) {
+        const force = (boid.position.y - (BOUNDS.yMax - margin)) / margin;
+        boid.velocity.y -= force * 1.2; // Push downward strongly
       }
 
       // Z bounds (symmetric)
@@ -281,9 +287,15 @@ const useRealtimeAquarium = (fishData) => {
       }
 
       // Hard clamp as safety (fish should NEVER escape these bounds)
+      const prevY = boid.position.y;
       boid.position.x = Math.max(-BOUNDS.x, Math.min(BOUNDS.x, boid.position.x));
-      boid.position.y = Math.max(BOUNDS.y.min, Math.min(BOUNDS.y.max, boid.position.y));
+      boid.position.y = Math.max(BOUNDS.yMin, Math.min(BOUNDS.yMax, boid.position.y));
       boid.position.z = Math.max(-BOUNDS.z, Math.min(BOUNDS.z, boid.position.z));
+
+      // Debug if fish was clamped
+      if (Math.abs(prevY - boid.position.y) > 0.01) {
+        console.warn('🚨 Fish CLAMPED:', boid.id, 'from y=', prevY, 'to y=', boid.position.y);
+      }
   
       // Ensure fish always keep moving
       if (boid.velocity.length() < 0.1) {

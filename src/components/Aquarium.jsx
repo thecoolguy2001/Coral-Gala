@@ -70,56 +70,66 @@ const Scene = ({ fishData, onFishClick }) => {
 
   return (
     <>
-      {/* PROFESSIONAL AQUARIUM LIGHTING SYSTEM */}
+      {/* PROFESSIONAL AQUARIUM LIGHTING SYSTEM - ENHANCED FOR VISIBILITY */}
 
-      {/* Enhanced ambient light - provides base illumination (was 0.3, now 0.6) */}
-      <ambientLight intensity={0.6} color="#f0f4f8" />
+      {/* Strong ambient light - base illumination */}
+      <ambientLight intensity={1.2} color="#f0f4f8" />
 
-      {/* Primary overhead light - simulates aquarium hood light (increased from 1.5 to 2.5) */}
+      {/* Primary overhead light - simulates aquarium hood light */}
       <directionalLight
         position={[0, 30, 0]}
-        intensity={2.5}
+        intensity={3.5}
         color="#ffffff"
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
-        shadow-camera-left={-25}
-        shadow-camera-right={25}
-        shadow-camera-top={25}
-        shadow-camera-bottom={-25}
+        shadow-camera-left={-30}
+        shadow-camera-right={30}
+        shadow-camera-top={30}
+        shadow-camera-bottom={-30}
       />
 
-      {/* Front key light - main visibility light (increased from 0.4 to 1.2, less blue) */}
+      {/* Front key light - main visibility light */}
       <directionalLight
-        position={[0, 5, 25]}
-        intensity={1.2}
+        position={[0, 10, 30]}
+        intensity={2.0}
         color="#ffffff"
       />
 
-      {/* Back rim light - creates depth and edge definition (increased from 0.3 to 0.8) */}
+      {/* Back rim light - creates depth and edge definition */}
       <pointLight
-        position={[0, 5, -15]}
-        intensity={0.8}
+        position={[0, 10, -20]}
+        intensity={1.5}
         color="#e8f0ff"
       />
 
       {/* Side fill lights - reduce harsh shadows and improve fish visibility */}
       <pointLight
-        position={[-20, 8, 0]}
-        intensity={0.6}
+        position={[-25, 10, 0]}
+        intensity={1.2}
         color="#fff8f0"
       />
       <pointLight
-        position={[20, 8, 0]}
-        intensity={0.6}
+        position={[25, 10, 0]}
+        intensity={1.2}
         color="#fff8f0"
       />
 
-      {/* Underwater accent light - warm tone for realism */}
+      {/* Underwater accent lights - warm tone for realism */}
       <pointLight
-        position={[0, -8, 5]}
-        intensity={0.4}
+        position={[0, -8, 8]}
+        intensity={0.8}
         color="#ffecd6"
+      />
+      <pointLight
+        position={[-15, 0, 0]}
+        intensity={0.6}
+        color="#b0d0ff"
+      />
+      <pointLight
+        position={[15, 0, 0]}
+        intensity={0.6}
+        color="#b0d0ff"
       />
 
       {/* Render in correct order for transparency */}

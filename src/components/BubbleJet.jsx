@@ -22,7 +22,7 @@ const BubbleJet = () => {
     // Position bubbles INSIDE the tank boundaries
     const jetX = -BOUNDS.x * 0.6; // Left side, inside tank bounds
     const jetZ = BOUNDS.z * 0.3;  // Slightly forward, inside tank bounds
-    const bottomY = BOUNDS.y.min + 0.5; // Just above substrate
+    const bottomY = BOUNDS.yMin + 0.5; // Just above substrate
 
     for (let i = 0; i < count; i++) {
       // Start bubbles at the bottom, spread them vertically
@@ -106,7 +106,7 @@ const BubbleJet = () => {
 
       const jetX = -BOUNDS.x * 0.6;
       const jetZ = BOUNDS.z * 0.3;
-      const bottomY = BOUNDS.y.min + 0.5;
+      const bottomY = BOUNDS.yMin + 0.5;
 
       for (let i = 0; i < positions.length; i += 3) {
         // Move bubbles upward
