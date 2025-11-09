@@ -25,21 +25,29 @@ const useRealtimeAquarium = (fishData) => {
     const newBoids = fishData.map((f, index) => {
       const realtimePosition = realtimePositions[f.id]?.position;
 
+      // Helper function to validate position is within bounds
+      const isValidPosition = (pos) => {
+        if (!Array.isArray(pos) || pos.length !== 3) return false;
+        return Math.abs(pos[0]) <= BOUNDS.x &&
+               Math.abs(pos[1]) <= BOUNDS.y &&
+               Math.abs(pos[2]) <= BOUNDS.z;
+      };
+
       // Ensure we have proper position data
       let positionArray;
-      if (realtimePosition && Array.isArray(realtimePosition) && realtimePosition.length === 3) {
+      if (realtimePosition && isValidPosition(realtimePosition)) {
         positionArray = realtimePosition;
-      } else if (f.position && Array.isArray(f.position) && f.position.length === 3) {
+      } else if (f.position && isValidPosition(f.position)) {
         positionArray = f.position;
       } else {
-        // Fallback positions spread across the tank interior
+        // Fallback positions spread across the tank interior (well within bounds)
         const safePositions = [
-          [-BOUNDS.x * 0.5, BOUNDS.y * 0.3, 0],
-          [BOUNDS.x * 0.5, -BOUNDS.y * 0.3, 0],
-          [0, BOUNDS.y * 0.5, 0],
-          [0, -BOUNDS.y * 0.5, 0],
-          [-BOUNDS.x * 0.3, 0, 0],
-          [BOUNDS.x * 0.3, 0, 0],
+          [-BOUNDS.x * 0.4, BOUNDS.y * 0.2, 0],
+          [BOUNDS.x * 0.4, -BOUNDS.y * 0.2, 0],
+          [0, BOUNDS.y * 0.3, BOUNDS.z * 0.3],
+          [0, -BOUNDS.y * 0.3, -BOUNDS.z * 0.3],
+          [-BOUNDS.x * 0.3, 0, BOUNDS.z * 0.2],
+          [BOUNDS.x * 0.3, 0, -BOUNDS.z * 0.2],
         ];
         positionArray = safePositions[index % safePositions.length];
       }
@@ -134,7 +142,14 @@ const useRealtimeAquarium = (fishData) => {
         const realtimePos = realtimePositions[boid.id]?.position;
         if (realtimePos && Array.isArray(realtimePos) && realtimePos.length === 3) {
           const targetPos = new THREE.Vector3(...realtimePos);
-          boid.position.lerp(targetPos, 0.05); // Smooth interpolation
+
+          // Only interpolate if there's a meaningful difference (> 0.1 units)
+          const distance = boid.position.distanceTo(targetPos);
+          if (distance > 0.1) {
+            // Faster interpolation to reduce perceived lag/jumping
+            const lerpFactor = Math.min(0.15, delta * 5); // Adaptive based on delta
+            boid.position.lerp(targetPos, lerpFactor);
+          }
 
           boid.ref.position.copy(boid.position);
 
@@ -154,10 +169,9 @@ const useRealtimeAquarium = (fishData) => {
 
     // Master browser: run simulation and update Firebase
     const now = Date.now();
-    // TEMPORARY: Massively reduced Firebase write frequency to let quota reset
-    // Update every 30 seconds instead of every 100ms
-    // TODO: Change back to 2000-5000ms once quota resets (after midnight Pacific Time)
-    if (now - lastUpdateTime.current < 30000) return;
+    // Optimized Firebase write frequency to balance responsiveness and quota
+    // Update every 2 seconds for smooth synchronized movement
+    if (now - lastUpdateTime.current < 2000) return;
     lastUpdateTime.current = now;
   
     const separationDistance = 4.0;
@@ -219,20 +233,20 @@ const useRealtimeAquarium = (fishData) => {
       // Constrain Z movement to keep fish more 2D
       boid.velocity.z *= 0.3;
   
-      // Smooth boundary containment - gradual steering instead of hard clamp
-      const margin = 2.0; // Start turning before hitting wall
+      // Smooth boundary containment - stronger steering to keep fish visible and centered
+      const margin = 4.0; // Larger margin - start turning earlier
 
       if (Math.abs(boid.position.x) > bounds.x - margin) {
         const force = (Math.abs(boid.position.x) - (bounds.x - margin)) / margin;
-        boid.velocity.x -= Math.sign(boid.position.x) * force * 0.5;
+        boid.velocity.x -= Math.sign(boid.position.x) * force * 0.8; // Stronger turn
       }
       if (Math.abs(boid.position.y) > bounds.y - margin) {
         const force = (Math.abs(boid.position.y) - (bounds.y - margin)) / margin;
-        boid.velocity.y -= Math.sign(boid.position.y) * force * 0.5;
+        boid.velocity.y -= Math.sign(boid.position.y) * force * 0.8;
       }
       if (Math.abs(boid.position.z) > bounds.z - margin) {
         const force = (Math.abs(boid.position.z) - (bounds.z - margin)) / margin;
-        boid.velocity.z -= Math.sign(boid.position.z) * force * 0.5;
+        boid.velocity.z -= Math.sign(boid.position.z) * force * 0.8;
       }
 
       // Hard clamp as safety (fish should never reach this)

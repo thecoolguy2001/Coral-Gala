@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH } from '../constants/tankDimensions';
+import { BOUNDS, WATER_LEVEL } from '../constants/tankDimensions';
 
 /**
  * BubbleJet - Realistic bubble stream from filter/aerator
@@ -19,15 +19,16 @@ const BubbleJet = () => {
     const scales = new Float32Array(count);
     const velocities = new Float32Array(count * 3);
 
-    // Position at top-left corner
-    const jetX = -TANK_WIDTH / 2 + 3; // 3 units from left edge
-    const jetZ = TANK_DEPTH / 2 - 2; // 2 units from front
+    // Position bubbles INSIDE the tank boundaries
+    const jetX = -BOUNDS.x * 0.6; // Left side, inside tank bounds
+    const jetZ = BOUNDS.z * 0.3;  // Slightly forward, inside tank bounds
+    const bottomY = -BOUNDS.y;    // Bottom of tank
 
     for (let i = 0; i < count; i++) {
-      // Start bubbles at the top, spread them vertically
-      positions[i * 3] = jetX + (Math.random() - 0.5) * 1.5; // Small X spread
-      positions[i * 3 + 1] = TANK_HEIGHT / 2 - Math.random() * TANK_HEIGHT; // Distributed throughout height
-      positions[i * 3 + 2] = jetZ + (Math.random() - 0.5) * 1.5; // Small Z spread
+      // Start bubbles at the bottom, spread them vertically
+      positions[i * 3] = jetX + (Math.random() - 0.5) * 1.0; // Small X spread
+      positions[i * 3 + 1] = bottomY + Math.random() * (WATER_LEVEL - bottomY); // Distributed from bottom to water surface
+      positions[i * 3 + 2] = jetZ + (Math.random() - 0.5) * 1.0; // Small Z spread
 
       // Random bubble sizes
       scales[i] = Math.random() * 0.3 + 0.1;
@@ -63,8 +64,9 @@ const BubbleJet = () => {
           pos.x += sin(time * 3.0 + position.y * 0.2) * 0.2;
           pos.z += cos(time * 2.5 + position.x * 0.2) * 0.15;
 
-          // Calculate alpha based on height (fade out at top)
-          vAlpha = 1.0 - smoothstep(10.5, 12.5, pos.y);
+          // Calculate alpha based on height (fade out near water surface)
+          // Water level is at ${WATER_LEVEL}, fade starts 2 units below
+          vAlpha = 1.0 - smoothstep(${WATER_LEVEL - 2.0}, ${WATER_LEVEL - 0.5}, pos.y);
 
           vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
           gl_PointSize = scale * (400.0 / -mvPosition.z);
@@ -102,8 +104,9 @@ const BubbleJet = () => {
       const positions = bubblesRef.current.geometry.attributes.position.array;
       const velocities = bubblesRef.current.geometry.attributes.velocity.array;
 
-      const jetX = -TANK_WIDTH / 2 + 3;
-      const jetZ = TANK_DEPTH / 2 - 2;
+      const jetX = -BOUNDS.x * 0.6;
+      const jetZ = BOUNDS.z * 0.3;
+      const bottomY = -BOUNDS.y;
 
       for (let i = 0; i < positions.length; i += 3) {
         // Move bubbles upward
@@ -111,11 +114,11 @@ const BubbleJet = () => {
         positions[i + 1] += velocities[i + 1];
         positions[i + 2] += velocities[i + 2];
 
-        // Reset bubbles that reach the top
-        if (positions[i + 1] > TANK_HEIGHT / 2) {
-          positions[i] = jetX + (Math.random() - 0.5) * 1.5;
-          positions[i + 1] = TANK_HEIGHT / 2 - TANK_HEIGHT; // Start at bottom
-          positions[i + 2] = jetZ + (Math.random() - 0.5) * 1.5;
+        // Reset bubbles that reach the water surface
+        if (positions[i + 1] > WATER_LEVEL) {
+          positions[i] = jetX + (Math.random() - 0.5) * 1.0;
+          positions[i + 1] = bottomY; // Start at bottom
+          positions[i + 2] = jetZ + (Math.random() - 0.5) * 1.0;
         }
       }
 
