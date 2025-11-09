@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { TANK_WIDTH, TANK_DEPTH, WATER_LEVEL } from '../constants/tankDimensions';
+import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, WATER_LEVEL } from '../constants/tankDimensions';
 
 /**
  * WaterVolume - Volumetric water effects with realistic refraction
