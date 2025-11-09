@@ -28,14 +28,10 @@ const useRealtimeAquarium = (fishData) => {
       // Helper function to validate position is within bounds
       const isValidPosition = (pos) => {
         if (!Array.isArray(pos) || pos.length !== 3) return false;
-        const valid = Math.abs(pos[0]) <= BOUNDS.x &&
+        return Math.abs(pos[0]) <= BOUNDS.x &&
                pos[1] >= BOUNDS.yMin &&
                pos[1] <= BOUNDS.yMax &&
                Math.abs(pos[2]) <= BOUNDS.z;
-        if (!valid) {
-          console.warn('⚠️ Invalid fish position detected:', pos, 'Bounds:', BOUNDS);
-        }
-        return valid;
       };
 
       // Ensure we have proper position data
@@ -57,7 +53,6 @@ const useRealtimeAquarium = (fishData) => {
           [BOUNDS.x * 0.4, yMid + yRange * 0.1, -BOUNDS.z * 0.2],
         ];
         positionArray = safePositions[index % safePositions.length];
-        console.log(`🐠 Fish ${f.name} spawned at:`, positionArray);
       }
 
       // Ensure we have proper velocity data
@@ -158,7 +153,6 @@ const useRealtimeAquarium = (fishData) => {
 
           if (!isValidTarget) {
             // Don't interpolate to invalid positions - clamp current position instead
-            console.warn('⚠️ Rejecting invalid Firebase position for', boid.id, realtimePos);
             boid.position.x = Math.max(-BOUNDS.x, Math.min(BOUNDS.x, boid.position.x));
             boid.position.y = Math.max(BOUNDS.yMin, Math.min(BOUNDS.yMax, boid.position.y));
             boid.position.z = Math.max(-BOUNDS.z, Math.min(BOUNDS.z, boid.position.z));
@@ -168,11 +162,11 @@ const useRealtimeAquarium = (fishData) => {
 
           const targetPos = new THREE.Vector3(...realtimePos);
 
-          // Only interpolate if there's a meaningful difference (> 0.1 units)
+          // Smooth interpolation - not too fast to avoid jerky movement
           const distance = boid.position.distanceTo(targetPos);
-          if (distance > 0.1) {
-            // Faster interpolation to reduce perceived lag/jumping
-            const lerpFactor = Math.min(0.15, delta * 5); // Adaptive based on delta
+          if (distance > 0.05) {
+            // Very smooth interpolation
+            const lerpFactor = Math.min(0.08, delta * 3);
             boid.position.lerp(targetPos, lerpFactor);
           }
 
@@ -197,18 +191,21 @@ const useRealtimeAquarium = (fishData) => {
       return;
     }
 
-    // Master browser: run simulation and update Firebase
+    // Master browser: run simulation locally EVERY FRAME
+    // Only sync to Firebase occasionally to reduce writes
     const now = Date.now();
-    // Optimized Firebase write frequency to balance responsiveness and quota
-    // Update every 2 seconds for smooth synchronized movement
-    if (now - lastUpdateTime.current < 2000) return;
-    lastUpdateTime.current = now;
-  
-    const separationDistance = 4.0;
-    const alignmentDistance = 6.0;
-    const cohesionDistance = 5.0;
-    const maxSpeed = 2.0;
-    const maxForce = 0.08;
+    const shouldSyncToFirebase = now - lastUpdateTime.current >= 5000; // Sync every 5 seconds
+    if (shouldSyncToFirebase) {
+      lastUpdateTime.current = now;
+    }
+
+    // Realistic fish swimming parameters
+    const separationDistance = 5.0;
+    const alignmentDistance = 8.0;
+    const cohesionDistance = 7.0;
+    const maxSpeed = 1.5;      // Slower, more graceful
+    const minSpeed = 0.8;      // Keep fish moving
+    const maxForce = 0.05;     // Smoother turns
   
     boids.forEach(boid => {
       const separation = new THREE.Vector3();
@@ -254,64 +251,52 @@ const useRealtimeAquarium = (fishData) => {
         cohesion.sub(boid.velocity).clampLength(0, maxForce);
       }
       
-      boid.velocity.add(separation.multiplyScalar(1.5));
-      boid.velocity.add(alignment.multiplyScalar(1.0));
-      boid.velocity.add(cohesion.multiplyScalar(1.0));
-      
+      // Apply forces with realistic weights
+      boid.velocity.add(separation.multiplyScalar(1.8));  // Avoid collisions
+      boid.velocity.add(alignment.multiplyScalar(0.8));   // Match neighbors
+      boid.velocity.add(cohesion.multiplyScalar(0.6));    // Stay together
+
       // Constrain Z movement to keep fish more 2D
-      boid.velocity.z *= 0.3;
+      boid.velocity.z *= 0.2;
   
-      // Smooth boundary containment - stronger steering to keep fish visible and centered
-      const margin = 3.0; // Margin for gradual turning
+      // Smooth boundary containment - gentle steering for natural movement
+      const margin = 4.0; // Larger margin for earlier, smoother turns
 
       // X bounds (symmetric)
       if (Math.abs(boid.position.x) > BOUNDS.x - margin) {
         const force = (Math.abs(boid.position.x) - (BOUNDS.x - margin)) / margin;
-        boid.velocity.x -= Math.sign(boid.position.x) * force * 0.8;
+        boid.velocity.x -= Math.sign(boid.position.x) * force * 0.3;
       }
 
       // Y bounds (asymmetric - different top and bottom)
       if (boid.position.y < BOUNDS.yMin + margin) {
         const force = (BOUNDS.yMin + margin - boid.position.y) / margin;
-        boid.velocity.y += force * 1.2; // Push upward strongly
+        boid.velocity.y += force * 0.3; // Gentle upward push
       }
       if (boid.position.y > BOUNDS.yMax - margin) {
         const force = (boid.position.y - (BOUNDS.yMax - margin)) / margin;
-        boid.velocity.y -= force * 1.2; // Push downward strongly
+        boid.velocity.y -= force * 0.3; // Gentle downward push
       }
 
       // Z bounds (symmetric)
       if (Math.abs(boid.position.z) > BOUNDS.z - margin) {
         const force = (Math.abs(boid.position.z) - (BOUNDS.z - margin)) / margin;
-        boid.velocity.z -= Math.sign(boid.position.z) * force * 0.8;
+        boid.velocity.z -= Math.sign(boid.position.z) * force * 0.3;
       }
 
       // Hard clamp as safety (fish should NEVER escape these bounds)
-      const prevY = boid.position.y;
       boid.position.x = Math.max(-BOUNDS.x, Math.min(BOUNDS.x, boid.position.x));
       boid.position.y = Math.max(BOUNDS.yMin, Math.min(BOUNDS.yMax, boid.position.y));
       boid.position.z = Math.max(-BOUNDS.z, Math.min(BOUNDS.z, boid.position.z));
 
-      // Debug if fish was clamped
-      if (Math.abs(prevY - boid.position.y) > 0.01) {
-        console.warn('🚨 Fish CLAMPED:', boid.id, 'from y=', prevY, 'to y=', boid.position.y);
+      // Ensure fish maintain realistic swimming speed
+      const currentSpeed = boid.velocity.length();
+      if (currentSpeed < minSpeed) {
+        boid.velocity.normalize().multiplyScalar(minSpeed);
       }
-  
-      // Ensure fish always keep moving
-      if (boid.velocity.length() < 0.1) {
-        // Give fish a random direction if they get stuck
-        // Prefer horizontal movement over vertical to keep fish visible
-        boid.velocity.set(
-          (Math.random() - 0.5) * 4,
-          (Math.random() - 0.5) * 2,
-          (Math.random() - 0.5) * 0.5
-        ).normalize().multiplyScalar(1.2);
-      }
-      
-      if (boid.velocity.length() < 1.0) {
-        boid.velocity.normalize().multiplyScalar(1.2);
-      }
-      boid.velocity.clampLength(1.0, maxSpeed);
+      boid.velocity.clampLength(minSpeed, maxSpeed);
+
+      // Smooth position update with delta time for consistent movement
       boid.position.add(boid.velocity.clone().multiplyScalar(delta));
   
       boid.ref.position.copy(boid.position);
@@ -321,13 +306,14 @@ const useRealtimeAquarium = (fishData) => {
       }
     });
 
-    // Update Firebase with new positions
-    const positions = {};
-    boids.forEach(boid => {
-      positions[boid.id] = boid; // Pass the entire boid object, not just position/velocity
-    });
-    
-    updateAllFishPositions(positions);
+    // Only update Firebase periodically, not every frame
+    if (shouldSyncToFirebase) {
+      const positions = {};
+      boids.forEach(boid => {
+        positions[boid.id] = boid;
+      });
+      updateAllFishPositions(positions);
+    }
   });
 
   // Return appropriate data based on role

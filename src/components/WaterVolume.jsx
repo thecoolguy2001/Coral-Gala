@@ -1,82 +1,28 @@
-import React, { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
+import React, { useMemo } from 'react';
 import * as THREE from 'three';
 import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, WATER_LEVEL } from '../constants/tankDimensions';
 
 /**
- * WaterVolume - Volumetric water effects with realistic refraction
- * Simulates light passing through water from overhead light source
+ * WaterVolume - Realistic visible water filling the tank
+ * Uses physical material for realistic underwater appearance
  */
 const WaterVolume = () => {
-  const waterVolumeRef = useRef();
-
-  // OPTIMIZED: Lightweight shader for better performance
+  // REALISTIC WATER MATERIAL - HIGHLY VISIBLE
   const waterVolumeMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
-      uniforms: {
-        time: { value: 0 },
-        waterColor: { value: new THREE.Color(0.05, 0.2, 0.35) },
-      },
-      vertexShader: `
-        varying vec3 vPosition;
-        varying vec3 vWorldPosition;
-
-        void main() {
-          vPosition = position;
-          vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform float time;
-        uniform vec3 waterColor;
-        varying vec3 vPosition;
-        varying vec3 vWorldPosition;
-
-        // OPTIMIZED: Simple noise (no expensive loops)
-        float simpleNoise(vec3 p) {
-          return fract(sin(dot(p, vec3(12.9898, 78.233, 45.164))) * 43758.5453);
-        }
-
-        void main() {
-          // Simple animated refraction pattern
-          float refraction = sin(vWorldPosition.x * 0.3 + time * 0.5) *
-                            cos(vWorldPosition.y * 0.2 + time * 0.4) * 0.5 + 0.5;
-
-          // Light rays from above (simplified)
-          float lightRay = (vPosition.y + 12.5) / 25.0; // Depth-based
-
-          // Simple god ray effect
-          float godRay = simpleNoise(vec3(vWorldPosition.x * 0.1, vWorldPosition.y * 0.2 + time * 0.3, vWorldPosition.z * 0.1));
-          godRay = smoothstep(0.4, 0.6, godRay) * lightRay * 0.3;
-
-          // Depth color variation
-          vec3 deepColor = waterColor;
-          vec3 shallowColor = waterColor * 1.5 + vec3(0.1, 0.2, 0.3);
-          vec3 finalColor = mix(deepColor, shallowColor, lightRay);
-
-          // Add subtle effects
-          finalColor += vec3(0.3, 0.5, 0.7) * refraction * 0.08;
-          finalColor += vec3(0.6, 0.8, 1.0) * godRay;
-
-          // INCREASED VISIBILITY - Make water actually visible
-          float alpha = 0.25;
-
-          gl_FragColor = vec4(finalColor, alpha);
-        }
-      `,
+    return new THREE.MeshPhysicalMaterial({
+      color: '#1a5f7a',              // Ocean blue
       transparent: true,
+      opacity: 0.6,                   // Much more visible
+      roughness: 0.1,
+      metalness: 0.0,
+      transmission: 0.4,              // Light passes through
+      thickness: 2,
+      envMapIntensity: 1.0,
+      clearcoat: 0.5,                 // Wet look
+      clearcoatRoughness: 0.1,
       side: THREE.DoubleSide,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
     });
   }, []);
-
-  useFrame(({ clock }) => {
-    if (waterVolumeRef.current) {
-      waterVolumeMaterial.uniforms.time.value = clock.elapsedTime;
-    }
-  });
 
   // Interior water volume - fill from substrate to water surface
   const volumeWidth = TANK_WIDTH - 1;
@@ -86,11 +32,10 @@ const WaterVolume = () => {
 
   return (
     <mesh
-      ref={waterVolumeRef}
       position={[0, waterYPosition, 0]}
+      material={waterVolumeMaterial}
     >
       <boxGeometry args={[volumeWidth, waterHeight, volumeDepth]} />
-      <primitive object={waterVolumeMaterial} />
     </mesh>
   );
 };

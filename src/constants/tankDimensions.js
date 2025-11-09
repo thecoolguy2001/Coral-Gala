@@ -37,12 +37,3 @@ export const BOUNDS = {
   yMax: FISH_Y_MAX,                // 9.0
   z: INTERIOR_DEPTH / 2 - 2.0     // 2 units from front/back = 7.7
 };
-
-// Log bounds for debugging
-console.log('🐠 FISH BOUNDS:', {
-  x: `±${BOUNDS.x}`,
-  y: `${BOUNDS.yMin} to ${BOUNDS.yMax}`,
-  z: `±${BOUNDS.z}`,
-  tankDimensions: { width: TANK_WIDTH, height: TANK_HEIGHT, depth: TANK_DEPTH },
-  waterLevel: WATER_LEVEL
-});
