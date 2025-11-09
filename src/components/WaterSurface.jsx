@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH } from '../constants/tankDimensions';
+import { TANK_WIDTH, TANK_DEPTH, WATER_LEVEL } from '../constants/tankDimensions';
 
 /**
  * WaterSurface - PROFESSIONAL REALISTIC water surface at the top of the tank
@@ -43,6 +43,9 @@ const WaterSurface = () => {
           vec2 edgeDist = abs(vUv - center) * 2.0;
           vDistanceFromEdge = max(edgeDist.x, edgeDist.y);
 
+          // Apply waves (stronger in center, subtle at edges)
+          float edgeFactor = 1.0 - smoothstep(0.85, 1.0, vDistanceFromEdge);
+
           // REALISTIC AQUARIUM WATER - Multiple layers with natural bouncing
           // Large slow swells from filter movement
           float swell1 = sin(pos.x * 1.5 + time * 1.8) * 0.12;
@@ -53,7 +56,6 @@ const WaterSurface = () => {
           float wave2 = cos(position.z * 0.1 + time * 0.5) * 0.2;
           float wave3 = cos(position.x * 0.2 + time * 1.0) * 0.1 * 0.2;
           float wave4 = -sin(position.z * 0.1 + time * 0.5) * 0.2 * 0.1;
-          pos.y += (wave1 + wave2) * edgeFactor;
 
           // Small capillary waves - surface tension ripples
           float cap1 = cos(pos.x * 8.0 - time * 3.0) * 0.03;
@@ -170,7 +172,7 @@ const WaterSurface = () => {
   return (
     <mesh
       ref={waterRef}
-      position={[0, TANK_HEIGHT / 2, 0]}
+      position={[0, WATER_LEVEL, 0]}
       rotation={[-Math.PI / 2, 0, 0]}
       renderOrder={1000} // Render last for proper transparency
     >
