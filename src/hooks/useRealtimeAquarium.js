@@ -191,119 +191,77 @@ const useRealtimeAquarium = (fishData) => {
       return;
     }
 
-    // Master browser: run simulation locally EVERY FRAME
-    // Only sync to Firebase occasionally to reduce writes
+    // Master browser: SIMPLE smooth swimming simulation
     const now = Date.now();
-    const shouldSyncToFirebase = now - lastUpdateTime.current >= 5000; // Sync every 5 seconds
+    const shouldSyncToFirebase = now - lastUpdateTime.current >= 5000;
     if (shouldSyncToFirebase) {
       lastUpdateTime.current = now;
     }
 
-    // Realistic fish swimming parameters
-    const separationDistance = 5.0;
-    const alignmentDistance = 8.0;
-    const cohesionDistance = 7.0;
-    const maxSpeed = 1.5;      // Slower, more graceful
-    const minSpeed = 0.8;      // Keep fish moving
-    const maxForce = 0.05;     // Smoother turns
-  
-    boids.forEach(boid => {
-      const separation = new THREE.Vector3();
-      const alignment = new THREE.Vector3();
-      const cohesion = new THREE.Vector3();
-      let separationCount = 0;
-      let alignmentCount = 0;
-      let cohesionCount = 0;
-  
+    // SIMPLE fish swimming - no complex boids, just gentle wandering
+    const swimSpeed = 0.8;
+    const turnStrength = 0.02;
+    const margin = 5.0;
+
+    boids.forEach((boid, index) => {
+      // Simple avoidance - only from very close fish
       boids.forEach(other => {
         if (boid === other) return;
         const dist = boid.position.distanceTo(other.position);
-  
-        if (dist > 0 && dist < separationDistance) {
-          const diff = new THREE.Vector3().subVectors(boid.position, other.position);
-          diff.normalize();
-          diff.divideScalar(dist);
-          separation.add(diff);
-          separationCount++;
-        }
-  
-        if (dist > 0 && dist < alignmentDistance) {
-          alignment.add(other.velocity);
-          alignmentCount++;
-        }
-  
-        if (dist > 0 && dist < cohesionDistance) {
-          cohesion.add(other.position);
-          cohesionCount++;
+        if (dist < 3.0 && dist > 0) {
+          const away = new THREE.Vector3().subVectors(boid.position, other.position);
+          away.normalize().multiplyScalar(0.1);
+          boid.velocity.add(away);
         }
       });
-  
-      if (separationCount > 0) {
-        separation.divideScalar(separationCount);
-      }
-      if (alignmentCount > 0) {
-        alignment.divideScalar(alignmentCount);
-        alignment.sub(boid.velocity).clampLength(0, maxForce);
-      }
-      if (cohesionCount > 0) {
-        cohesion.divideScalar(cohesionCount);
-        cohesion.sub(boid.position);
-        cohesion.sub(boid.velocity).clampLength(0, maxForce);
-      }
-      
-      // Apply forces with realistic weights
-      boid.velocity.add(separation.multiplyScalar(1.8));  // Avoid collisions
-      boid.velocity.add(alignment.multiplyScalar(0.8));   // Match neighbors
-      boid.velocity.add(cohesion.multiplyScalar(0.6));    // Stay together
 
-      // Constrain Z movement to keep fish more 2D
-      boid.velocity.z *= 0.2;
-  
-      // Smooth boundary containment - gentle steering for natural movement
-      const margin = 4.0; // Larger margin for earlier, smoother turns
+      // Gentle random wandering
+      boid.velocity.x += (Math.random() - 0.5) * turnStrength;
+      boid.velocity.y += (Math.random() - 0.5) * turnStrength * 0.5;
+      boid.velocity.z += (Math.random() - 0.5) * turnStrength * 0.3;
 
-      // X bounds (symmetric)
-      if (Math.abs(boid.position.x) > BOUNDS.x - margin) {
-        const force = (Math.abs(boid.position.x) - (BOUNDS.x - margin)) / margin;
-        boid.velocity.x -= Math.sign(boid.position.x) * force * 0.3;
+      // Keep fish mostly horizontal
+      boid.velocity.z *= 0.5;
+      boid.velocity.y *= 0.7;
+
+      // Boundary avoidance - STRONG forces to keep fish inside
+      if (boid.position.x < -BOUNDS.x + margin) {
+        boid.velocity.x += ((-BOUNDS.x + margin) - boid.position.x) * 0.05;
+      }
+      if (boid.position.x > BOUNDS.x - margin) {
+        boid.velocity.x -= (boid.position.x - (BOUNDS.x - margin)) * 0.05;
       }
 
-      // Y bounds (asymmetric - different top and bottom)
       if (boid.position.y < BOUNDS.yMin + margin) {
-        const force = (BOUNDS.yMin + margin - boid.position.y) / margin;
-        boid.velocity.y += force * 0.3; // Gentle upward push
+        boid.velocity.y += ((BOUNDS.yMin + margin) - boid.position.y) * 0.05;
       }
       if (boid.position.y > BOUNDS.yMax - margin) {
-        const force = (boid.position.y - (BOUNDS.yMax - margin)) / margin;
-        boid.velocity.y -= force * 0.3; // Gentle downward push
+        boid.velocity.y -= (boid.position.y - (BOUNDS.yMax - margin)) * 0.05;
       }
 
-      // Z bounds (symmetric)
-      if (Math.abs(boid.position.z) > BOUNDS.z - margin) {
-        const force = (Math.abs(boid.position.z) - (BOUNDS.z - margin)) / margin;
-        boid.velocity.z -= Math.sign(boid.position.z) * force * 0.3;
+      if (boid.position.z < -BOUNDS.z + margin) {
+        boid.velocity.z += ((-BOUNDS.z + margin) - boid.position.z) * 0.05;
+      }
+      if (boid.position.z > BOUNDS.z - margin) {
+        boid.velocity.z -= (boid.position.z - (BOUNDS.z - margin)) * 0.05;
       }
 
-      // Hard clamp as safety (fish should NEVER escape these bounds)
+      // Maintain constant speed
+      boid.velocity.normalize().multiplyScalar(swimSpeed);
+
+      // Update position
+      boid.position.add(boid.velocity.clone().multiplyScalar(delta));
+
+      // ABSOLUTE hard clamp - fish CANNOT escape
       boid.position.x = Math.max(-BOUNDS.x, Math.min(BOUNDS.x, boid.position.x));
       boid.position.y = Math.max(BOUNDS.yMin, Math.min(BOUNDS.yMax, boid.position.y));
       boid.position.z = Math.max(-BOUNDS.z, Math.min(BOUNDS.z, boid.position.z));
 
-      // Ensure fish maintain realistic swimming speed
-      const currentSpeed = boid.velocity.length();
-      if (currentSpeed < minSpeed) {
-        boid.velocity.normalize().multiplyScalar(minSpeed);
-      }
-      boid.velocity.clampLength(minSpeed, maxSpeed);
-
-      // Smooth position update with delta time for consistent movement
-      boid.position.add(boid.velocity.clone().multiplyScalar(delta));
-  
       boid.ref.position.copy(boid.position);
-      if (boid.velocity.length() > 0.1) {
-        const lookTarget = boid.position.clone().add(boid.velocity.clone().normalize());
-        boid.ref.lookAt(lookTarget);
-      }
+
+      // Smooth rotation
+      const lookTarget = boid.position.clone().add(boid.velocity.normalize());
+      boid.ref.lookAt(lookTarget);
     });
 
     // Only update Firebase periodically, not every frame

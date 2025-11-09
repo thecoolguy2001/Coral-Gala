@@ -175,8 +175,8 @@ const TankContainer = ({ isOutsideView }) => {
 
       {/* MODERN JAVA FERN - Realistic leaf structure (attached to driftwood) */}
       <group position={[-10, -tankHeight / 2 + 2, -3]}>
-        {[...Array(8)].map((_, i) => {
-          const angle = (i / 8) * Math.PI * 0.8 - 0.4;
+        {[...Array(6)].map((_, i) => {
+          const angle = (i / 6) * Math.PI * 0.8 - 0.4;
           const height = 3 + Math.random() * 1.5;
           return (
             <mesh
@@ -203,7 +203,7 @@ const TankContainer = ({ isOutsideView }) => {
       <group position={[8, -tankHeight / 2 + 1, -5]}>
         {/* Base */}
         <mesh castShadow receiveShadow>
-          <cylinderGeometry args={[1, 1.5, 1.5, 8]} />
+          <cylinderGeometry args={[1, 1.5, 1.5, 6]} />
           <meshStandardMaterial
             color="#7a5f8a"
             roughness={0.6}
@@ -212,9 +212,9 @@ const TankContainer = ({ isOutsideView }) => {
             emissiveIntensity={0.3}
           />
         </mesh>
-        {/* Branches - reduced from 12 to 6 */}
-        {[...Array(6)].map((_, i) => {
-          const angle = (i / 6) * Math.PI * 2;
+        {/* Branches - reduced to 4 */}
+        {[...Array(4)].map((_, i) => {
+          const angle = (i / 4) * Math.PI * 2;
           const radius = 1.2;
           const branchHeight = 2.5;
           return (
@@ -310,8 +310,8 @@ const TankContainer = ({ isOutsideView }) => {
 
       {/* OPTIMIZED: Bubble coral - reduced spheres */}
       <group position={[-13, -tankHeight / 2 + 0.8, 4]}>
-        {[...Array(8)].map((_, i) => {
-          const angle = (i / 8) * Math.PI * 2;
+        {[...Array(6)].map((_, i) => {
+          const angle = (i / 6) * Math.PI * 2;
           const radius = 0.6;
           const size = 0.35;
           return (
@@ -344,16 +344,16 @@ const TankContainer = ({ isOutsideView }) => {
       <group position={[5, -tankHeight / 2 + 0.8, 1]}>
         {/* Anemone base */}
         <mesh castShadow receiveShadow>
-          <cylinderGeometry args={[0.8, 1, 0.8, 12]} />
+          <cylinderGeometry args={[0.8, 1, 0.8, 8]} />
           <meshStandardMaterial
             color="#8a4a6a"
             roughness={0.5}
             metalness={0.15}
           />
         </mesh>
-        {/* Tentacles - reduced from 24 to 12 */}
-        {[...Array(12)].map((_, i) => {
-          const angle = (i / 12) * Math.PI * 2;
+        {/* Tentacles - reduced to 8 */}
+        {[...Array(8)].map((_, i) => {
+          const angle = (i / 8) * Math.PI * 2;
           const radius = 0.6;
           const tentacleLength = 1.8;
           return (
@@ -385,7 +385,7 @@ const TankContainer = ({ isOutsideView }) => {
 
       {/* BRIGHT ORANGE TUBE CORAL - front right */}
       <group position={[14, -tankHeight / 2 + 0.8, 6]}>
-        {[...Array(8)].map((_, i) => {
+        {[...Array(5)].map((_, i) => {
           const xOffset = (Math.random() - 0.5) * 1.5;
           const zOffset = (Math.random() - 0.5) * 1.5;
           const height = 2.5 + Math.random() * 1.5;
@@ -411,8 +411,8 @@ const TankContainer = ({ isOutsideView }) => {
 
       {/* BLUE STAGHORN CORAL - mid-left */}
       <group position={[-8, -tankHeight / 2 + 1.5, -2]}>
-        {[...Array(10)].map((_, i) => {
-          const angle = (i / 10) * Math.PI * 2;
+        {[...Array(6)].map((_, i) => {
+          const angle = (i / 6) * Math.PI * 2;
           const radius = 0.8 + Math.random() * 0.4;
           const height = 2.5 + Math.random() * 1.0;
           return (
@@ -442,9 +442,9 @@ const TankContainer = ({ isOutsideView }) => {
 
       {/* YELLOW BRAIN CORAL - center front */}
       <group position={[3, -tankHeight / 2 + 0.8, 7]}>
-        {[...Array(15)].map((_, i) => {
-          const angle = (i / 15) * Math.PI * 2;
-          const layer = Math.floor(i / 5);
+        {[...Array(9)].map((_, i) => {
+          const angle = (i / 9) * Math.PI * 2;
+          const layer = Math.floor(i / 3);
           const radius = 0.8 - layer * 0.25;
           return (
             <mesh
@@ -472,7 +472,7 @@ const TankContainer = ({ isOutsideView }) => {
 
       {/* PURPLE FAN CORAL - back left */}
       <group position={[-10, -tankHeight / 2 + 2, -8]}>
-        {[...Array(5)].map((_, i) => {
+        {[...Array(3)].map((_, i) => {
           const xSpread = (i - 2) * 0.8;
           return (
             <mesh
