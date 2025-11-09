@@ -198,10 +198,10 @@ const useRealtimeAquarium = (fishData) => {
       lastUpdateTime.current = now;
     }
 
-    // OPTIMIZED fish swimming - simple and performant (no nested loops)
+    // Smooth fish swimming with strong boundary avoidance
     const swimSpeed = 1.0;
     const turnStrength = 0.015;
-    const margin = 8.0;
+    const margin = 12.0; // Increased margin for earlier boundary detection
 
     boids.forEach((boid) => {
       // Gentle random wandering for natural movement
@@ -209,7 +209,7 @@ const useRealtimeAquarium = (fishData) => {
       boid.velocity.y += (Math.random() - 0.5) * turnStrength * 0.4;
       boid.velocity.z += (Math.random() - 0.5) * turnStrength * 0.2;
 
-      // VERY GENTLE boundary forces - just nudge the direction slightly
+      // STRONG boundary forces - prevent fish from escaping
       // Calculate distance from boundaries
       const distFromLeftWall = boid.position.x - (-BOUNDS.x);
       const distFromRightWall = BOUNDS.x - boid.position.x;
@@ -218,29 +218,29 @@ const useRealtimeAquarium = (fishData) => {
       const distFromBackWall = boid.position.z - (-BOUNDS.z);
       const distFromFrontWall = BOUNDS.z - boid.position.z;
 
-      // Only apply forces within margin, and make them VERY gentle
+      // Apply progressively stronger forces as fish approaches boundaries
       if (distFromLeftWall < margin) {
-        const force = (1.0 - distFromLeftWall / margin) * 0.01; // Very weak force
+        const force = (1.0 - distFromLeftWall / margin) * 0.3; // Strong force to turn away
         boid.velocity.x += force;
       }
       if (distFromRightWall < margin) {
-        const force = (1.0 - distFromRightWall / margin) * 0.01;
+        const force = (1.0 - distFromRightWall / margin) * 0.3;
         boid.velocity.x -= force;
       }
       if (distFromBottom < margin) {
-        const force = (1.0 - distFromBottom / margin) * 0.01;
+        const force = (1.0 - distFromBottom / margin) * 0.3;
         boid.velocity.y += force;
       }
       if (distFromTop < margin) {
-        const force = (1.0 - distFromTop / margin) * 0.01;
+        const force = (1.0 - distFromTop / margin) * 0.3;
         boid.velocity.y -= force;
       }
       if (distFromBackWall < margin) {
-        const force = (1.0 - distFromBackWall / margin) * 0.01;
+        const force = (1.0 - distFromBackWall / margin) * 0.3;
         boid.velocity.z += force;
       }
       if (distFromFrontWall < margin) {
-        const force = (1.0 - distFromFrontWall / margin) * 0.01;
+        const force = (1.0 - distFromFrontWall / margin) * 0.3;
         boid.velocity.z -= force;
       }
 
@@ -253,10 +253,44 @@ const useRealtimeAquarium = (fishData) => {
       // Update position smoothly
       boid.position.add(boid.velocity.clone().multiplyScalar(delta));
 
-      // Gentle clamp as last resort (should rarely trigger now)
-      boid.position.x = Math.max(-BOUNDS.x, Math.min(BOUNDS.x, boid.position.x));
-      boid.position.y = Math.max(BOUNDS.yMin, Math.min(BOUNDS.yMax, boid.position.y));
-      boid.position.z = Math.max(-BOUNDS.z, Math.min(BOUNDS.z, boid.position.z));
+      // Hard boundary enforcement - clamp position AND reverse velocity if hit
+      let hitBoundary = false;
+
+      if (boid.position.x < -BOUNDS.x) {
+        boid.position.x = -BOUNDS.x;
+        boid.velocity.x = Math.abs(boid.velocity.x); // Reflect velocity inward
+        hitBoundary = true;
+      }
+      if (boid.position.x > BOUNDS.x) {
+        boid.position.x = BOUNDS.x;
+        boid.velocity.x = -Math.abs(boid.velocity.x); // Reflect velocity inward
+        hitBoundary = true;
+      }
+      if (boid.position.y < BOUNDS.yMin) {
+        boid.position.y = BOUNDS.yMin;
+        boid.velocity.y = Math.abs(boid.velocity.y); // Reflect velocity inward
+        hitBoundary = true;
+      }
+      if (boid.position.y > BOUNDS.yMax) {
+        boid.position.y = BOUNDS.yMax;
+        boid.velocity.y = -Math.abs(boid.velocity.y); // Reflect velocity inward
+        hitBoundary = true;
+      }
+      if (boid.position.z < -BOUNDS.z) {
+        boid.position.z = -BOUNDS.z;
+        boid.velocity.z = Math.abs(boid.velocity.z); // Reflect velocity inward
+        hitBoundary = true;
+      }
+      if (boid.position.z > BOUNDS.z) {
+        boid.position.z = BOUNDS.z;
+        boid.velocity.z = -Math.abs(boid.velocity.z); // Reflect velocity inward
+        hitBoundary = true;
+      }
+
+      // Renormalize velocity after reflection
+      if (hitBoundary && boid.velocity.length() > 0.01) {
+        boid.velocity.normalize().multiplyScalar(swimSpeed);
+      }
 
       boid.ref.position.copy(boid.position);
 
