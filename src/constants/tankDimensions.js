@@ -21,10 +21,18 @@ export const INTERIOR_DEPTH = TANK_DEPTH - (GLASS_THICKNESS * 2);
 // Water level (below tank rim for realistic appearance)
 export const WATER_LEVEL = TANK_HEIGHT / 2 - 1.5;
 
-// Boid simulation bounds (half-dimensions for +/- coordinate system)
-// Fish should stay well below the water surface
+// Substrate dimensions (sand at bottom)
+const SUBSTRATE_HEIGHT = 0.6;
+const SUBSTRATE_Y_POSITION = -TANK_HEIGHT / 2 + 0.3;
+const SUBSTRATE_TOP = SUBSTRATE_Y_POSITION + SUBSTRATE_HEIGHT / 2;
+
+// Boid simulation bounds - fish swim area
+// Fish must stay: above substrate AND below water surface
 export const BOUNDS = {
-  x: INTERIOR_WIDTH / 2,
-  y: WATER_LEVEL - 1.0,  // Keep fish at least 1 unit below water surface
-  z: INTERIOR_DEPTH / 2
+  x: INTERIOR_WIDTH / 2 - 1.0,           // Stay 1 unit from side walls
+  y: {
+    min: SUBSTRATE_TOP + 0.5,             // 0.5 units above substrate top (-11.6)
+    max: WATER_LEVEL - 1.0                // 1 unit below water surface (10)
+  },
+  z: INTERIOR_DEPTH / 2 - 1.0            // Stay 1 unit from front/back walls
 };

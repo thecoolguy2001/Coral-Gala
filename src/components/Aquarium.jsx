@@ -203,9 +203,9 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
     setSelectedFish(null);
   };
 
-  // Camera positioned for optimal viewing - slightly above and back from tank
-  const cameraPosition = [0, 5, TANK_DEPTH / 2 + 35];
-  const cameraLookAt = [0, 0, 0]; // Look at center of tank
+  // Camera positioned slightly above center, zoomed out, angled gently downward
+  const cameraPosition = [0, 3, TANK_DEPTH / 2 + 20];
+  const cameraLookAt = [0, -1, 0]; // Looking slightly downward for balanced view
 
   return (
     <>
@@ -213,9 +213,7 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
         <Canvas
           camera={{
             position: cameraPosition,
-            fov: 50, // Narrower FOV for less distortion, like a telephoto lens
-            near: 0.1,
-            far: 1000,
+            fov: 65, // Slightly wider field of view
           }}
           shadows
           style={{
@@ -225,7 +223,7 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
             position: 'relative'
           }}
           onCreated={({ camera }) => {
-            // Point camera at center of tank
+            // Point camera upward at angle
             camera.lookAt(...cameraLookAt);
           }}
         >
