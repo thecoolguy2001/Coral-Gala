@@ -28,7 +28,7 @@ const BubbleJet = () => {
     // Spout is now the Intake Tube at [filterWidth / 2 - 0.5, -filterHeight / 2 + 1, 0] (relative)
     // Absolute positions
     const spoutX = filterX + (4 / 2 - 0.5); // Right side of filter
-    const spoutY = WATER_LEVEL - 3.0; // Start deeper, coming out of the tube bottom
+    const spoutY = WATER_LEVEL - 1.0; // Moved higher, closer to the tube bottom
     const spoutZ = filterZ; // Centered Z
 
     for (let i = 0; i < count; i++) {
@@ -42,7 +42,7 @@ const BubbleJet = () => {
 
       // Initial velocity: STRONG Downward push from tube
       velocities[i * 3] = (Math.random() - 0.5) * 0.02; 
-      velocities[i * 3 + 1] = - (Math.random() * 0.1 + 0.15); // Much stronger downward (0.15 to 0.25)
+      velocities[i * 3 + 1] = - (Math.random() * 0.1 + 0.25); // Stronger downward (0.25 to 0.35)
       velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.02; 
     }
 
@@ -114,7 +114,7 @@ const BubbleJet = () => {
 
       // Update spout position in animation loop too
       const spoutX = filterX + (4 / 2 - 0.5);
-      const spoutY = WATER_LEVEL - 3.0; 
+      const spoutY = WATER_LEVEL - 1.0; 
       const spoutZ = filterZ;
       
       const gravity = new THREE.Vector3(0, -0.0005, 0); 
@@ -122,7 +122,7 @@ const BubbleJet = () => {
       for (let i = 0; i < positions.length; i += 3) {
         // Apply physics
         // Strong drag/buoyancy overcoming the initial downward force
-        velocities[i + 1] += 0.005; // Strong upward acceleration to eventually flip the velocity
+        velocities[i + 1] += 0.003; // Slightly reduced upward acceleration
 
         // Terminal upward velocity (once it starts rising)
         if (velocities[i + 1] > 0.04) velocities[i + 1] = 0.04;
@@ -139,7 +139,7 @@ const BubbleJet = () => {
           
           // Reset to strong downward velocity
           velocities[i] = (Math.random() - 0.5) * 0.01;
-          velocities[i + 1] = - (Math.random() * 0.1 + 0.15); // Strong downward
+          velocities[i + 1] = - (Math.random() * 0.1 + 0.25); // Reset to strong downward
           velocities[i + 2] = (Math.random() - 0.5) * 0.01;
         }
       }
