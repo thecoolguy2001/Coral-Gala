@@ -22,9 +22,9 @@ const BubbleJet = () => {
 
     // Define 3 jet positions
     const jetSources = [
-      { x: -BOUNDS.x * 0.6, z: BOUNDS.z * 0.3 }, // Left-Front
-      { x: BOUNDS.x * 0.6, z: -BOUNDS.z * 0.3 }, // Right-Back
-      { x: 0, z: -BOUNDS.z * 0.8 }               // Center-Back
+      { x: -BOUNDS.x * 0.6, z: BOUNDS.z * 0.3 }, // Left-Front (Original - closer to front)
+      { x: BOUNDS.x * 0.6, z: BOUNDS.z * 0.1 },  // Right-Middle (Moved closer to front)
+      { x: 0, z: BOUNDS.z * 0.2 }                // Center-Middle-Front (Moved much closer to front)
     ];
     
     const bottomY = BOUNDS.yMin + 0.5; // Just above substrate
