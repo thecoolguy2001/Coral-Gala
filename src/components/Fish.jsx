@@ -53,40 +53,40 @@ const Fish = ({ boid, onFishClick }) => {
     const newScale = baseScale * THREE.MathUtils.lerp(currentScale, targetScale, 0.15);
     groupRef.current.scale.setScalar(newScale);
 
-    // Swimming animation speed based on velocity
-    const swimSpeed = THREE.MathUtils.clamp(boid.velocity.length() * 2.2, 0.5, 4.0);
+    // Gentle swimming animation speed based on actual velocity
+    const swimSpeed = THREE.MathUtils.clamp(boid.velocity.length() * 3.0, 0.3, 1.2);
     setSwimPhase((prev) => prev + swimSpeed * delta);
 
-    // Realistic fish swimming animation
+    // Subtle, realistic fish swimming animation
     if (modelRef.current) {
       const time = swimPhase;
-      const speed = Math.max(boid.velocity.length(), 0.5);
-      
-      // Simple but effective whole-body fish animation
-      const swimWave = Math.sin(time * 5) * 0.15 * speed;
-      const tailWag = Math.sin(time * 6 + Math.PI * 0.5) * 0.3 * speed;
-      
-      // Apply swimming motion to entire fish model
+      const speed = boid.velocity.length(); // Use actual speed, no artificial minimum
+
+      // Very subtle whole-body fish animation - minimal rocking
+      const swimWave = Math.sin(time * 2.5) * 0.04 * speed;
+      const tailWag = Math.sin(time * 3.0 + Math.PI * 0.5) * 0.08 * speed;
+
+      // Apply very subtle swimming motion
       modelRef.current.rotation.z = swimWave;
-      modelRef.current.rotation.y = tailWag * 0.5;
-      
-      // Add subtle vertical bobbing
-      const bobbing = Math.sin(time * 3) * 0.1;
+      modelRef.current.rotation.y = tailWag * 0.3;
+
+      // Minimal vertical bobbing
+      const bobbing = Math.sin(time * 1.5) * 0.02;
       modelRef.current.position.y = bobbing;
-      
-      // Try to animate specific parts by mesh name or position
+
+      // Animate tail/fins only - keep body stable
       modelRef.current.traverse((child) => {
         if (child.isMesh) {
           // Animate back parts of fish more (likely tail)
           if (child.position && child.position.x < -0.5) {
-            child.rotation.z = tailWag;
+            child.rotation.z = tailWag * 0.8;
           }
-          
+
           // Find and animate by common fish part names
           const name = child.name ? child.name.toLowerCase() : '';
           if (name.includes('tail') || name.includes('fin') || name.includes('back')) {
-            child.rotation.z = tailWag * 1.5;
-            child.rotation.y = swimWave * 2;
+            child.rotation.z = tailWag * 1.0;
+            child.rotation.y = swimWave * 0.5;
           }
         }
       });
