@@ -105,9 +105,9 @@ const HOBFilter = () => {
 
         {/* OPTIMIZED: Reduced particles for better performance */}
         <group ref={waterFlowRef} position={[0, -0.8, 0.2]}>
-          {/* Main cascading water stream */}
-          <mesh position={[0, -1.8, 0]}>
-            <cylinderGeometry args={[0.15, 0.10, 3.5, 6]} />
+          {/* Main cascading water stream - Extended to reach water level */}
+          <mesh position={[0, -3.0, 0]}>
+            <cylinderGeometry args={[0.15, 0.10, 6.0, 6]} />
             <meshStandardMaterial
               color="#6aaadf"
               transparent={true}
@@ -119,9 +119,9 @@ const HOBFilter = () => {
             />
           </mesh>
 
-          {/* Simple water droplets (reduced from 8 to 4) */}
+          {/* Simple water droplets (spread further) */}
           {[0, 1, 2, 3].map((i) => (
-            <mesh key={`drop-${i}`} position={[0, -i * 0.8, 0]}>
+            <mesh key={`drop-${i}`} position={[0, -i * 1.5, 0]}>
               <sphereGeometry args={[0.12, 6, 6]} />
               <meshStandardMaterial
                 color="#5abaff"
