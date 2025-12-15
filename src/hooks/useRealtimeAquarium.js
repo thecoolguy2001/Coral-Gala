@@ -68,14 +68,14 @@ const useRealtimeAquarium = (fishData) => {
       } else if (f.velocity && Array.isArray(f.velocity) && f.velocity.length === 3) {
         velocityArray = f.velocity;
       } else {
-        // Gentle initial velocity seeds for slow, realistic movement
+        // Smooth initial velocity seeds for realistic movement
         const velocitySeeds = [
-          [0.2, 0.05, 0.0],
-          [-0.2, 0.08, 0.0],
-          [0.15, -0.1, 0.0],
-          [-0.15, 0.12, 0.0],
-          [0.18, 0.0, 0.05],
-          [-0.18, 0.0, -0.05],
+          [0.3, 0.1, 0.0],
+          [-0.3, 0.12, 0.0],
+          [0.25, -0.15, 0.0],
+          [-0.25, 0.18, 0.0],
+          [0.28, 0.0, 0.08],
+          [-0.28, 0.0, -0.08],
         ];
         velocityArray = velocitySeeds[index % velocitySeeds.length];
       }
@@ -168,13 +168,12 @@ const useRealtimeAquarium = (fishData) => {
 
           const targetPos = new THREE.Vector3(...realtimePos);
 
-          // Only interpolate if there's a meaningful difference (> 0.1 units)
+          // Smooth interpolation with predictive movement
           const distance = boid.position.distanceTo(targetPos);
-          if (distance > 0.1) {
-            // Faster interpolation to reduce perceived lag/jumping
-            const lerpFactor = Math.min(0.15, delta * 5); // Adaptive based on delta
-            boid.position.lerp(targetPos, lerpFactor);
-          }
+
+          // Use higher lerp factor for smoother following
+          const lerpFactor = Math.min(0.1, delta * 3);
+          boid.position.lerp(targetPos, lerpFactor);
 
           // Clamp position after interpolation to ensure it stays in bounds
           boid.position.x = Math.max(-BOUNDS.x, Math.min(BOUNDS.x, boid.position.x));
@@ -187,7 +186,7 @@ const useRealtimeAquarium = (fishData) => {
           const realtimeVel = realtimePositions[boid.id]?.velocity;
           if (realtimeVel && Array.isArray(realtimeVel) && realtimeVel.length === 3) {
             const velocity = new THREE.Vector3(...realtimeVel);
-            if (velocity.length() > 0.1) {
+            if (velocity.length() > 0.05) {
               const lookTarget = boid.position.clone().add(velocity.normalize());
               boid.ref.lookAt(lookTarget);
             }
@@ -197,21 +196,21 @@ const useRealtimeAquarium = (fishData) => {
       return;
     }
 
-    // Master browser: run simulation and update Firebase
+    // Master browser: run simulation EVERY FRAME for smooth movement
     const now = Date.now();
-    // Optimized Firebase write frequency to balance responsiveness and quota
-    // Update every 2 seconds for smooth synchronized movement
-    if (now - lastUpdateTime.current < 2000) return;
-    lastUpdateTime.current = now;
+    const shouldUpdateFirebase = (now - lastUpdateTime.current >= 150); // Update Firebase every 150ms
+    if (shouldUpdateFirebase) {
+      lastUpdateTime.current = now;
+    }
   
-    // SLOW, REALISTIC FISH MOVEMENT - completely redesigned
+    // SMOOTH, REALISTIC FISH MOVEMENT
     const separationDistance = 3.5;
     const alignmentDistance = 8.0;
     const cohesionDistance = 7.0;
-    const maxSpeed = 0.4; // Much slower, realistic swimming
-    const minSpeed = 0.15; // Gentle minimum movement
-    const maxForce = 0.02; // Smoother, gradual turns
-    const damping = 0.98; // Velocity damping for smoothness
+    const maxSpeed = 0.6; // Realistic swimming speed
+    const minSpeed = 0.25; // Gentle minimum movement
+    const maxForce = 0.03; // Smooth, gradual turns
+    const damping = 0.97; // Velocity damping for smoothness
   
     boids.forEach(boid => {
       const separation = new THREE.Vector3();
@@ -311,13 +310,13 @@ const useRealtimeAquarium = (fishData) => {
         console.warn('🚨 Fish CLAMPED:', boid.id, 'from y=', prevY, 'to y=', boid.position.y);
       }
   
-      // Ensure fish keep moving gently
-      if (boid.velocity.length() < 0.05) {
+      // Ensure fish keep moving smoothly
+      if (boid.velocity.length() < 0.1) {
         // Give fish a gentle random direction if they get stuck
         boid.velocity.set(
-          (Math.random() - 0.5) * 0.6,
-          (Math.random() - 0.5) * 0.3,
-          (Math.random() - 0.5) * 0.2
+          (Math.random() - 0.5) * 1.0,
+          (Math.random() - 0.5) * 0.5,
+          (Math.random() - 0.5) * 0.3
         ).normalize().multiplyScalar(minSpeed);
       }
 
@@ -339,13 +338,15 @@ const useRealtimeAquarium = (fishData) => {
       }
     });
 
-    // Update Firebase with new positions
-    const positions = {};
-    boids.forEach(boid => {
-      positions[boid.id] = boid; // Pass the entire boid object, not just position/velocity
-    });
-    
-    updateAllFishPositions(positions);
+    // Update Firebase only at intervals (not every frame) to reduce writes
+    if (shouldUpdateFirebase) {
+      const positions = {};
+      boids.forEach(boid => {
+        positions[boid.id] = boid; // Pass the entire boid object, not just position/velocity
+      });
+
+      updateAllFishPositions(positions);
+    }
   });
 
   // Return appropriate data based on role
