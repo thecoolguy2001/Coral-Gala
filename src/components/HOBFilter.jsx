@@ -14,24 +14,7 @@ const HOBFilter = () => {
 
   // Animate water flow - realistic HOB filter output
   useFrame(({ clock }) => {
-    if (waterFlowRef.current) {
-      const time = clock.elapsedTime;
-      // Gentle bobbing motion for water stream
-      waterFlowRef.current.position.y = Math.sin(time * 2.5) * 0.05;
-
-      // Animate each water particle/droplet with different phases
-      waterFlowRef.current.children.forEach((child, i) => {
-        if (child.type === 'Mesh') {
-          const phase = i * 0.3;
-          const offset = Math.sin(time * 4.0 + phase) * 0.08;
-          child.position.x = offset; // Wobble side to side
-
-          // Pulsing effect - water flow varies
-          const pulse = Math.sin(time * 2.0) * 0.1 + 0.9;
-          child.scale.setScalar(pulse);
-        }
-      });
-    }
+    // waterFlowRef logic removed
   });
 
   // Filter box dimensions
@@ -102,37 +85,6 @@ const HOBFilter = () => {
             metalness={0.2}
           />
         </mesh>
-
-        {/* OPTIMIZED: Reduced particles for better performance */}
-        <group ref={waterFlowRef} position={[0, -0.8, 0.2]}>
-          {/* Main cascading water stream - Extended to reach water level */}
-          <mesh position={[0, -3.0, 0]}>
-            <cylinderGeometry args={[0.15, 0.10, 6.0, 6]} />
-            <meshStandardMaterial
-              color="#6aaadf"
-              transparent={true}
-              opacity={0.6}
-              roughness={0.1}
-              metalness={0.3}
-              emissive="#4a8ac7"
-              emissiveIntensity={0.2}
-            />
-          </mesh>
-
-          {/* Simple water droplets (spread further) */}
-          {[0, 1, 2, 3].map((i) => (
-            <mesh key={`drop-${i}`} position={[0, -i * 1.5, 0]}>
-              <sphereGeometry args={[0.12, 6, 6]} />
-              <meshStandardMaterial
-                color="#5abaff"
-                transparent={true}
-                opacity={0.7 - i * 0.15}
-                roughness={0.1}
-                metalness={0.3}
-              />
-            </mesh>
-          ))}
-        </group>
       </group>
 
       {/* Power cord (cosmetic detail) */}

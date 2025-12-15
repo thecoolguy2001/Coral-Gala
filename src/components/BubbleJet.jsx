@@ -40,10 +40,10 @@ const BubbleJet = () => {
       // Random bubble sizes
       scales[i] = Math.random() * 0.35 + 0.1;
 
-      // Initial velocity: Downward push from tube
-      velocities[i * 3] = (Math.random() - 0.5) * 0.01; 
-      velocities[i * 3 + 1] = - (Math.random() * 0.03 + 0.02); // Downward
-      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.01; 
+      // Initial velocity: STRONG Downward push from tube
+      velocities[i * 3] = (Math.random() - 0.5) * 0.02; 
+      velocities[i * 3 + 1] = - (Math.random() * 0.1 + 0.15); // Much stronger downward (0.15 to 0.25)
+      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.02; 
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -68,11 +68,10 @@ const BubbleJet = () => {
           vec3 pos = position;
 
           // Turbulent wobble
-          pos.x += sin(time * 8.0 + position.y * 0.5) * 0.1;
-          pos.z += cos(time * 6.0 + position.x * 0.5) * 0.1;
+          pos.x += sin(time * 12.0 + position.y * 0.5) * 0.05;
+          pos.z += cos(time * 10.0 + position.x * 0.5) * 0.05;
 
           // Alpha logic: Visible underwater, pop at surface
-          // Fade out only when slightly ABOVE water level
           vAlpha = 1.0 - smoothstep(${(WATER_LEVEL).toFixed(1)}, ${(WATER_LEVEL + 0.5).toFixed(1)}, pos.y);
 
           vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
@@ -122,24 +121,25 @@ const BubbleJet = () => {
 
       for (let i = 0; i < positions.length; i += 3) {
         // Apply physics
-        velocities[i] += gravity.x;
-        velocities[i + 1] += 0.0015; // Buoyancy
-        velocities[i + 2] += gravity.z;
+        // Strong drag/buoyancy overcoming the initial downward force
+        velocities[i + 1] += 0.005; // Strong upward acceleration to eventually flip the velocity
 
-        if (velocities[i + 1] > 0.05) velocities[i + 1] = 0.05;
+        // Terminal upward velocity (once it starts rising)
+        if (velocities[i + 1] > 0.04) velocities[i + 1] = 0.04;
 
         positions[i] += velocities[i];
         positions[i + 1] += velocities[i + 1];
         positions[i + 2] += velocities[i + 2];
         
-        // Reset logic
-        if ((positions[i + 1] > WATER_LEVEL + 0.2 && velocities[i + 1] > 0) || positions[i + 1] < BOUNDS.yMin) {
+        // Reset logic: Only reset if it hits surface OR goes too deep (past bottom)
+        if (positions[i + 1] > WATER_LEVEL + 0.2 || positions[i + 1] < BOUNDS.yMin - 2.0) {
           positions[i] = spoutX + (Math.random() - 0.5) * 0.3;
           positions[i + 1] = spoutY + (Math.random() - 0.5) * 0.5;
           positions[i + 2] = spoutZ + (Math.random() - 0.5) * 0.3;
           
+          // Reset to strong downward velocity
           velocities[i] = (Math.random() - 0.5) * 0.01;
-          velocities[i + 1] = - (Math.random() * 0.03 + 0.02);
+          velocities[i + 1] = - (Math.random() * 0.1 + 0.15); // Strong downward
           velocities[i + 2] = (Math.random() - 0.5) * 0.01;
         }
       }
