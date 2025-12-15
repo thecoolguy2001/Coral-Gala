@@ -46,32 +46,32 @@ const WaterSurface = () => {
           // Apply waves (stronger in center, subtle at edges)
           float edgeFactor = 1.0 - smoothstep(0.85, 1.0, vDistanceFromEdge);
 
-          // REALISTIC AQUARIUM WATER - Multiple layers with natural bouncing
-          // Large slow swells from filter movement
-          float swell1 = sin(pos.x * 1.5 + time * 1.8) * 0.12;
-          float swell2 = sin(pos.y * 1.2 + time * 1.5) * 0.12;
+          // REALISTIC AQUARIUM WATER - More active
+          // Large slow swells from filter movement (Increased amplitude)
+          float swell1 = sin(pos.x * 1.5 + time * 2.0) * 0.20;
+          float swell2 = sin(pos.y * 1.2 + time * 1.8) * 0.20;
 
-          // Medium frequency waves - main visible motion
-          float wave1 = sin(position.x * 0.2 + time * 1.0) * 0.1;
-          float wave2 = cos(position.z * 0.1 + time * 0.5) * 0.2;
-          float wave3 = cos(position.x * 0.2 + time * 1.0) * 0.1 * 0.2;
-          float wave4 = -sin(position.z * 0.1 + time * 0.5) * 0.2 * 0.1;
+          // Medium frequency waves - Active motion
+          float wave1 = sin(position.x * 0.3 + time * 1.5) * 0.15;
+          float wave2 = cos(position.z * 0.2 + time * 1.0) * 0.25;
+          float wave3 = cos(position.x * 0.3 + time * 1.5) * 0.15;
+          float wave4 = -sin(position.z * 0.2 + time * 1.0) * 0.15;
 
-          // Small capillary waves - surface tension ripples
-          float cap1 = cos(pos.x * 8.0 - time * 3.0) * 0.03;
-          float cap2 = cos(pos.y * 7.0 + time * 2.8) * 0.03;
+          // Small capillary waves - surface tension ripples (Faster)
+          float cap1 = cos(pos.x * 10.0 - time * 4.0) * 0.04;
+          float cap2 = cos(pos.y * 9.0 + time * 3.8) * 0.04;
 
           // Filter output creates circular ripples
           vec2 filterPos = vec2(tankWidth * 0.35, -tankDepth * 0.4); // Top-right back
           float filterDist = length(vec2(pos.x, pos.y) - filterPos);
-          float filterRipple = sin(filterDist * 4.0 - time * 5.0) * 0.06 * smoothstep(15.0, 0.0, filterDist);
+          float filterRipple = sin(filterDist * 6.0 - time * 6.0) * 0.08 * smoothstep(15.0, 0.0, filterDist);
 
           // Bubble jet creates disturbance (left side)
           vec2 bubblePos = vec2(-tankWidth * 0.3, tankDepth * 0.3);
           float bubbleDist = length(vec2(pos.x, pos.y) - bubblePos);
-          float bubbleWave = sin(bubbleDist * 5.0 - time * 6.0) * 0.04 * smoothstep(8.0, 0.0, bubbleDist);
+          float bubbleWave = sin(bubbleDist * 7.0 - time * 7.0) * 0.06 * smoothstep(8.0, 0.0, bubbleDist);
 
-          // Combine all wave types for realistic bouncing water
+          // Combine all wave types
           float totalWave = swell1 + swell2 + wave1 + wave2 + cap1 + cap2 + filterRipple + bubbleWave;
 
           // Apply waves (stronger in center, subtle at edges)
@@ -176,7 +176,7 @@ const WaterSurface = () => {
       rotation={[-Math.PI / 2, 0, 0]}
       renderOrder={1000} // Render last for proper transparency
     >
-      <planeGeometry args={[TANK_WIDTH - 0.5, TANK_DEPTH - 0.5, 64, 64]} />
+      <planeGeometry args={[TANK_WIDTH - 0.7, TANK_DEPTH - 0.7, 64, 64]} />
       <primitive object={waterMaterial} />
     </mesh>
   );

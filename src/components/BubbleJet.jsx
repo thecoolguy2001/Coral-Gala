@@ -14,36 +14,29 @@ const BubbleJet = () => {
   // Create bubble particles
   const bubblesGeometry = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
-    const count = 100; // Single strong jet stream
+    const count = 300; // Significantly more bubbles for aggression
     const positions = new Float32Array(count * 3);
     const scales = new Float32Array(count);
     const velocities = new Float32Array(count * 3);
 
-    // Calculate HOB Filter output spout position
-    // These values are based on HOBFilter.jsx
-    const filterX = TANK_WIDTH / 2 - 4 - 2; // Original HOB filter X
-    const filterY = TANK_HEIGHT / 2 + 6 / 2 - 0.5; // Original HOB filter Y
-    const filterZ = -TANK_DEPTH / 2; // Original HOB filter Z
-    
-    // Spout is now the Intake Tube at [filterWidth / 2 - 0.5, -filterHeight / 2 + 1, 0] (relative)
     // Absolute positions
     const spoutX = filterX + (4 / 2 - 0.5); // Right side of filter
-    const spoutY = WATER_LEVEL - 1.0; // Moved higher, closer to the tube bottom
-    const spoutZ = filterZ; // Centered Z
+    const spoutY = WATER_LEVEL - 1.0; 
+    const spoutZ = filterZ; 
 
     for (let i = 0; i < count; i++) {
       // Start bubbles near the tube bottom
-      positions[i * 3] = spoutX + (Math.random() - 0.5) * 0.3; 
+      positions[i * 3] = spoutX + (Math.random() - 0.5) * 0.4; 
       positions[i * 3 + 1] = spoutY + (Math.random() - 0.5) * 0.5; 
-      positions[i * 3 + 2] = spoutZ + (Math.random() - 0.5) * 0.3; 
+      positions[i * 3 + 2] = spoutZ + (Math.random() - 0.5) * 0.4; 
 
-      // Random bubble sizes
-      scales[i] = Math.random() * 0.35 + 0.1;
+      // Larger, more varied bubble sizes
+      scales[i] = Math.random() * 0.45 + 0.15;
 
-      // Initial velocity: STRONG Downward push from tube
-      velocities[i * 3] = (Math.random() - 0.5) * 0.02; 
-      velocities[i * 3 + 1] = - (Math.random() * 0.1 + 0.25); // Stronger downward (0.25 to 0.35)
-      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.02; 
+      // Initial velocity: VERY STRONG Downward push
+      velocities[i * 3] = (Math.random() - 0.5) * 0.03; // More spread
+      velocities[i * 3 + 1] = - (Math.random() * 0.2 + 0.4); // Very aggressive downward (0.4 to 0.6)
+      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.03; 
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -67,11 +60,11 @@ const BubbleJet = () => {
         void main() {
           vec3 pos = position;
 
-          // Turbulent wobble
-          pos.x += sin(time * 12.0 + position.y * 0.5) * 0.05;
-          pos.z += cos(time * 10.0 + position.x * 0.5) * 0.05;
+          // Aggressive Turbulent wobble
+          pos.x += sin(time * 20.0 + position.y * 0.8) * 0.08;
+          pos.z += cos(time * 15.0 + position.x * 0.8) * 0.08;
 
-          // Alpha logic: Visible underwater, pop at surface
+          // Alpha logic
           vAlpha = 1.0 - smoothstep(${(WATER_LEVEL).toFixed(1)}, ${(WATER_LEVEL + 0.5).toFixed(1)}, pos.y);
 
           vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
@@ -90,7 +83,7 @@ const BubbleJet = () => {
           // Sharp highlight
           float highlight = 1.0 - smoothstep(0.0, 0.25, length(center - vec2(-0.15, -0.15)));
           vec3 bubbleColor = vec3(0.95, 1.0, 1.0); 
-          bubbleColor += vec3(1.0) * highlight * 0.8;
+          bubbleColor += vec3(1.0) * highlight * 0.9;
 
           float alpha = (1.0 - smoothstep(0.3, 0.5, dist)) * vAlpha * 0.95;
           gl_FragColor = vec4(bubbleColor, alpha);
@@ -112,7 +105,6 @@ const BubbleJet = () => {
       const filterX = TANK_WIDTH / 2 - 4 - 2;
       const filterZ = -TANK_DEPTH / 2;
 
-      // Update spout position in animation loop too
       const spoutX = filterX + (4 / 2 - 0.5);
       const spoutY = WATER_LEVEL - 1.0; 
       const spoutZ = filterZ;
@@ -121,26 +113,26 @@ const BubbleJet = () => {
 
       for (let i = 0; i < positions.length; i += 3) {
         // Apply physics
-        // Strong drag/buoyancy overcoming the initial downward force
-        velocities[i + 1] += 0.003; // Slightly reduced upward acceleration
+        // Strong drag/buoyancy needed to counter aggressive speed
+        velocities[i + 1] += 0.008; // Stronger upward acceleration
 
-        // Terminal upward velocity (once it starts rising)
-        if (velocities[i + 1] > 0.04) velocities[i + 1] = 0.04;
+        // Terminal upward velocity
+        if (velocities[i + 1] > 0.05) velocities[i + 1] = 0.05;
 
         positions[i] += velocities[i];
         positions[i + 1] += velocities[i + 1];
         positions[i + 2] += velocities[i + 2];
         
-        // Reset logic: Only reset if it hits surface OR goes too deep (past bottom)
-        if (positions[i + 1] > WATER_LEVEL + 0.2 || positions[i + 1] < BOUNDS.yMin - 2.0) {
-          positions[i] = spoutX + (Math.random() - 0.5) * 0.3;
+        // Reset logic
+        if ((positions[i + 1] > WATER_LEVEL + 0.2 && velocities[i + 1] > 0) || positions[i + 1] < BOUNDS.yMin - 3.0) {
+          positions[i] = spoutX + (Math.random() - 0.5) * 0.4;
           positions[i + 1] = spoutY + (Math.random() - 0.5) * 0.5;
-          positions[i + 2] = spoutZ + (Math.random() - 0.5) * 0.3;
+          positions[i + 2] = spoutZ + (Math.random() - 0.5) * 0.4;
           
-          // Reset to strong downward velocity
-          velocities[i] = (Math.random() - 0.5) * 0.01;
-          velocities[i + 1] = - (Math.random() * 0.1 + 0.25); // Reset to strong downward
-          velocities[i + 2] = (Math.random() - 0.5) * 0.01;
+          // Reset to aggressive downward velocity
+          velocities[i] = (Math.random() - 0.5) * 0.02;
+          velocities[i + 1] = - (Math.random() * 0.2 + 0.4); 
+          velocities[i + 2] = (Math.random() - 0.5) * 0.02;
         }
       }
 

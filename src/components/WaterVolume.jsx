@@ -43,24 +43,28 @@ const WaterVolume = () => {
           float refraction = sin(vWorldPosition.x * 0.3 + time * 0.5) *
                             cos(vWorldPosition.y * 0.2 + time * 0.4) * 0.5 + 0.5;
 
-          // Light rays from above (simplified)
-          float lightRay = (vPosition.y + 12.5) / 25.0; // Depth-based
+          // Light rays from above - CONCENTRATED AT TOP
+          // Standardize Y to 0-1 range relative to water volume
+          float relativeY = smoothstep(-15.0, 12.0, vPosition.y);
+          
+          // Refractions ONLY visible near top (fade out quickly below)
+          float lightRay = pow(relativeY, 4.0); // Exponential fade for top-heavy effect
 
-          // Simple god ray effect
+          // Simple god ray effect - confined to top
           float godRay = simpleNoise(vec3(vWorldPosition.x * 0.1, vWorldPosition.y * 0.2 + time * 0.3, vWorldPosition.z * 0.1));
-          godRay = smoothstep(0.4, 0.6, godRay) * lightRay * 0.3;
+          godRay = smoothstep(0.4, 0.6, godRay) * lightRay * 0.5;
 
           // Depth color variation - More pronounced
           vec3 deepColor = vec3(0.02, 0.15, 0.35); // Darker deep blue
           vec3 shallowColor = vec3(0.2, 0.5, 0.6); // Lighter teal/blue
           vec3 finalColor = mix(deepColor, shallowColor, lightRay);
 
-          // Add subtle effects
-          finalColor += vec3(0.3, 0.5, 0.7) * refraction * 0.15; // Stronger refraction highlight
-          finalColor += vec3(0.6, 0.8, 1.0) * godRay * 0.5; // Brighter god rays
+          // Add subtle effects - mostly at top
+          finalColor += vec3(0.3, 0.5, 0.7) * refraction * 0.15 * lightRay; // Only refract at top
+          finalColor += vec3(0.6, 0.8, 1.0) * godRay;
 
-          // Subtle water presence - Increased alpha for better visibility
-          float alpha = 0.25; // Increased from 0.15
+          // Subtle water presence
+          float alpha = 0.25;
 
           // Distance fade (fake fog)
           float dist = gl_FragCoord.z / gl_FragCoord.w;
@@ -84,10 +88,11 @@ const WaterVolume = () => {
   });
 
   // Interior water volume - fill from substrate to water surface
-  const volumeWidth = TANK_WIDTH - 1;
-  const waterHeight = WATER_LEVEL - (-TANK_HEIGHT / 2 + 0.6); // From substrate top to water level
-  const volumeDepth = TANK_DEPTH - 1;
-  const waterYPosition = (-TANK_HEIGHT / 2 + 0.6 + WATER_LEVEL) / 2; // Center between substrate and surface
+  // WIDENED to fill gaps (Tank width is 40, glass is 0.3)
+  const volumeWidth = TANK_WIDTH - 0.7; // Tighter fit
+  const waterHeight = WATER_LEVEL - (-TANK_HEIGHT / 2 + 0.6); 
+  const volumeDepth = TANK_DEPTH - 0.7; // Tighter fit
+  const waterYPosition = (-TANK_HEIGHT / 2 + 0.6 + WATER_LEVEL) / 2;
 
   return (
     <mesh
