@@ -73,7 +73,7 @@ const WaterVolume = () => {
       transparent: true,
       side: THREE.DoubleSide,
       depthWrite: false,
-      blending: THREE.AdditiveBlending,
+      blending: THREE.NormalBlending, // Changed from Additive to Normal for better visibility
     });
   }, []);
 

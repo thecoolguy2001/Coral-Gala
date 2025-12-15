@@ -32,6 +32,7 @@ const TankContainer = ({ isOutsideView }) => {
           transmission={0.95}
           thickness={glassThickness}
           envMapIntensity={1}
+          depthWrite={false} // Prevent occlusion
         />
       </mesh>
 
@@ -45,6 +46,7 @@ const TankContainer = ({ isOutsideView }) => {
           roughness={0.1}
           metalness={0.0}
           transmission={0.7}
+          depthWrite={false} // Prevent occlusion
         />
       </mesh>
 
@@ -59,6 +61,7 @@ const TankContainer = ({ isOutsideView }) => {
           metalness={0.0}
           transmission={0.95}
           thickness={glassThickness}
+          depthWrite={false} // Prevent occlusion
         />
       </mesh>
 
@@ -73,6 +76,7 @@ const TankContainer = ({ isOutsideView }) => {
           metalness={0.0}
           transmission={0.95}
           thickness={glassThickness}
+          depthWrite={false} // Prevent occlusion
         />
       </mesh>
 
@@ -86,6 +90,7 @@ const TankContainer = ({ isOutsideView }) => {
           roughness={0.05}
           metalness={0.0}
           transmission={0.95}
+          depthWrite={false} // Prevent occlusion
         />
       </mesh>
 

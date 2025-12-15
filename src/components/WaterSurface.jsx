@@ -150,7 +150,8 @@ const WaterSurface = () => {
           color *= 1.0 + depthVar;
 
           // Variable transparency - subtle and realistic
-          float alpha = mix(0.25, 0.5, edgeFoam + fresnel * 0.3);
+          // INCREASED ALPHA for visibility
+          float alpha = mix(0.4, 0.7, edgeFoam + fresnel * 0.5);
 
           gl_FragColor = vec4(color, alpha);
         }
