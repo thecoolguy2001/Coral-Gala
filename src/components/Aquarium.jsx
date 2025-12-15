@@ -5,6 +5,7 @@ import TankContainer from './TankContainer';
 import WaterSurface from './WaterSurface';
 import WaterVolume from './WaterVolume';
 import BubbleJet from './BubbleJet';
+import AmbientBubbles from './AmbientBubbles';
 import HOBFilter from './HOBFilter';
 import RealisticCaustics from './RealisticCaustics';
 import Environment from './Environment';
@@ -137,6 +138,9 @@ const Scene = ({ fishData, onFishClick }) => {
 
       {/* 5. Bubble jet aerator (must render after fish) */}
       <BubbleJet />
+      
+      {/* 5b. Ambient scattered bubbles */}
+      <AmbientBubbles />
 
       {/* 6. Volumetric water with refraction (subtle overlay) */}
       <WaterVolume />
