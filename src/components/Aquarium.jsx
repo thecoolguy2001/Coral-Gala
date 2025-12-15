@@ -7,6 +7,7 @@ import WaterVolume from './WaterVolume';
 import BubbleJet from './BubbleJet';
 import HOBFilter from './HOBFilter';
 import RealisticCaustics from './RealisticCaustics';
+import Environment from './Environment';
 import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
 import { getDefaultFish } from '../models/fishModel';
 import { TANK_DEPTH } from '../constants/tankDimensions';
@@ -70,15 +71,15 @@ const Scene = ({ fishData, onFishClick }) => {
 
   return (
     <>
-      {/* PROFESSIONAL AQUARIUM LIGHTING SYSTEM - ENHANCED FOR VISIBILITY */}
+      {/* PROFESSIONAL AQUARIUM LIGHTING SYSTEM */}
 
-      {/* Strong ambient light - base illumination */}
-      <ambientLight intensity={1.2} color="#f0f4f8" />
+      {/* Ambient base illumination - softer and warmer */}
+      <ambientLight intensity={0.6} color="#e8f4ff" />
 
       {/* Primary overhead light - simulates aquarium hood light */}
       <directionalLight
-        position={[0, 30, 0]}
-        intensity={3.5}
+        position={[0, 35, 5]}
+        intensity={2.5}
         color="#ffffff"
         castShadow
         shadow-mapSize-width={2048}
@@ -89,55 +90,41 @@ const Scene = ({ fishData, onFishClick }) => {
         shadow-camera-bottom={-30}
       />
 
-      {/* Front key light - main visibility light */}
+      {/* Front fill light - gentle illumination */}
       <directionalLight
-        position={[0, 10, 30]}
-        intensity={2.0}
-        color="#ffffff"
-      />
-
-      {/* Back rim light - creates depth and edge definition */}
-      <pointLight
-        position={[0, 10, -20]}
-        intensity={1.5}
-        color="#e8f0ff"
-      />
-
-      {/* Side fill lights - reduce harsh shadows and improve fish visibility */}
-      <pointLight
-        position={[-25, 10, 0]}
+        position={[5, 15, 35]}
         intensity={1.2}
-        color="#fff8f0"
-      />
-      <pointLight
-        position={[25, 10, 0]}
-        intensity={1.2}
-        color="#fff8f0"
+        color="#f8f8ff"
       />
 
-      {/* Underwater accent lights - warm tone for realism */}
+      {/* Subtle back rim light */}
       <pointLight
-        position={[0, -8, 8]}
+        position={[0, 15, -25]}
         intensity={0.8}
-        color="#ffecd6"
+        color="#d0e8ff"
+      />
+
+      {/* Side accent lights - subtle */}
+      <pointLight
+        position={[-20, 8, 0]}
+        intensity={0.5}
+        color="#ffe8d0"
       />
       <pointLight
-        position={[-15, 0, 0]}
-        intensity={0.6}
-        color="#b0d0ff"
-      />
-      <pointLight
-        position={[15, 0, 0]}
-        intensity={0.6}
-        color="#b0d0ff"
+        position={[20, 8, 0]}
+        intensity={0.5}
+        color="#ffe8d0"
       />
 
       {/* Render in correct order for transparency */}
 
+      {/* 0. Environment (room, table, walls) */}
+      <Environment />
+
       {/* 1. Tank structure (opaque base) */}
       <TankContainer />
 
-      {/* 2. Realistic light caustics */}
+      {/* 2. Realistic light caustics - subtle */}
       <RealisticCaustics />
 
       {/* 3. Fish swimming in the tank */}
@@ -229,7 +216,7 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
           style={{
             width: '100%',
             height: '100%',
-            background: 'linear-gradient(to bottom, #0a0a0a, #1a1a2a, #0a0a0a)',
+            background: 'linear-gradient(to bottom, #2c3e50, #34495e, #2c3e50)',
             position: 'relative'
           }}
           onCreated={({ camera }) => {

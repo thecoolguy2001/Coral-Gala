@@ -59,8 +59,8 @@ const WaterVolume = () => {
           finalColor += vec3(0.3, 0.5, 0.7) * refraction * 0.08;
           finalColor += vec3(0.6, 0.8, 1.0) * godRay;
 
-          // INCREASED VISIBILITY - Make water actually visible
-          float alpha = 0.25;
+          // Subtle water presence
+          float alpha = 0.15;
 
           gl_FragColor = vec4(finalColor, alpha);
         }

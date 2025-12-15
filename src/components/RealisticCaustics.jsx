@@ -14,7 +14,7 @@ const RealisticCaustics = () => {
     return new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        intensity: { value: 1.5 },
+        intensity: { value: 0.8 },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -80,7 +80,7 @@ const RealisticCaustics = () => {
           float depthFade = smoothstep(-12.5, 12.5, vPosition.y);
           color *= 0.5 + depthFade * 0.5;
 
-          gl_FragColor = vec4(color, caustics * 0.8);
+          gl_FragColor = vec4(color, caustics * 0.4);
         }
       `,
       transparent: true,
