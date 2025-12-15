@@ -39,10 +39,10 @@ const HOBFilter = () => {
   const filterHeight = 6;
   const filterDepth = 3;
 
-  // Position at top-left back corner
-  const filterX = -TANK_WIDTH / 2 + filterWidth / 2 + 2; // Left side
-  const filterY = TANK_HEIGHT / 2 + filterHeight / 2 - 1.5; // Hanging on rim
-  const filterZ = -TANK_DEPTH / 2 - filterDepth / 2 + 0.5; // On back wall
+  // Position at top-back, slightly right of center
+  const filterX = TANK_WIDTH / 2 - filterWidth - 2;
+  const filterY = TANK_HEIGHT / 2 + filterHeight / 2 - 0.5;
+  const filterZ = -TANK_DEPTH / 2;
 
   return (
     <group ref={filterRef} position={[filterX, filterY, filterZ]}>
