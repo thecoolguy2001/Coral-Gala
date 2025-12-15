@@ -14,29 +14,41 @@ const BubbleJet = () => {
   // Create bubble particles
   const bubblesGeometry = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
-    const count = 100; // 100 bubbles in the jet stream
+    const count = 300; // Increased count for 3 jets (100 per jet)
     const positions = new Float32Array(count * 3);
     const scales = new Float32Array(count);
     const velocities = new Float32Array(count * 3);
+    const sources = new Float32Array(count); // Store source index for each bubble
 
-    // Position bubbles INSIDE the tank boundaries
-    const jetX = -BOUNDS.x * 0.6; // Left side, inside tank bounds
-    const jetZ = BOUNDS.z * 0.3;  // Slightly forward, inside tank bounds
+    // Define 3 jet positions
+    const jetSources = [
+      { x: -BOUNDS.x * 0.6, z: BOUNDS.z * 0.3 }, // Left-Front
+      { x: BOUNDS.x * 0.6, z: -BOUNDS.z * 0.3 }, // Right-Back
+      { x: 0, z: -BOUNDS.z * 0.8 }               // Center-Back
+    ];
+    
     const bottomY = BOUNDS.yMin + 0.5; // Just above substrate
 
     for (let i = 0; i < count; i++) {
+      // Assign to one of the 3 sources
+      const sourceIdx = i % 3;
+      const source = jetSources[sourceIdx];
+      
+      // Store source index in a custom attribute if needed, 
+      // but for simple logic we can just use the modulo in the update loop too.
+      
       // Start bubbles at the bottom, spread them vertically
-      positions[i * 3] = jetX + (Math.random() - 0.5) * 1.0; // Small X spread
-      positions[i * 3 + 1] = bottomY + Math.random() * (WATER_LEVEL - bottomY); // Distributed from bottom to water surface
-      positions[i * 3 + 2] = jetZ + (Math.random() - 0.5) * 1.0; // Small Z spread
+      positions[i * 3] = source.x + (Math.random() - 0.5) * 1.0; 
+      positions[i * 3 + 1] = bottomY + Math.random() * (WATER_LEVEL - bottomY); 
+      positions[i * 3 + 2] = source.z + (Math.random() - 0.5) * 1.0; 
 
       // Random bubble sizes
       scales[i] = Math.random() * 0.3 + 0.1;
 
       // Upward velocity with slight horizontal drift
-      velocities[i * 3] = (Math.random() - 0.5) * 0.02; // Slight X drift
-      velocities[i * 3 + 1] = Math.random() * 0.05 + 0.03; // Upward
-      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.02; // Slight Z drift
+      velocities[i * 3] = (Math.random() - 0.5) * 0.02; 
+      velocities[i * 3 + 1] = Math.random() * 0.05 + 0.03; 
+      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.02; 
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -103,10 +115,14 @@ const BubbleJet = () => {
 
       const positions = bubblesRef.current.geometry.attributes.position.array;
       const velocities = bubblesRef.current.geometry.attributes.velocity.array;
-
-      const jetX = -BOUNDS.x * 0.6;
-      const jetZ = BOUNDS.z * 0.3;
       const bottomY = BOUNDS.yMin + 0.5;
+
+      // Define 3 jet positions matching initialization
+      const jetSources = [
+        { x: -BOUNDS.x * 0.6, z: BOUNDS.z * 0.3 }, // Left-Front
+        { x: BOUNDS.x * 0.6, z: -BOUNDS.z * 0.3 }, // Right-Back
+        { x: 0, z: -BOUNDS.z * 0.8 }               // Center-Back
+      ];
 
       for (let i = 0; i < positions.length; i += 3) {
         // Move bubbles upward
@@ -116,9 +132,14 @@ const BubbleJet = () => {
 
         // Reset bubbles that reach the water surface
         if (positions[i + 1] > WATER_LEVEL) {
-          positions[i] = jetX + (Math.random() - 0.5) * 1.0;
+          // Identify which source this bubble belongs to
+          const bubbleIndex = i / 3;
+          const sourceIdx = bubbleIndex % 3;
+          const source = jetSources[sourceIdx];
+
+          positions[i] = source.x + (Math.random() - 0.5) * 1.0;
           positions[i + 1] = bottomY; // Start at bottom
-          positions[i + 2] = jetZ + (Math.random() - 0.5) * 1.0;
+          positions[i + 2] = source.z + (Math.random() - 0.5) * 1.0;
         }
       }
 
