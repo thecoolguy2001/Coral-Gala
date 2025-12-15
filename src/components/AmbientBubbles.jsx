@@ -13,7 +13,7 @@ const AmbientBubbles = () => {
   // Create bubble particles
   const bubblesGeometry = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
-    const count = 50; // Fewer bubbles than the jet, scattered around
+    const count = 150; // Increased count for better fill
     const positions = new Float32Array(count * 3);
     const scales = new Float32Array(count);
     const velocities = new Float32Array(count * 3);
@@ -26,8 +26,8 @@ const AmbientBubbles = () => {
       positions[i * 3 + 1] = bottomY + Math.random() * (WATER_LEVEL - bottomY); // Distributed height
       positions[i * 3 + 2] = (Math.random() - 0.5) * (BOUNDS.z * 1.8); // Wide Z spread
 
-      // Random sizes - generally smaller than jet bubbles
-      scales[i] = Math.random() * 0.2 + 0.05;
+      // Random sizes - slightly larger for visibility
+      scales[i] = Math.random() * 0.25 + 0.08;
 
       // Slower upward velocity for ambient bubbles
       velocities[i * 3] = (Math.random() - 0.5) * 0.01; // Tiny X drift
@@ -84,7 +84,7 @@ const AmbientBubbles = () => {
           vec3 bubbleColor = vec3(0.8, 0.9, 1.0);
           bubbleColor += vec3(1.0) * highlight * 0.4;
 
-          float alpha = (1.0 - smoothstep(0.3, 0.5, dist)) * vAlpha * 0.6; // Lower alpha
+          float alpha = (1.0 - smoothstep(0.3, 0.5, dist)) * vAlpha * 0.8; // Increased visibility
           gl_FragColor = vec4(bubbleColor, alpha);
         }
       `,

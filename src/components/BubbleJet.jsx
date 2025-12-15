@@ -14,41 +14,30 @@ const BubbleJet = () => {
   // Create bubble particles
   const bubblesGeometry = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
-    const count = 300; // Increased count for 3 jets (100 per jet)
+    const count = 100; // Single strong jet stream
     const positions = new Float32Array(count * 3);
     const scales = new Float32Array(count);
     const velocities = new Float32Array(count * 3);
-    const sources = new Float32Array(count); // Store source index for each bubble
 
-    // Define 3 jet positions
-    const jetSources = [
-      { x: -BOUNDS.x * 0.6, z: BOUNDS.z * 0.3 }, // Left-Front (Original - closer to front)
-      { x: BOUNDS.x * 0.6, z: BOUNDS.z * 0.1 },  // Right-Middle (Moved closer to front)
-      { x: 0, z: BOUNDS.z * 0.2 }                // Center-Middle-Front (Moved much closer to front)
-    ];
-    
+    // Position bubbles aligned with the HOB Filter output (Top-Left Back)
+    // Filter is at left side, so jet should be below its output
+    const jetX = -BOUNDS.x + 3.5; // Left side, aligned with filter spout
+    const jetZ = -BOUNDS.z + 1.5; // Back wall, slightly forward
     const bottomY = BOUNDS.yMin + 0.5; // Just above substrate
 
     for (let i = 0; i < count; i++) {
-      // Assign to one of the 3 sources
-      const sourceIdx = i % 3;
-      const source = jetSources[sourceIdx];
-      
-      // Store source index in a custom attribute if needed, 
-      // but for simple logic we can just use the modulo in the update loop too.
-      
-      // Start bubbles at the bottom, spread them vertically
-      positions[i * 3] = source.x + (Math.random() - 0.5) * 1.0; 
+      // Start bubbles at the bottom, spread them vertically for initial fill
+      positions[i * 3] = jetX + (Math.random() - 0.5) * 0.8; // Tighter X spread
       positions[i * 3 + 1] = bottomY + Math.random() * (WATER_LEVEL - bottomY); 
-      positions[i * 3 + 2] = source.z + (Math.random() - 0.5) * 1.0; 
+      positions[i * 3 + 2] = jetZ + (Math.random() - 0.5) * 0.8; // Tighter Z spread
 
-      // Random bubble sizes
-      scales[i] = Math.random() * 0.3 + 0.1;
+      // Random bubble sizes - mixed large and small for turbulence
+      scales[i] = Math.random() * 0.35 + 0.1;
 
-      // Upward velocity with slight horizontal drift
-      velocities[i * 3] = (Math.random() - 0.5) * 0.02; 
-      velocities[i * 3 + 1] = Math.random() * 0.05 + 0.03; 
-      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.02; 
+      // Upward velocity with forward drift (pushed by filter flow)
+      velocities[i * 3] = (Math.random() + 0.2) * 0.03; // Drift right (away from wall)
+      velocities[i * 3 + 1] = Math.random() * 0.06 + 0.04; // Strong upward flow
+      velocities[i * 3 + 2] = (Math.random() + 0.1) * 0.03; // Drift forward
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -72,12 +61,11 @@ const BubbleJet = () => {
         void main() {
           vec3 pos = position;
 
-          // Add wobble to bubble movement
-          pos.x += sin(time * 3.0 + position.y * 0.2) * 0.2;
-          pos.z += cos(time * 2.5 + position.x * 0.2) * 0.15;
+          // Turbulent wobble for filter stream
+          pos.x += sin(time * 5.0 + position.y * 0.5) * 0.15;
+          pos.z += cos(time * 4.0 + position.x * 0.5) * 0.1;
 
-          // Calculate alpha based on height (fade out near water surface)
-          // Water level is at ${WATER_LEVEL.toFixed(1)}, fade starts 2 units below
+          // Fade out near water surface
           vAlpha = 1.0 - smoothstep(${(WATER_LEVEL - 2.0).toFixed(1)}, ${(WATER_LEVEL - 0.5).toFixed(1)}, pos.y);
 
           vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
@@ -89,17 +77,16 @@ const BubbleJet = () => {
         varying float vAlpha;
 
         void main() {
-          // Make bubbles circular
           vec2 center = gl_PointCoord - vec2(0.5);
           float dist = length(center);
           if (dist > 0.5) discard;
 
-          // Bubble with highlight (shiny effect)
-          float highlight = 1.0 - smoothstep(0.0, 0.3, length(center - vec2(-0.15, -0.15)));
-          vec3 bubbleColor = vec3(0.9, 0.95, 1.0);
-          bubbleColor += vec3(1.0) * highlight * 0.5;
+          // Sharp highlight
+          float highlight = 1.0 - smoothstep(0.0, 0.25, length(center - vec2(-0.15, -0.15)));
+          vec3 bubbleColor = vec3(0.95, 1.0, 1.0); // Very white/bright
+          bubbleColor += vec3(1.0) * highlight * 0.8;
 
-          float alpha = (1.0 - smoothstep(0.3, 0.5, dist)) * vAlpha * 0.9;
+          float alpha = (1.0 - smoothstep(0.3, 0.5, dist)) * vAlpha * 0.95;
           gl_FragColor = vec4(bubbleColor, alpha);
         }
       `,
@@ -115,31 +102,22 @@ const BubbleJet = () => {
 
       const positions = bubblesRef.current.geometry.attributes.position.array;
       const velocities = bubblesRef.current.geometry.attributes.velocity.array;
+      
+      const jetX = -BOUNDS.x + 3.5;
+      const jetZ = -BOUNDS.z + 1.5;
       const bottomY = BOUNDS.yMin + 0.5;
 
-      // Define 3 jet positions matching initialization
-      const jetSources = [
-        { x: -BOUNDS.x * 0.6, z: BOUNDS.z * 0.3 }, // Left-Front
-        { x: BOUNDS.x * 0.6, z: -BOUNDS.z * 0.3 }, // Right-Back
-        { x: 0, z: -BOUNDS.z * 0.8 }               // Center-Back
-      ];
-
       for (let i = 0; i < positions.length; i += 3) {
-        // Move bubbles upward
+        // Move bubbles
         positions[i] += velocities[i];
         positions[i + 1] += velocities[i + 1];
         positions[i + 2] += velocities[i + 2];
 
         // Reset bubbles that reach the water surface
         if (positions[i + 1] > WATER_LEVEL) {
-          // Identify which source this bubble belongs to
-          const bubbleIndex = i / 3;
-          const sourceIdx = bubbleIndex % 3;
-          const source = jetSources[sourceIdx];
-
-          positions[i] = source.x + (Math.random() - 0.5) * 1.0;
-          positions[i + 1] = bottomY; // Start at bottom
-          positions[i + 2] = source.z + (Math.random() - 0.5) * 1.0;
+          positions[i] = jetX + (Math.random() - 0.5) * 0.8;
+          positions[i + 1] = bottomY; 
+          positions[i + 2] = jetZ + (Math.random() - 0.5) * 0.8;
         }
       }
 
