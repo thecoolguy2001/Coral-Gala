@@ -19,6 +19,10 @@ const BubbleJet = () => {
     const scales = new Float32Array(count);
     const velocities = new Float32Array(count * 3);
 
+    // Calculate filter position (needed for spout)
+    const filterX = TANK_WIDTH / 2 - 4 - 2;
+    const filterZ = -TANK_DEPTH / 2;
+
     // Absolute positions
     const spoutX = filterX + (4 / 2 - 0.5); // Right side of filter
     const spoutY = WATER_LEVEL - 1.0; 
