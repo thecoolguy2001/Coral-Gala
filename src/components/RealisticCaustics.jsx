@@ -42,7 +42,8 @@ const RealisticCaustics = () => {
           float c = 1.0;
           float inten = 0.005;
 
-          for (int n = 0; n < 7; n++) {
+          // OPTIMIZED: Reduced iterations from 7 to 4 for performance
+          for (int n = 0; n < 4; n++) {
             float t = time * (1.0 - (3.5 / float(n + 1)));
             i = p + vec2(
               cos(t - i.x) + sin(t + i.y),
@@ -54,33 +55,33 @@ const RealisticCaustics = () => {
             ));
           }
 
-          c /= float(7);
+          c /= float(4);
           c = 1.17 - pow(c, 1.4);
           return pow(abs(c), 8.0);
         }
 
         void main() {
           // Create layered caustics for depth
-          vec2 uv = vUv * 2.0;
+          vec2 uv = vUv * 3.0; // Larger scale patterns
 
           float c1 = causticPattern(uv, time * 0.5);
           float c2 = causticPattern(uv * 0.8 + vec2(0.5), time * 0.4);
-          float c3 = causticPattern(uv * 1.3 + vec2(0.2, 0.7), time * 0.6);
 
-          float caustics = (c1 + c2 * 0.7 + c3 * 0.5) * intensity;
+          // Combined for stronger effect but cheaper calculation
+          float caustics = (c1 + c2 * 0.8) * intensity * 1.5;
 
           // Realistic underwater light color (blue-green tint)
-          vec3 lightColor = vec3(0.5, 0.85, 1.0); // Cyan-blue water light
+          vec3 lightColor = vec3(0.6, 0.9, 1.0); // Brighter cyan
           vec3 color = lightColor * caustics;
 
           // Add warm sun highlights
-          color += vec3(1.0, 0.95, 0.7) * caustics * 0.4;
+          color += vec3(1.0, 0.95, 0.8) * caustics * 0.6;
 
           // Fade based on depth (Y position)
           float depthFade = smoothstep(-12.5, 12.5, vPosition.y);
-          color *= 0.5 + depthFade * 0.5;
+          color *= 0.6 + depthFade * 0.4;
 
-          gl_FragColor = vec4(color, caustics * 0.4);
+          gl_FragColor = vec4(color, caustics * 0.5); // Increased alpha
         }
       `,
       transparent: true,

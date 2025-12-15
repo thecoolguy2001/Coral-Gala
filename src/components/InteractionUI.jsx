@@ -72,9 +72,19 @@ const InteractionUI = ({ disabled }) => {
     
     setIsLoading(true);
     try {
-      // This is where you would typically call your backend to create a checkout session.
-      // For this example, we'll assume a session ID is returned from your backend.
-      const sessionId = 'cs_test_YOUR_SESSION_ID'; // Placeholder
+      // Call our backend to create a checkout session
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const { sessionId } = await response.json();
 
       const { error } = await stripe.redirectToCheckout({
         sessionId,

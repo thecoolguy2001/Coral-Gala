@@ -14,14 +14,14 @@ const Environment = () => {
   const tableYPosition = -TANK_HEIGHT / 2 - FRAME_THICKNESS - tableHeight / 2 - 0.5;
 
   // Wall dimensions
-  const wallWidth = 100;
-  const wallHeight = 80;
-  const wallYPosition = 0;
-  const wallZPosition = -TANK_DEPTH / 2 - 15; // Behind the tank
+  const wallWidth = 300; // Significantly wider
+  const wallHeight = 150; // Taller
+  const wallYPosition = 20;
+  const wallZPosition = -TANK_DEPTH / 2 - 25; // Slightly further back
 
   // Floor dimensions (visible around table)
-  const floorWidth = 120;
-  const floorDepth = 100;
+  const floorWidth = 300;
+  const floorDepth = 200;
   const floorYPosition = tableYPosition - tableHeight / 2 - 0.1;
 
   return (
@@ -30,7 +30,7 @@ const Environment = () => {
       <mesh position={[0, wallYPosition, wallZPosition]} receiveShadow>
         <planeGeometry args={[wallWidth, wallHeight]} />
         <meshStandardMaterial
-          color="#d4cfc0"
+          color="#808080" // Darker grey as requested
           roughness={0.9}
           metalness={0.0}
         />

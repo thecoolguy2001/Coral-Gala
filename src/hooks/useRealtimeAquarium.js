@@ -204,13 +204,13 @@ const useRealtimeAquarium = (fishData) => {
     }
   
     // SMOOTH, REALISTIC FISH MOVEMENT
-    const separationDistance = 3.5;
-    const alignmentDistance = 8.0;
-    const cohesionDistance = 7.0;
-    const maxSpeed = 0.6; // Realistic swimming speed
-    const minSpeed = 0.25; // Gentle minimum movement
-    const maxForce = 0.03; // Smooth, gradual turns
-    const damping = 0.97; // Velocity damping for smoothness
+    const separationDistance = 4.0;
+    const alignmentDistance = 10.0;
+    const cohesionDistance = 10.0; // Increased to keep schools together
+    const maxSpeed = 0.5; // Slightly slower for scale
+    const minSpeed = 0.2;
+    const maxForce = 0.015; // Very low force for smooth, graceful turns
+    const damping = 0.98; // Less drag
   
     boids.forEach(boid => {
       const separation = new THREE.Vector3();
@@ -224,10 +224,13 @@ const useRealtimeAquarium = (fishData) => {
         if (boid === other) return;
         const dist = boid.position.distanceTo(other.position);
   
+        // Only perceive local neighbors
+        if (dist > 15.0) return;
+
         if (dist > 0 && dist < separationDistance) {
           const diff = new THREE.Vector3().subVectors(boid.position, other.position);
           diff.normalize();
-          diff.divideScalar(dist);
+          diff.divideScalar(dist); // Weight by distance
           separation.add(diff);
           separationCount++;
         }
@@ -243,60 +246,60 @@ const useRealtimeAquarium = (fishData) => {
         }
       });
   
-      // Apply boid forces with gentle, realistic weights
+      // Apply boid forces
       if (separationCount > 0) {
         separation.divideScalar(separationCount);
         separation.normalize();
-        separation.multiplyScalar(maxForce);
+        separation.multiplyScalar(maxForce * 1.5); // Stronger separation to avoid clipping
       }
       if (alignmentCount > 0) {
         alignment.divideScalar(alignmentCount);
         alignment.normalize();
         alignment.sub(boid.velocity.clone().normalize());
-        alignment.multiplyScalar(maxForce * 0.5);
+        alignment.multiplyScalar(maxForce * 0.8);
       }
       if (cohesionCount > 0) {
         cohesion.divideScalar(cohesionCount);
         cohesion.sub(boid.position);
         cohesion.normalize();
-        cohesion.multiplyScalar(maxForce * 0.5);
+        cohesion.multiplyScalar(maxForce * 0.4);
       }
 
-      // Apply forces gently for smooth, natural movement
-      boid.velocity.add(separation.multiplyScalar(1.2)); // Gentle separation
-      boid.velocity.add(alignment.multiplyScalar(0.6)); // Subtle alignment
-      boid.velocity.add(cohesion.multiplyScalar(0.4)); // Soft cohesion
+      // Apply forces
+      boid.velocity.add(separation);
+      boid.velocity.add(alignment);
+      boid.velocity.add(cohesion);
 
-      // Apply damping for smooth, realistic movement
+      // Apply damping
       boid.velocity.multiplyScalar(damping);
 
-      // Constrain Z movement to keep fish swimming more horizontally
-      boid.velocity.z *= 0.4;
+      // Constrain Z movement to keep fish swimming more horizontally (pseudo-2D preferance)
+      boid.velocity.z *= 0.3;
   
-      // Gentle boundary containment - smooth, natural turning
-      const margin = 4.0; // Larger margin for very gradual turning
-      const boundaryForce = 0.03; // Gentle steering force
+      // SOFT BOUNDARY CONTAINMENT
+      // Use a "soft wall" force that increases exponentially as they approach the edge
+      const margin = 5.0; 
+      const turnStrength = 0.002; // Base turn strength
 
-      // X bounds - gentle horizontal steering
-      if (Math.abs(boid.position.x) > BOUNDS.x - margin) {
-        const force = (Math.abs(boid.position.x) - (BOUNDS.x - margin)) / margin;
-        boid.velocity.x -= Math.sign(boid.position.x) * force * boundaryForce;
+      // X bounds
+      if (boid.position.x > BOUNDS.x - margin) {
+        boid.velocity.x -= turnStrength * Math.pow(boid.position.x - (BOUNDS.x - margin), 2);
+      } else if (boid.position.x < -BOUNDS.x + margin) {
+        boid.velocity.x += turnStrength * Math.pow((-BOUNDS.x + margin) - boid.position.x, 2);
       }
 
-      // Y bounds - gentle vertical steering
-      if (boid.position.y < BOUNDS.yMin + margin) {
-        const force = (BOUNDS.yMin + margin - boid.position.y) / margin;
-        boid.velocity.y += force * boundaryForce * 1.2;
-      }
+      // Y bounds
       if (boid.position.y > BOUNDS.yMax - margin) {
-        const force = (boid.position.y - (BOUNDS.yMax - margin)) / margin;
-        boid.velocity.y -= force * boundaryForce * 1.2;
+        boid.velocity.y -= turnStrength * Math.pow(boid.position.y - (BOUNDS.yMax - margin), 2);
+      } else if (boid.position.y < BOUNDS.yMin + margin) {
+        boid.velocity.y += turnStrength * Math.pow((BOUNDS.yMin + margin) - boid.position.y, 2);
       }
 
-      // Z bounds - gentle depth steering
-      if (Math.abs(boid.position.z) > BOUNDS.z - margin) {
-        const force = (Math.abs(boid.position.z) - (BOUNDS.z - margin)) / margin;
-        boid.velocity.z -= Math.sign(boid.position.z) * force * boundaryForce;
+      // Z bounds
+      if (boid.position.z > BOUNDS.z - margin) {
+        boid.velocity.z -= turnStrength * Math.pow(boid.position.z - (BOUNDS.z - margin), 2);
+      } else if (boid.position.z < -BOUNDS.z + margin) {
+        boid.velocity.z += turnStrength * Math.pow((-BOUNDS.z + margin) - boid.position.z, 2);
       }
 
       // Hard clamp as safety (fish should NEVER escape these bounds)
@@ -304,37 +307,39 @@ const useRealtimeAquarium = (fishData) => {
       boid.position.x = Math.max(-BOUNDS.x, Math.min(BOUNDS.x, boid.position.x));
       boid.position.y = Math.max(BOUNDS.yMin, Math.min(BOUNDS.yMax, boid.position.y));
       boid.position.z = Math.max(-BOUNDS.z, Math.min(BOUNDS.z, boid.position.z));
-
-      // Debug if fish was clamped
-      if (Math.abs(prevY - boid.position.y) > 0.01) {
-        console.warn('🚨 Fish CLAMPED:', boid.id, 'from y=', prevY, 'to y=', boid.position.y);
-      }
   
-      // Ensure fish keep moving smoothly
-      if (boid.velocity.length() < 0.1) {
-        // Give fish a gentle random direction if they get stuck
-        boid.velocity.set(
-          (Math.random() - 0.5) * 1.0,
-          (Math.random() - 0.5) * 0.5,
-          (Math.random() - 0.5) * 0.3
-        ).normalize().multiplyScalar(minSpeed);
+      // Random wandering if moving too slow (prevents getting stuck)
+      if (boid.velocity.length() < 0.05) {
+        boid.velocity.add(new THREE.Vector3(
+          (Math.random() - 0.5) * 0.05,
+          (Math.random() - 0.5) * 0.05,
+          (Math.random() - 0.5) * 0.05
+        ));
       }
 
-      // Maintain gentle minimum speed
-      if (boid.velocity.length() < minSpeed) {
+      // Clamp speed
+      const speed = boid.velocity.length();
+      if (speed > maxSpeed) {
+        boid.velocity.multiplyScalar(maxSpeed / speed);
+      } else if (speed < minSpeed) {
         boid.velocity.normalize().multiplyScalar(minSpeed);
       }
 
-      // Clamp to realistic speed range
-      boid.velocity.clampLength(minSpeed, maxSpeed);
-
-      // Update position with smooth movement
-      boid.position.add(boid.velocity.clone().multiplyScalar(delta));
+      // Update position
+      boid.position.add(boid.velocity.clone().multiplyScalar(delta * 60)); // Normalize to 60fps
   
       boid.ref.position.copy(boid.position);
+      
+      // Smooth rotation
       if (boid.velocity.length() > 0.1) {
         const lookTarget = boid.position.clone().add(boid.velocity.clone().normalize());
+        // Slerp rotation for smoothness could be done here, but lookAt is usually okay for small steps
         boid.ref.lookAt(lookTarget);
+        
+        // Add banking (roll) based on turn
+        // Calculate angular velocity or centripetal force approximation
+        // Simple visual banking:
+        // boid.bankAngle = -boid.velocity.x * 0.5; // Example
       }
     });
 

@@ -50,17 +50,22 @@ const WaterVolume = () => {
           float godRay = simpleNoise(vec3(vWorldPosition.x * 0.1, vWorldPosition.y * 0.2 + time * 0.3, vWorldPosition.z * 0.1));
           godRay = smoothstep(0.4, 0.6, godRay) * lightRay * 0.3;
 
-          // Depth color variation
-          vec3 deepColor = waterColor;
-          vec3 shallowColor = waterColor * 1.5 + vec3(0.1, 0.2, 0.3);
+          // Depth color variation - More pronounced
+          vec3 deepColor = vec3(0.02, 0.15, 0.35); // Darker deep blue
+          vec3 shallowColor = vec3(0.2, 0.5, 0.6); // Lighter teal/blue
           vec3 finalColor = mix(deepColor, shallowColor, lightRay);
 
           // Add subtle effects
-          finalColor += vec3(0.3, 0.5, 0.7) * refraction * 0.08;
-          finalColor += vec3(0.6, 0.8, 1.0) * godRay;
+          finalColor += vec3(0.3, 0.5, 0.7) * refraction * 0.15; // Stronger refraction highlight
+          finalColor += vec3(0.6, 0.8, 1.0) * godRay * 0.5; // Brighter god rays
 
-          // Subtle water presence
-          float alpha = 0.15;
+          // Subtle water presence - Increased alpha for better visibility
+          float alpha = 0.25; // Increased from 0.15
+
+          // Distance fade (fake fog)
+          float dist = gl_FragCoord.z / gl_FragCoord.w;
+          float fogFactor = smoothstep(10.0, 50.0, dist);
+          finalColor = mix(finalColor, vec3(0.05, 0.1, 0.2), fogFactor * 0.3);
 
           gl_FragColor = vec4(finalColor, alpha);
         }
