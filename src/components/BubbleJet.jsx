@@ -25,25 +25,25 @@ const BubbleJet = () => {
     const filterY = TANK_HEIGHT / 2 + 6 / 2 - 0.5; // Original HOB filter Y
     const filterZ = -TANK_DEPTH / 2; // Original HOB filter Z
     
-    // Spout is at [-filterWidth / 2 + 0.8, filterHeight / 2 - 0.5, filterDepth / 2] relative to filter group
-    // Absolute spout X, Y, Z
-    const spoutX = filterX - 4 / 2 + 0.8;
-    const spoutY = WATER_LEVEL; // Start exactly at water surface
-    const spoutZ = filterZ + 3 / 2 + 0.2; // Adjusted Z to match waterfall stream
+    // Spout is now the Intake Tube at [filterWidth / 2 - 0.5, -filterHeight / 2 + 1, 0] (relative)
+    // Absolute positions
+    const spoutX = filterX + (4 / 2 - 0.5); // Right side of filter
+    const spoutY = WATER_LEVEL - 3.0; // Start deeper, coming out of the tube bottom
+    const spoutZ = filterZ; // Centered Z
 
     for (let i = 0; i < count; i++) {
-      // Start bubbles near the spout impact point
-      positions[i * 3] = spoutX + (Math.random() - 0.5) * 0.4; 
-      positions[i * 3 + 1] = spoutY - Math.random() * 2.0; // Start slightly underwater too
-      positions[i * 3 + 2] = spoutZ + (Math.random() - 0.5) * 0.4; 
+      // Start bubbles near the tube bottom
+      positions[i * 3] = spoutX + (Math.random() - 0.5) * 0.3; 
+      positions[i * 3 + 1] = spoutY + (Math.random() - 0.5) * 0.5; 
+      positions[i * 3 + 2] = spoutZ + (Math.random() - 0.5) * 0.3; 
 
       // Random bubble sizes
       scales[i] = Math.random() * 0.35 + 0.1;
 
-      // Initial velocity: Strong downward push from waterfall
-      velocities[i * 3] = -(Math.random() - 0.5) * 0.02; 
-      velocities[i * 3 + 1] = - (Math.random() * 0.05 + 0.05); // Stronger downward push
-      velocities[i * 3 + 2] = (Math.random() * 0.04 + 0.02); // Forward push
+      // Initial velocity: Downward push from tube
+      velocities[i * 3] = (Math.random() - 0.5) * 0.01; 
+      velocities[i * 3 + 1] = - (Math.random() * 0.03 + 0.02); // Downward
+      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.01; 
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -67,7 +67,7 @@ const BubbleJet = () => {
         void main() {
           vec3 pos = position;
 
-          // Turbulent wobble for filter stream
+          // Turbulent wobble
           pos.x += sin(time * 8.0 + position.y * 0.5) * 0.1;
           pos.z += cos(time * 6.0 + position.x * 0.5) * 0.1;
 
@@ -90,7 +90,7 @@ const BubbleJet = () => {
 
           // Sharp highlight
           float highlight = 1.0 - smoothstep(0.0, 0.25, length(center - vec2(-0.15, -0.15)));
-          vec3 bubbleColor = vec3(0.95, 1.0, 1.0); // Very white/bright
+          vec3 bubbleColor = vec3(0.95, 1.0, 1.0); 
           bubbleColor += vec3(1.0) * highlight * 0.8;
 
           float alpha = (1.0 - smoothstep(0.3, 0.5, dist)) * vAlpha * 0.95;
@@ -113,37 +113,34 @@ const BubbleJet = () => {
       const filterX = TANK_WIDTH / 2 - 4 - 2;
       const filterZ = -TANK_DEPTH / 2;
 
-      const spoutX = filterX - 4 / 2 + 0.8;
-      const spoutY = WATER_LEVEL; 
-      const spoutZ = filterZ + 3 / 2 + 0.2;
+      // Update spout position in animation loop too
+      const spoutX = filterX + (4 / 2 - 0.5);
+      const spoutY = WATER_LEVEL - 3.0; 
+      const spoutZ = filterZ;
       
-      const gravity = new THREE.Vector3(0, -0.0005, 0); // Simulate buoyancy
+      const gravity = new THREE.Vector3(0, -0.0005, 0); 
 
       for (let i = 0; i < positions.length; i += 3) {
         // Apply physics
         velocities[i] += gravity.x;
-        // Stronger buoyancy recovery
-        velocities[i + 1] += 0.0015; 
+        velocities[i + 1] += 0.0015; // Buoyancy
         velocities[i + 2] += gravity.z;
 
-        // Terminal upward velocity
         if (velocities[i + 1] > 0.05) velocities[i + 1] = 0.05;
 
         positions[i] += velocities[i];
         positions[i + 1] += velocities[i + 1];
         positions[i + 2] += velocities[i + 2];
         
-        // Reset bubbles that reach the water surface (after being submerged)
-        // Only reset if they are moving UP and are above surface
+        // Reset logic
         if ((positions[i + 1] > WATER_LEVEL + 0.2 && velocities[i + 1] > 0) || positions[i + 1] < BOUNDS.yMin) {
-          positions[i] = spoutX + (Math.random() - 0.5) * 0.4;
-          positions[i + 1] = spoutY; // Reset to surface
-          positions[i + 2] = spoutZ + (Math.random() - 0.5) * 0.4;
+          positions[i] = spoutX + (Math.random() - 0.5) * 0.3;
+          positions[i + 1] = spoutY + (Math.random() - 0.5) * 0.5;
+          positions[i + 2] = spoutZ + (Math.random() - 0.5) * 0.3;
           
-          // Reset initial "shot" velocities
-          velocities[i] = -(Math.random() - 0.5) * 0.02;
-          velocities[i + 1] = - (Math.random() * 0.05 + 0.05); // Downward
-          velocities[i + 2] = (Math.random() * 0.04 + 0.02);
+          velocities[i] = (Math.random() - 0.5) * 0.01;
+          velocities[i + 1] = - (Math.random() * 0.03 + 0.02);
+          velocities[i + 2] = (Math.random() - 0.5) * 0.01;
         }
       }
 
