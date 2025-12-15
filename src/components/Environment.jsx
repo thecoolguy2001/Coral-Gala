@@ -1,0 +1,93 @@
+import React from 'react';
+import * as THREE from 'three';
+import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, FRAME_THICKNESS } from '../constants/tankDimensions';
+
+/**
+ * Environment - Creates a realistic room environment for the aquarium
+ * Includes table surface and wall background
+ */
+const Environment = () => {
+  // Table dimensions
+  const tableWidth = TANK_WIDTH + 20;
+  const tableDepth = TANK_DEPTH + 15;
+  const tableHeight = 2;
+  const tableYPosition = -TANK_HEIGHT / 2 - FRAME_THICKNESS - tableHeight / 2 - 0.5;
+
+  // Wall dimensions
+  const wallWidth = 100;
+  const wallHeight = 80;
+  const wallYPosition = 0;
+  const wallZPosition = -TANK_DEPTH / 2 - 15; // Behind the tank
+
+  // Floor dimensions (visible around table)
+  const floorWidth = 120;
+  const floorDepth = 100;
+  const floorYPosition = tableYPosition - tableHeight / 2 - 0.1;
+
+  return (
+    <group>
+      {/* WALL - Behind the tank */}
+      <mesh position={[0, wallYPosition, wallZPosition]} receiveShadow>
+        <planeGeometry args={[wallWidth, wallHeight]} />
+        <meshStandardMaterial
+          color="#d4cfc0"
+          roughness={0.9}
+          metalness={0.0}
+        />
+      </mesh>
+
+      {/* TABLE SURFACE - Under the tank */}
+      <mesh position={[0, tableYPosition, 0]} receiveShadow>
+        <boxGeometry args={[tableWidth, tableHeight, tableDepth]} />
+        <meshStandardMaterial
+          color="#8b7355"
+          roughness={0.6}
+          metalness={0.1}
+        />
+      </mesh>
+
+      {/* TABLE LEGS - Four corners */}
+      {[
+        [-tableWidth / 2 + 3, tableYPosition - tableHeight / 2 - 15, -tableDepth / 2 + 3],
+        [tableWidth / 2 - 3, tableYPosition - tableHeight / 2 - 15, -tableDepth / 2 + 3],
+        [-tableWidth / 2 + 3, tableYPosition - tableHeight / 2 - 15, tableDepth / 2 - 3],
+        [tableWidth / 2 - 3, tableYPosition - tableHeight / 2 - 15, tableDepth / 2 - 3],
+      ].map((pos, i) => (
+        <mesh key={`leg-${i}`} position={pos}>
+          <cylinderGeometry args={[1, 1, 30, 8]} />
+          <meshStandardMaterial
+            color="#6b5944"
+            roughness={0.7}
+            metalness={0.1}
+          />
+        </mesh>
+      ))}
+
+      {/* FLOOR - Wooden floor boards pattern */}
+      <mesh
+        position={[0, floorYPosition, 5]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        receiveShadow
+      >
+        <planeGeometry args={[floorWidth, floorDepth]} />
+        <meshStandardMaterial
+          color="#b5956a"
+          roughness={0.8}
+          metalness={0.0}
+        />
+      </mesh>
+
+      {/* BASEBOARD - Where wall meets floor */}
+      <mesh position={[0, wallYPosition - wallHeight / 2 + 2, wallZPosition + 0.5]}>
+        <boxGeometry args={[wallWidth, 4, 1]} />
+        <meshStandardMaterial
+          color="#f5f5f0"
+          roughness={0.7}
+          metalness={0.0}
+        />
+      </mesh>
+    </group>
+  );
+};
+
+export default Environment;
