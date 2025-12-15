@@ -68,14 +68,14 @@ const useRealtimeAquarium = (fishData) => {
       } else if (f.velocity && Array.isArray(f.velocity) && f.velocity.length === 3) {
         velocityArray = f.velocity;
       } else {
-        // Initial velocity seeds to ensure fish move from the start
+        // Gentle initial velocity seeds for slow, realistic movement
         const velocitySeeds = [
-          [1.0, 0.3, 0.0],
-          [-1.0, 0.5, 0.0],
-          [0.5, -1.0, 0.0],
-          [-0.5, 1.0, 0.0],
-          [0.8, 0.0, 0.0],
-          [-0.8, 0.0, 0.0],
+          [0.2, 0.05, 0.0],
+          [-0.2, 0.08, 0.0],
+          [0.15, -0.1, 0.0],
+          [-0.15, 0.12, 0.0],
+          [0.18, 0.0, 0.05],
+          [-0.18, 0.0, -0.05],
         ];
         velocityArray = velocitySeeds[index % velocitySeeds.length];
       }
@@ -204,11 +204,14 @@ const useRealtimeAquarium = (fishData) => {
     if (now - lastUpdateTime.current < 2000) return;
     lastUpdateTime.current = now;
   
-    const separationDistance = 4.0;
-    const alignmentDistance = 6.0;
-    const cohesionDistance = 5.0;
-    const maxSpeed = 2.0;
-    const maxForce = 0.08;
+    // SLOW, REALISTIC FISH MOVEMENT - completely redesigned
+    const separationDistance = 3.5;
+    const alignmentDistance = 8.0;
+    const cohesionDistance = 7.0;
+    const maxSpeed = 0.4; // Much slower, realistic swimming
+    const minSpeed = 0.15; // Gentle minimum movement
+    const maxForce = 0.02; // Smoother, gradual turns
+    const damping = 0.98; // Velocity damping for smoothness
   
     boids.forEach(boid => {
       const separation = new THREE.Vector3();
@@ -241,49 +244,60 @@ const useRealtimeAquarium = (fishData) => {
         }
       });
   
+      // Apply boid forces with gentle, realistic weights
       if (separationCount > 0) {
         separation.divideScalar(separationCount);
+        separation.normalize();
+        separation.multiplyScalar(maxForce);
       }
       if (alignmentCount > 0) {
         alignment.divideScalar(alignmentCount);
-        alignment.sub(boid.velocity).clampLength(0, maxForce);
+        alignment.normalize();
+        alignment.sub(boid.velocity.clone().normalize());
+        alignment.multiplyScalar(maxForce * 0.5);
       }
       if (cohesionCount > 0) {
         cohesion.divideScalar(cohesionCount);
         cohesion.sub(boid.position);
-        cohesion.sub(boid.velocity).clampLength(0, maxForce);
+        cohesion.normalize();
+        cohesion.multiplyScalar(maxForce * 0.5);
       }
-      
-      boid.velocity.add(separation.multiplyScalar(1.5));
-      boid.velocity.add(alignment.multiplyScalar(1.0));
-      boid.velocity.add(cohesion.multiplyScalar(1.0));
-      
-      // Constrain Z movement to keep fish more 2D
-      boid.velocity.z *= 0.3;
-  
-      // Smooth boundary containment - stronger steering to keep fish visible and centered
-      const margin = 3.0; // Margin for gradual turning
 
-      // X bounds (symmetric)
+      // Apply forces gently for smooth, natural movement
+      boid.velocity.add(separation.multiplyScalar(1.2)); // Gentle separation
+      boid.velocity.add(alignment.multiplyScalar(0.6)); // Subtle alignment
+      boid.velocity.add(cohesion.multiplyScalar(0.4)); // Soft cohesion
+
+      // Apply damping for smooth, realistic movement
+      boid.velocity.multiplyScalar(damping);
+
+      // Constrain Z movement to keep fish swimming more horizontally
+      boid.velocity.z *= 0.4;
+  
+      // Gentle boundary containment - smooth, natural turning
+      const margin = 4.0; // Larger margin for very gradual turning
+      const boundaryForce = 0.03; // Gentle steering force
+
+      // X bounds - gentle horizontal steering
       if (Math.abs(boid.position.x) > BOUNDS.x - margin) {
         const force = (Math.abs(boid.position.x) - (BOUNDS.x - margin)) / margin;
-        boid.velocity.x -= Math.sign(boid.position.x) * force * 0.8;
+        boid.velocity.x -= Math.sign(boid.position.x) * force * boundaryForce;
       }
 
-      // Y bounds (asymmetric - different top and bottom)
+      // Y bounds - gentle vertical steering
       if (boid.position.y < BOUNDS.yMin + margin) {
         const force = (BOUNDS.yMin + margin - boid.position.y) / margin;
-        boid.velocity.y += force * 1.2; // Push upward strongly
+        boid.velocity.y += force * boundaryForce * 1.2;
       }
       if (boid.position.y > BOUNDS.yMax - margin) {
         const force = (boid.position.y - (BOUNDS.yMax - margin)) / margin;
-        boid.velocity.y -= force * 1.2; // Push downward strongly
+        boid.velocity.y -= force * boundaryForce * 1.2;
       }
 
-      // Z bounds (symmetric)
+      // Z bounds - gentle depth steering
       if (Math.abs(boid.position.z) > BOUNDS.z - margin) {
         const force = (Math.abs(boid.position.z) - (BOUNDS.z - margin)) / margin;
-        boid.velocity.z -= Math.sign(boid.position.z) * force * 0.8;
+        boid.velocity.z -= Math.sign(boid.position.z) * force * boundaryForce;
       }
 
       // Hard clamp as safety (fish should NEVER escape these bounds)
@@ -297,21 +311,25 @@ const useRealtimeAquarium = (fishData) => {
         console.warn('🚨 Fish CLAMPED:', boid.id, 'from y=', prevY, 'to y=', boid.position.y);
       }
   
-      // Ensure fish always keep moving
-      if (boid.velocity.length() < 0.1) {
-        // Give fish a random direction if they get stuck
-        // Prefer horizontal movement over vertical to keep fish visible
+      // Ensure fish keep moving gently
+      if (boid.velocity.length() < 0.05) {
+        // Give fish a gentle random direction if they get stuck
         boid.velocity.set(
-          (Math.random() - 0.5) * 4,
-          (Math.random() - 0.5) * 2,
-          (Math.random() - 0.5) * 0.5
-        ).normalize().multiplyScalar(1.2);
+          (Math.random() - 0.5) * 0.6,
+          (Math.random() - 0.5) * 0.3,
+          (Math.random() - 0.5) * 0.2
+        ).normalize().multiplyScalar(minSpeed);
       }
-      
-      if (boid.velocity.length() < 1.0) {
-        boid.velocity.normalize().multiplyScalar(1.2);
+
+      // Maintain gentle minimum speed
+      if (boid.velocity.length() < minSpeed) {
+        boid.velocity.normalize().multiplyScalar(minSpeed);
       }
-      boid.velocity.clampLength(1.0, maxSpeed);
+
+      // Clamp to realistic speed range
+      boid.velocity.clampLength(minSpeed, maxSpeed);
+
+      // Update position with smooth movement
       boid.position.add(boid.velocity.clone().multiplyScalar(delta));
   
       boid.ref.position.copy(boid.position);
