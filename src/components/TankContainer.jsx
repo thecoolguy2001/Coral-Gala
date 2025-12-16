@@ -11,9 +11,9 @@ const TankContainer = ({ isOutsideView }) => {
   const tankRef = useRef();
 
   // Use shared tank dimensions
-  const tankWidth = TANK_WIDTH;
+  const tankWidth = TANK_WIDTH - 0.4; // Slightly smaller to close gap with water
   const tankHeight = TANK_HEIGHT;
-  const tankDepth = TANK_DEPTH;
+  const tankDepth = TANK_DEPTH - 0.4; // Slightly smaller to close gap with water
   const glassThickness = GLASS_THICKNESS;
   const frameThickness = FRAME_THICKNESS;
 

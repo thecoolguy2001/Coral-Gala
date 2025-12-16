@@ -15,7 +15,7 @@ const WaterSurface = () => {
     return new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        waterColor: { value: new THREE.Color(0.05, 0.15, 0.3) }, // Darker, more realistic
+        waterColor: { value: new THREE.Color(0.1, 0.3, 0.5) }, // Matched to Volume top
         tankWidth: { value: TANK_WIDTH - 0.5 },
         tankDepth: { value: TANK_DEPTH - 0.5 },
       },
@@ -129,7 +129,7 @@ const WaterSurface = () => {
           float edgeFoam = smoothstep(0.88, 0.96, vDistanceFromEdge);
           float foamNoise = noise(vUv * 50.0 + time * 0.5);
           edgeFoam *= foamNoise;
-          vec3 foamColor = vec3(0.9, 0.95, 1.0);
+          vec3 foamColor = vec3(0.2, 0.4, 0.6); // Blue foam, not white
           color = mix(color, foamColor, edgeFoam * 0.8);
 
           // Dynamic sparkles - more visible and realistic

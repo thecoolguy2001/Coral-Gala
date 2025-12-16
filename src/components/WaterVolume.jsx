@@ -33,38 +33,22 @@ const WaterVolume = () => {
         varying vec3 vPosition;
         varying vec3 vWorldPosition;
 
-        // OPTIMIZED: Simple noise (no expensive loops)
-        float simpleNoise(vec3 p) {
-          return fract(sin(dot(p, vec3(12.9898, 78.233, 45.164))) * 43758.5453);
-        }
-
         void main() {
-          // Simple animated refraction pattern
-          float refraction = sin(vWorldPosition.x * 0.3 + time * 0.5) *
-                            cos(vWorldPosition.y * 0.2 + time * 0.4) * 0.5 + 0.5;
-
-          // Light rays from above - CONCENTRATED AT TOP
-          // Standardize Y to 0-1 range relative to water volume
-          float relativeY = smoothstep(-15.0, 12.0, vPosition.y);
+          // Pure gradient based on height - No static noise patterns
           
-          // Refractions ONLY visible near top (fade out quickly below)
-          float lightRay = pow(relativeY, 4.0); // Exponential fade for top-heavy effect
+          // Map Y position to 0-1 range (approximate tank height)
+          // Tank is centered at 0, height is roughly 25
+          float heightFactor = smoothstep(-12.5, 12.5, vPosition.y);
 
-          // Simple god ray effect - confined to top
-          float godRay = simpleNoise(vec3(vWorldPosition.x * 0.1, vWorldPosition.y * 0.2 + time * 0.3, vWorldPosition.z * 0.1));
-          godRay = smoothstep(0.4, 0.6, godRay) * lightRay * 0.5;
+          // Colors
+          vec3 deepColor = vec3(0.02, 0.1, 0.25); // Deep blue
+          vec3 surfaceColor = vec3(0.1, 0.3, 0.5); // Matches surface look
+          
+          // Smooth blend
+          vec3 finalColor = mix(deepColor, surfaceColor, heightFactor);
 
-          // Depth color variation - More pronounced
-          vec3 deepColor = vec3(0.02, 0.15, 0.35); // Darker deep blue
-          vec3 shallowColor = vec3(0.2, 0.5, 0.6); // Lighter teal/blue
-          vec3 finalColor = mix(deepColor, shallowColor, lightRay);
-
-          // Add subtle effects - mostly at top
-          finalColor += vec3(0.3, 0.5, 0.7) * refraction * 0.15 * lightRay; // Only refract at top
-          finalColor += vec3(0.6, 0.8, 1.0) * godRay;
-
-          // Subtle water presence
-          float alpha = 0.25;
+          // Uniform transparency that increases slightly at the top for blending
+          float alpha = mix(0.3, 0.15, heightFactor); 
 
           gl_FragColor = vec4(finalColor, alpha);
         }
