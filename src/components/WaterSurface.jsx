@@ -170,7 +170,7 @@ const WaterSurface = () => {
       rotation={[-Math.PI / 2, 0, 0]}
       renderOrder={1000} // Render last for proper transparency
     >
-      <planeGeometry args={[INTERIOR_WIDTH + 0.1, INTERIOR_DEPTH + 0.1, 128, 128]} />
+      <planeGeometry args={[INTERIOR_WIDTH + 0.1, INTERIOR_DEPTH + 0.1, 256, 256]} />
       <primitive object={waterMaterial} />
     </mesh>
   );
