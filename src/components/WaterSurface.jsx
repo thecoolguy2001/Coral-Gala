@@ -46,27 +46,26 @@ const WaterSurface = () => {
           // Apply waves (stronger in center, subtle at edges)
           float edgeFactor = 1.0 - smoothstep(0.85, 1.0, vDistanceFromEdge);
 
-          // REALISTIC AQUARIUM WATER - More random and wild waves
-          // Large slow swells (from filter, general movement)
-          float swell1 = sin(pos.x * 0.7 + time * 1.0) * 0.35; // Larger amplitude, faster
-          float swell2 = cos(pos.y * 0.6 + time * 0.9) * 0.35;
+          // SMOOTHER, GENTLE WAVES (Reverted to original style)
+          // Large slow swells
+          float swell1 = sin(pos.x * 1.5 + time * 1.0) * 0.1;
+          float swell2 = sin(pos.y * 1.2 + time * 0.8) * 0.1;
 
-          // Medium frequency waves - main visible motion, more chaotic
-          float waveA = sin(pos.x * 0.5 + time * 1.8) * 0.25 + cos(pos.y * 0.4 + time * 1.6) * 0.2; // Stronger, faster
-          float waveB = cos(pos.x * 0.6 + time * 2.2) * 0.22 + sin(pos.y * 0.7 + time * 2.0) * 0.15;
+          // Medium frequency waves - Gentle motion
+          float wave1 = sin(pos.x * 0.2 + time * 0.5) * 0.1;
+          float wave2 = cos(pos.z * 0.1 + time * 0.3) * 0.15;
           
-          // Small capillary waves - surface tension ripples (faster and more numerous)
-          float cap1 = sin(pos.x * 15.0 - time * 8.0) * 0.08; // More aggressive;
-          float cap2 = cos(pos.y * 14.0 + time * 7.0) * 0.08;
-          float cap3 = sin(pos.x * 18.0 + time * 9.0) * 0.05;
-          
-          // Filter output creates circular ripples (tuned for aggressiveness)
+          // Small capillary waves - surface tension ripples (Very subtle)
+          float cap1 = cos(pos.x * 8.0 - time * 2.0) * 0.02;
+          float cap2 = cos(pos.y * 7.0 + time * 1.8) * 0.02;
+
+          // Filter output creates circular ripples (Softened)
           vec2 filterPos = vec2(tankWidth * 0.35, -tankDepth * 0.4); 
           float filterDist = length(vec2(pos.x, pos.y) - filterPos);
-          float filterRipple = sin(filterDist * 10.0 - time * 10.0) * 0.15 * smoothstep(25.0, 0.0, filterDist); // Stronger, wider effect
+          float filterRipple = sin(filterDist * 5.0 - time * 4.0) * 0.05 * smoothstep(15.0, 0.0, filterDist);
 
-          // Combine all wave types for realistic, chaotic bouncing water
-          float totalWave = swell1 + swell2 + waveA + waveB + cap1 + cap2 + cap3 + filterRipple;
+          // Combine all wave types
+          float totalWave = swell1 + swell2 + wave1 + wave2 + cap1 + cap2 + filterRipple;
 
           // Apply waves
           pos.z += totalWave * edgeFactor;
@@ -79,8 +78,10 @@ const WaterSurface = () => {
           vWorldPosition = (modelMatrix * vec4(pos, 1.0)).xyz;
 
           // Calculate new normal for proper lighting
-          vec3 tangent1 = vec3(1.0, 0.0, (swell1 + swell2 + waveA + waveB + cap1 + cap2 + cap3 + filterRipple) * edgeFactor);
-          vec3 tangent2 = vec3(0.0, 1.0, (swell1 + swell2 + waveA + waveB + cap1 + cap2 + cap3 + filterRipple) * edgeFactor);
+          // Simplified tangent calculation for smoothness
+          float delta = 0.1;
+          vec3 tangent1 = vec3(1.0, 0.0, (totalWave) * 0.5 * edgeFactor); 
+          vec3 tangent2 = vec3(0.0, 1.0, (totalWave) * 0.5 * edgeFactor);
           vNormal = normalize(cross(tangent1, tangent2));
 
           gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
