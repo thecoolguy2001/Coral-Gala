@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, WATER_LEVEL } from '../constants/tankDimensions';
+import { BOUNDS, WATER_LEVEL, TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, INTERIOR_WIDTH, INTERIOR_DEPTH } from '../constants/tankDimensions';
 
 /**
  * WaterVolume - Volumetric water effects with realistic refraction
@@ -66,11 +66,6 @@ const WaterVolume = () => {
           // Subtle water presence
           float alpha = 0.25;
 
-          // Distance fade (fake fog)
-          float dist = gl_FragCoord.z / gl_FragCoord.w;
-          float fogFactor = smoothstep(10.0, 50.0, dist);
-          finalColor = mix(finalColor, vec3(0.05, 0.1, 0.2), fogFactor * 0.3);
-
           gl_FragColor = vec4(finalColor, alpha);
         }
       `,
@@ -88,10 +83,9 @@ const WaterVolume = () => {
   });
 
   // Interior water volume - fill from substrate to water surface
-  // WIDENED to fill gaps (Tank width is 40, glass is 0.3)
-  const volumeWidth = TANK_WIDTH - 0.7; // Tighter fit
+  const volumeWidth = INTERIOR_WIDTH + 0.1; // Tighter fit
   const waterHeight = WATER_LEVEL - (-TANK_HEIGHT / 2 + 0.6); 
-  const volumeDepth = TANK_DEPTH - 0.7; // Tighter fit
+  const volumeDepth = INTERIOR_DEPTH + 0.1; // Tighter fit
   const waterYPosition = (-TANK_HEIGHT / 2 + 0.6 + WATER_LEVEL) / 2;
 
   return (

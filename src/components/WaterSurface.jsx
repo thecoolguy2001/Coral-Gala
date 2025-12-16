@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { TANK_WIDTH, TANK_DEPTH, WATER_LEVEL } from '../constants/tankDimensions';
+import { TANK_WIDTH, TANK_DEPTH, WATER_LEVEL, INTERIOR_WIDTH, INTERIOR_DEPTH } from '../constants/tankDimensions';
 
 /**
  * WaterSurface - PROFESSIONAL REALISTIC water surface at the top of the tank
@@ -46,35 +46,29 @@ const WaterSurface = () => {
           // Apply waves (stronger in center, subtle at edges)
           float edgeFactor = 1.0 - smoothstep(0.85, 1.0, vDistanceFromEdge);
 
-          // REALISTIC AQUARIUM WATER - More active
-          // Large slow swells from filter movement (Increased amplitude)
-          float swell1 = sin(pos.x * 1.5 + time * 2.0) * 0.20;
-          float swell2 = sin(pos.y * 1.2 + time * 1.8) * 0.20;
+          // REALISTIC AQUARIUM WATER - More random and wild waves
+          // Large slow swells (from filter, general movement)
+          float swell1 = sin(pos.x * 0.7 + time * 1.0) * 0.35; // Larger amplitude, faster
+          float swell2 = cos(pos.y * 0.6 + time * 0.9) * 0.35;
 
-          // Medium frequency waves - Active motion
-          float wave1 = sin(position.x * 0.3 + time * 1.5) * 0.15;
-          float wave2 = cos(position.z * 0.2 + time * 1.0) * 0.25;
-          float wave3 = cos(position.x * 0.3 + time * 1.5) * 0.15;
-          float wave4 = -sin(position.z * 0.2 + time * 1.0) * 0.15;
-
-          // Small capillary waves - surface tension ripples (Faster)
-          float cap1 = cos(pos.x * 10.0 - time * 4.0) * 0.04;
-          float cap2 = cos(pos.y * 9.0 + time * 3.8) * 0.04;
-
-          // Filter output creates circular ripples
-          vec2 filterPos = vec2(tankWidth * 0.35, -tankDepth * 0.4); // Top-right back
+          // Medium frequency waves - main visible motion, more chaotic
+          float waveA = sin(pos.x * 0.5 + time * 1.8) * 0.25 + cos(pos.y * 0.4 + time * 1.6) * 0.2; // Stronger, faster
+          float waveB = cos(pos.x * 0.6 + time * 2.2) * 0.22 + sin(pos.y * 0.7 + time * 2.0) * 0.15;
+          
+          // Small capillary waves - surface tension ripples (faster and more numerous)
+          float cap1 = sin(pos.x * 15.0 - time * 8.0) * 0.08; // More aggressive;
+          float cap2 = cos(pos.y * 14.0 + time * 7.0) * 0.08;
+          float cap3 = sin(pos.x * 18.0 + time * 9.0) * 0.05;
+          
+          // Filter output creates circular ripples (tuned for aggressiveness)
+          vec2 filterPos = vec2(tankWidth * 0.35, -tankDepth * 0.4); 
           float filterDist = length(vec2(pos.x, pos.y) - filterPos);
-          float filterRipple = sin(filterDist * 6.0 - time * 6.0) * 0.08 * smoothstep(15.0, 0.0, filterDist);
+          float filterRipple = sin(filterDist * 10.0 - time * 10.0) * 0.15 * smoothstep(25.0, 0.0, filterDist); // Stronger, wider effect
 
-          // Bubble jet creates disturbance (left side)
-          vec2 bubblePos = vec2(-tankWidth * 0.3, tankDepth * 0.3);
-          float bubbleDist = length(vec2(pos.x, pos.y) - bubblePos);
-          float bubbleWave = sin(bubbleDist * 7.0 - time * 7.0) * 0.06 * smoothstep(8.0, 0.0, bubbleDist);
+          // Combine all wave types for realistic, chaotic bouncing water
+          float totalWave = swell1 + swell2 + waveA + waveB + cap1 + cap2 + cap3 + filterRipple;
 
-          // Combine all wave types
-          float totalWave = swell1 + swell2 + wave1 + wave2 + cap1 + cap2 + filterRipple + bubbleWave;
-
-          // Apply waves (stronger in center, subtle at edges)
+          // Apply waves
           pos.z += totalWave * edgeFactor;
 
           // Meniscus effect - water curves up at edges
@@ -85,8 +79,8 @@ const WaterSurface = () => {
           vWorldPosition = (modelMatrix * vec4(pos, 1.0)).xyz;
 
           // Calculate new normal for proper lighting
-          vec3 tangent1 = vec3(1.0, 0.0, wave3 * edgeFactor);
-          vec3 tangent2 = vec3(0.0, 1.0, wave4 * edgeFactor);
+          vec3 tangent1 = vec3(1.0, 0.0, (swell1 + swell2 + waveA + waveB + cap1 + cap2 + cap3 + filterRipple) * edgeFactor);
+          vec3 tangent2 = vec3(0.0, 1.0, (swell1 + swell2 + waveA + waveB + cap1 + cap2 + cap3 + filterRipple) * edgeFactor);
           vNormal = normalize(cross(tangent1, tangent2));
 
           gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
@@ -176,7 +170,7 @@ const WaterSurface = () => {
       rotation={[-Math.PI / 2, 0, 0]}
       renderOrder={1000} // Render last for proper transparency
     >
-      <planeGeometry args={[TANK_WIDTH - 0.7, TANK_DEPTH - 0.7, 64, 64]} />
+      <planeGeometry args={[INTERIOR_WIDTH + 0.1, INTERIOR_DEPTH + 0.1, 128, 128]} />
       <primitive object={waterMaterial} />
     </mesh>
   );
