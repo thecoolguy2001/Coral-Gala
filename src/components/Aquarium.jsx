@@ -125,6 +125,9 @@ const Scene = ({ fishData, onFishClick }) => {
       {/* 1. Tank structure (opaque base) */}
       <TankContainer />
 
+      {/* 2. Realistic light caustics - subtle */}
+      <RealisticCaustics />
+
       {/* 3. Fish swimming in the tank */}
       {boids.map(boid => (
         <Fish key={boid.id} boid={boid} onFishClick={onFishClick} />

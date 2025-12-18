@@ -133,12 +133,15 @@ const WaterSurface = () => {
           vec3 foamColor = vec3(0.2, 0.4, 0.6); // Blue foam, not white
           color = mix(color, foamColor, edgeFoam * 0.8);
 
-          // Dynamic sparkles - more visible and realistic
+          // Dynamic sparkles - visible refraction highlight
+          // Combined waviness and light refraction
           float sparkle1 = sin(vUv.x * 60.0 + time * 2.5) * sin(vUv.y * 60.0 + time * 2.0);
           float sparkle2 = sin(vUv.x * 80.0 - time * 1.8) * cos(vUv.y * 70.0 + time * 2.2);
           float sparkle = (sparkle1 + sparkle2) * 0.5;
           sparkle = smoothstep(0.85, 0.95, sparkle) * fresnel;
-          color += vec3(1.0) * sparkle * 0.6;
+          
+          // Add sharp specular highlight for "refraction" look - INCREASED INTENSITY
+          color += vec3(1.0, 1.0, 1.0) * sparkle * 1.5;
 
           // Subtle color variation for depth perception
           float depthVar = noise(vUv * 10.0 + time * 0.2) * 0.1;

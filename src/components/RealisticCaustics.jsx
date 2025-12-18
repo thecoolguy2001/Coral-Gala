@@ -100,39 +100,13 @@ const RealisticCaustics = () => {
   // Create multiple caustic layers for depth
   return (
     <group>
-      {/* Back wall caustics */}
-      <mesh
-        ref={causticsRef}
-        position={[0, 0, -TANK_DEPTH / 2 + 0.5]}
-        material={causticsMaterial}
-      >
-        <planeGeometry args={[TANK_WIDTH - 1, TANK_HEIGHT - 1, 1, 1]} />
-      </mesh>
-
-      {/* Bottom caustics */}
+      {/* Bottom caustics - ONLY on the floor */}
       <mesh
         position={[0, -TANK_HEIGHT / 2 + 0.5, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
         material={causticsMaterial}
       >
         <planeGeometry args={[TANK_WIDTH - 1, TANK_DEPTH - 1, 1, 1]} />
-      </mesh>
-
-      {/* Side walls caustics (subtle) */}
-      <mesh
-        position={[-TANK_WIDTH / 2 + 0.5, 0, 0]}
-        rotation={[0, Math.PI / 2, 0]}
-        material={causticsMaterial}
-      >
-        <planeGeometry args={[TANK_DEPTH - 1, TANK_HEIGHT - 1, 1, 1]} />
-      </mesh>
-
-      <mesh
-        position={[TANK_WIDTH / 2 - 0.5, 0, 0]}
-        rotation={[0, -Math.PI / 2, 0]}
-        material={causticsMaterial}
-      >
-        <planeGeometry args={[TANK_DEPTH - 1, TANK_HEIGHT - 1, 1, 1]} />
       </mesh>
     </group>
   );
