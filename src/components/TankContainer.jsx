@@ -139,7 +139,7 @@ const TankContainer = ({ isOutsideView }) => {
 
       {/* Fine white sand substrate */}
       <mesh position={[0, -tankHeight / 2 + 0.3, 0]} receiveShadow>
-        <boxGeometry args={[tankWidth - 0.6, 0.6, tankDepth - 0.6]} />
+        <boxGeometry args={[tankWidth - 0.1, 0.6, tankDepth - 0.1]} />
         <meshStandardMaterial
           color="#f0e8d8"
           roughness={0.85}

@@ -140,8 +140,8 @@ const WaterSurface = () => {
           float sparkle = (sparkle1 + sparkle2) * 0.5;
           sparkle = smoothstep(0.85, 0.95, sparkle) * fresnel;
           
-          // Add sharp specular highlight for "refraction" look - INCREASED INTENSITY
-          color += vec3(1.0, 1.0, 1.0) * sparkle * 1.5;
+          // Add sharp specular highlight for "refraction" look - MAX INTENSITY
+          color += vec3(1.0, 1.0, 1.0) * sparkle * 4.0;
 
           // Subtle color variation for depth perception
           float depthVar = noise(vUv * 10.0 + time * 0.2) * 0.1;

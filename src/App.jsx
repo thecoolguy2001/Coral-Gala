@@ -10,6 +10,7 @@ function App() {
   const { documents: fishData, loading: fishLoading, error: fishError } = useCollection('fish');
   const { documents: events, error: eventsError } = useCollection('events', 'timestamp', 'desc');
   const [showAquarium, setShowAquarium] = useState(false);
+  const [roomLightsOn, setRoomLightsOn] = useState(false);
 
   // Initialize fish collection with default fish when app loads
   useEffect(() => {
@@ -68,8 +69,17 @@ function App() {
   return (
     <div className="App">
       <FallbackBanner message={error ? `Firebase Error: ${error}` : null} />
-      <InteractionUI disabled={!!error} events={events} />
-      <Aquarium fishData={fishData} loading={fishLoading} />
+      <InteractionUI 
+        disabled={!!error} 
+        events={events} 
+        roomLightsOn={roomLightsOn} 
+        toggleRoomLights={() => setRoomLightsOn(prev => !prev)} 
+      />
+      <Aquarium 
+        fishData={fishData} 
+        loading={fishLoading} 
+        roomLightsOn={roomLightsOn}
+      />
     </div>
   );
 }

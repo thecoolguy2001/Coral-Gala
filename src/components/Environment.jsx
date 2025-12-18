@@ -6,7 +6,7 @@ import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, FRAME_THICKNESS } from '../constan
  * Environment - Creates a realistic room environment for the aquarium
  * Includes table surface and wall background
  */
-const Environment = () => {
+const Environment = ({ roomLightsOn }) => {
   // Table dimensions
   const tableWidth = TANK_WIDTH + 20;
   const tableDepth = TANK_DEPTH + 15;
@@ -24,23 +24,29 @@ const Environment = () => {
   const floorDepth = 200;
   const floorYPosition = tableYPosition - tableHeight / 2 - 0.1;
 
+  // Colors based on light state
+  const wallColor = roomLightsOn ? "#d4cfc0" : "#111111";
+  const floorColor = roomLightsOn ? "#b5956a" : "#0d0d0d";
+  const baseboardColor = roomLightsOn ? "#f5f5f0" : "#222222";
+  const legsColor = roomLightsOn ? "#6b5944" : "#151515";
+
   return (
     <group>
       {/* WALL - Behind the tank */}
       <mesh position={[0, wallYPosition, wallZPosition]} receiveShadow>
         <planeGeometry args={[wallWidth, wallHeight]} />
         <meshStandardMaterial
-          color="#111111" // Dark environment
+          color={wallColor}
           roughness={0.9}
           metalness={0.0}
         />
       </mesh>
 
-      {/* TABLE SURFACE - Under the tank */}
+      {/* TABLE SURFACE - Under the tank (Always Wood) */}
       <mesh position={[0, tableYPosition, 0]} receiveShadow>
         <boxGeometry args={[tableWidth, tableHeight, tableDepth]} />
         <meshStandardMaterial
-          color="#1a1a1a" // Dark table
+          color="#4a3728" // Dark Mahogany Wood
           roughness={0.6}
           metalness={0.1}
         />
@@ -56,7 +62,7 @@ const Environment = () => {
         <mesh key={`leg-${i}`} position={pos}>
           <cylinderGeometry args={[1, 1, 30, 8]} />
           <meshStandardMaterial
-            color="#151515" // Dark legs
+            color={legsColor}
             roughness={0.7}
             metalness={0.1}
           />
@@ -71,7 +77,7 @@ const Environment = () => {
       >
         <planeGeometry args={[floorWidth, floorDepth]} />
         <meshStandardMaterial
-          color="#0d0d0d" // Very dark floor
+          color={floorColor}
           roughness={0.8}
           metalness={0.0}
         />
@@ -81,7 +87,7 @@ const Environment = () => {
       <mesh position={[0, wallYPosition - wallHeight / 2 + 2, wallZPosition + 0.5]}>
         <boxGeometry args={[wallWidth, 4, 1]} />
         <meshStandardMaterial
-          color="#222222" // Dark baseboard
+          color={baseboardColor}
           roughness={0.7}
           metalness={0.0}
         />

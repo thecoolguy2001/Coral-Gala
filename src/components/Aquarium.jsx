@@ -57,7 +57,7 @@ class ThreeErrorBoundary extends React.Component {
 
 
 // Scene component - realistic aquarium view
-const Scene = ({ fishData, onFishClick }) => {
+const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
   const initialFish = useMemo(() => {
     // Pass complete fish data, only add initialPosition if position exists
     return fishData.map(f => ({
@@ -74,8 +74,8 @@ const Scene = ({ fishData, onFishClick }) => {
     <>
       {/* PROFESSIONAL AQUARIUM LIGHTING SYSTEM */}
 
-      {/* Ambient base illumination - Dark room setting */}
-      <ambientLight intensity={0.2} color="#e8f4ff" />
+      {/* Ambient base illumination - controlled by room switch */}
+      <ambientLight intensity={roomLightsOn ? 0.7 : 0.2} color="#e8f4ff" />
 
       {/* Primary overhead light - Strong focus on tank */}
       <directionalLight
@@ -120,7 +120,7 @@ const Scene = ({ fishData, onFishClick }) => {
       {/* Render in correct order for transparency */}
 
       {/* 0. Environment (room, table, walls) */}
-      <Environment />
+      <Environment roomLightsOn={roomLightsOn} />
 
       {/* 1. Tank structure (opaque base) */}
       <TankContainer />
@@ -151,7 +151,7 @@ const Scene = ({ fishData, onFishClick }) => {
   );
 };
 
-const Aquarium = ({ fishData = [], events = [], loading = false }) => {
+const Aquarium = ({ fishData = [], events = [], loading = false, roomLightsOn }) => {
   const [selectedFish, setSelectedFish] = React.useState(null);
   
   // Use comprehensive fish data with full stats and personalities
@@ -228,7 +228,7 @@ const Aquarium = ({ fishData = [], events = [], loading = false }) => {
             camera.lookAt(...cameraLookAt);
           }}
         >
-          <Scene fishData={activeFishData} onFishClick={handleFishClick} />
+          <Scene fishData={activeFishData} onFishClick={handleFishClick} roomLightsOn={roomLightsOn} />
         </Canvas>
       </ThreeErrorBoundary>
 

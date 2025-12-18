@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { writeEvent } from '../firestore/events';
 import { useStripe } from '@stripe/react-stripe-js';
 
-const InteractionUI = ({ disabled }) => {
+const InteractionUI = ({ disabled, roomLightsOn, toggleRoomLights }) => {
   const stripe = useStripe();
   const [isLoading, setIsLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -161,6 +161,16 @@ const InteractionUI = ({ disabled }) => {
             <span className="button-text">Buy New Fish</span>
           </div>
           {isLoading && <div className="loading-spinner"></div>}
+        </button>
+
+        <button 
+          className={`apple-button light-button`}
+          onClick={toggleRoomLights} 
+        >
+          <div className="button-content">
+            <div className="button-icon">{roomLightsOn ? '🌙' : '💡'}</div>
+            <span className="button-text">{roomLightsOn ? 'Dark Mode' : 'Lights On'}</span>
+          </div>
         </button>
       </div>
     </div>
