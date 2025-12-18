@@ -74,10 +74,10 @@ const Scene = ({ fishData, onFishClick }) => {
     <>
       {/* PROFESSIONAL AQUARIUM LIGHTING SYSTEM */}
 
-      {/* Ambient base illumination - softer and warmer */}
-      <ambientLight intensity={0.6} color="#e8f4ff" />
+      {/* Ambient base illumination - Dark room setting */}
+      <ambientLight intensity={0.2} color="#e8f4ff" />
 
-      {/* Primary overhead light - simulates aquarium hood light */}
+      {/* Primary overhead light - Strong focus on tank */}
       <directionalLight
         position={[0, 35, 5]}
         intensity={2.5}

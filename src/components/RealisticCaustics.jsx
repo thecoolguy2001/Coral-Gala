@@ -14,7 +14,7 @@ const RealisticCaustics = () => {
     return new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        intensity: { value: 0.8 },
+        intensity: { value: 0.4 }, // Lighter intensity
       },
       vertexShader: `
         varying vec2 vUv;
@@ -67,21 +67,14 @@ const RealisticCaustics = () => {
           float c1 = causticPattern(uv, time * 0.5);
           float c2 = causticPattern(uv * 0.8 + vec2(0.5), time * 0.4);
 
-          // Combined for stronger effect but cheaper calculation
-          float caustics = (c1 + c2 * 0.8) * intensity * 1.5;
+          // Combined
+          float caustics = (c1 + c2 * 0.8) * intensity;
 
-          // Realistic underwater light color (blue-green tint)
-          vec3 lightColor = vec3(0.6, 0.9, 1.0); // Brighter cyan
-          vec3 color = lightColor * caustics;
-
-          // Add warm sun highlights
-          color += vec3(1.0, 0.95, 0.8) * caustics * 0.6;
-
-          // Fade based on depth (Y position)
-          float depthFade = smoothstep(-12.5, 12.5, vPosition.y);
-          color *= 0.6 + depthFade * 0.4;
-
-          gl_FragColor = vec4(color, caustics * 0.5); // Increased alpha
+          // Light color
+          vec3 lightColor = vec3(0.8, 0.9, 1.0); // Soft white-blue
+          
+          // Output only the light pattern (additive blending handles the rest)
+          gl_FragColor = vec4(lightColor, caustics * 0.5); // Soft alpha
         }
       `,
       transparent: true,

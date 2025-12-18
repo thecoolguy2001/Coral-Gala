@@ -33,21 +33,32 @@ const WaterVolume = () => {
         varying vec3 vPosition;
         varying vec3 vWorldPosition;
 
+        // Noise for light rays
+        float simpleNoise(vec3 p) {
+          return fract(sin(dot(p, vec3(12.9898, 78.233, 45.164))) * 43758.5453);
+        }
+
         void main() {
-          // Pure gradient based on height - No static noise patterns
-          
-          // Map Y position to 0-1 range (approximate tank height)
-          // Tank is centered at 0, height is roughly 25
+          // Pure gradient based on height
           float heightFactor = smoothstep(-12.5, 12.5, vPosition.y);
 
           // Colors
-          vec3 deepColor = vec3(0.02, 0.1, 0.25); // Deep blue
-          vec3 surfaceColor = vec3(0.1, 0.3, 0.5); // Matches surface look
+          vec3 deepColor = vec3(0.02, 0.1, 0.25); 
+          vec3 surfaceColor = vec3(0.1, 0.3, 0.5); 
           
-          // Smooth blend
           vec3 finalColor = mix(deepColor, surfaceColor, heightFactor);
 
-          // Uniform transparency that increases slightly at the top for blending
+          // VOLUMETRIC LIGHT RAYS (God Rays) - Top only
+          // Map Y to 0-1 for top section only
+          float rayFade = smoothstep(5.0, 12.0, vPosition.y); // Only visible in top ~7 units
+          
+          if (rayFade > 0.01) {
+            float rayNoise = simpleNoise(vec3(vWorldPosition.x * 0.2, vWorldPosition.y * 0.1 + time * 0.5, vWorldPosition.z * 0.2));
+            float rayIntensity = smoothstep(0.4, 0.7, rayNoise) * rayFade;
+            finalColor += vec3(0.8, 0.9, 1.0) * rayIntensity * 0.3; // Add light
+          }
+
+          // Uniform transparency that increases slightly at the top
           float alpha = mix(0.3, 0.15, heightFactor); 
 
           gl_FragColor = vec4(finalColor, alpha);

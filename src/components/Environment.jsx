@@ -30,7 +30,7 @@ const Environment = () => {
       <mesh position={[0, wallYPosition, wallZPosition]} receiveShadow>
         <planeGeometry args={[wallWidth, wallHeight]} />
         <meshStandardMaterial
-          color="#808080" // Darker grey as requested
+          color="#111111" // Dark environment
           roughness={0.9}
           metalness={0.0}
         />
@@ -40,7 +40,7 @@ const Environment = () => {
       <mesh position={[0, tableYPosition, 0]} receiveShadow>
         <boxGeometry args={[tableWidth, tableHeight, tableDepth]} />
         <meshStandardMaterial
-          color="#8b7355"
+          color="#1a1a1a" // Dark table
           roughness={0.6}
           metalness={0.1}
         />
@@ -56,7 +56,7 @@ const Environment = () => {
         <mesh key={`leg-${i}`} position={pos}>
           <cylinderGeometry args={[1, 1, 30, 8]} />
           <meshStandardMaterial
-            color="#6b5944"
+            color="#151515" // Dark legs
             roughness={0.7}
             metalness={0.1}
           />
@@ -71,7 +71,7 @@ const Environment = () => {
       >
         <planeGeometry args={[floorWidth, floorDepth]} />
         <meshStandardMaterial
-          color="#b5956a"
+          color="#0d0d0d" // Very dark floor
           roughness={0.8}
           metalness={0.0}
         />
@@ -81,7 +81,7 @@ const Environment = () => {
       <mesh position={[0, wallYPosition - wallHeight / 2 + 2, wallZPosition + 0.5]}>
         <boxGeometry args={[wallWidth, 4, 1]} />
         <meshStandardMaterial
-          color="#f5f5f0"
+          color="#222222" // Dark baseboard
           roughness={0.7}
           metalness={0.0}
         />
