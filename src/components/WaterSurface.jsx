@@ -114,41 +114,64 @@ const WaterSurface = () => {
           );
         }
 
+        // Caustic pattern function for realistic refractions
+        float causticPattern(vec2 uv, float time) {
+          vec2 p = mod(uv * 6.28318, 6.28318) - 250.0;
+          vec2 i = vec2(p);
+          float c = 1.0;
+          float inten = 0.005;
+
+          for (int n = 0; n < 5; n++) {
+            float t = time * (1.0 - (3.5 / float(n + 1)));
+            i = p + vec2(
+              cos(t - i.x) + sin(t + i.y),
+              sin(t - i.y) + cos(t + i.x)
+            );
+            c += 1.0 / length(vec2(
+              p.x / (sin(i.x + t) / inten),
+              p.y / (cos(i.y + t) / inten)
+            ));
+          }
+
+          c /= float(5);
+          c = 1.17 - pow(c, 1.4);
+          return pow(abs(c), 8.0);
+        }
+
         void main() {
-          // Base water color - darker and more realistic
+          // Base water color
           vec3 color = waterColor;
 
-          // Enhanced Fresnel effect for realistic viewing angle
+          // Enhanced Fresnel effect
           vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
           float fresnel = pow(1.0 - max(dot(viewDirection, vNormal), 0.0), 3.0);
 
-          // Reflection color (sky/room light)
+          // Reflection color
           vec3 reflectionColor = vec3(0.4, 0.6, 0.8);
           color = mix(color, reflectionColor, fresnel * 0.7);
 
-          // EDGE FOAM - Creates realistic meniscus and surface tension
+          // EDGE FOAM
           float edgeFoam = smoothstep(0.88, 0.96, vDistanceFromEdge);
           float foamNoise = noise(vUv * 50.0 + time * 0.5);
           edgeFoam *= foamNoise;
-          vec3 foamColor = vec3(0.2, 0.4, 0.6); // Blue foam, not white
+          vec3 foamColor = vec3(0.2, 0.4, 0.6); 
           color = mix(color, foamColor, edgeFoam * 0.8);
 
-          // Dynamic sparkles - visible refraction highlight
-          // Combined waviness and light refraction
-          float sparkle1 = sin(vUv.x * 60.0 + time * 2.5) * sin(vUv.y * 60.0 + time * 2.0);
-          float sparkle2 = sin(vUv.x * 80.0 - time * 1.8) * cos(vUv.y * 70.0 + time * 2.2);
-          float sparkle = (sparkle1 + sparkle2) * 0.5;
-          sparkle = smoothstep(0.85, 0.95, sparkle) * fresnel;
+          // REALISTIC TOP REFRACTIONS (Caustics on surface)
+          vec2 causticUv = vUv * 4.0;
+          float c1 = causticPattern(causticUv, time * 0.5);
+          float c2 = causticPattern(causticUv * 0.8 + vec2(0.5), time * 0.4);
+          float surfaceCaustics = (c1 + c2 * 0.7) * 2.0;
           
-          // Add sharp specular highlight for "refraction" look - MAX INTENSITY
-          color += vec3(1.0, 1.0, 1.0) * sparkle * 4.0;
+          // Add sharp specular refraction highlights
+          vec3 refractionColor = vec3(0.9, 0.95, 1.0);
+          color += refractionColor * surfaceCaustics * (0.5 + fresnel * 0.5);
 
-          // Subtle color variation for depth perception
+          // Subtle color variation
           float depthVar = noise(vUv * 10.0 + time * 0.2) * 0.1;
           color *= 1.0 + depthVar;
 
-          // Variable transparency - subtle and realistic
-          // INCREASED ALPHA for visibility
+          // Variable transparency
           float alpha = mix(0.4, 0.7, edgeFoam + fresnel * 0.5);
 
           gl_FragColor = vec4(color, alpha);

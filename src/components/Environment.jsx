@@ -7,26 +7,26 @@ import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, FRAME_THICKNESS } from '../constan
  * Includes table surface and wall background
  */
 const Environment = ({ roomLightsOn }) => {
-  // Table dimensions
-  const tableWidth = TANK_WIDTH + 20;
-  const tableDepth = TANK_DEPTH + 15;
+  // Table dimensions - Expansive wood surface
+  const tableWidth = 200; // Much wider
+  const tableDepth = 150; // Much deeper
   const tableHeight = 2;
   const tableYPosition = -TANK_HEIGHT / 2 - FRAME_THICKNESS - tableHeight / 2 - 0.5;
 
   // Wall dimensions
-  const wallWidth = 300; // Significantly wider
-  const wallHeight = 150; // Taller
+  const wallWidth = 500; 
+  const wallHeight = 200; 
   const wallYPosition = 20;
-  const wallZPosition = -TANK_DEPTH / 2 - 25; // Slightly further back
+  const wallZPosition = -TANK_DEPTH / 2 - 40; 
 
-  // Floor dimensions (visible around table)
-  const floorWidth = 300;
-  const floorDepth = 200;
+  // Floor dimensions
+  const floorWidth = 500;
+  const floorDepth = 400;
   const floorYPosition = tableYPosition - tableHeight / 2 - 0.1;
 
   // Colors based on light state
   const wallColor = roomLightsOn ? "#d4cfc0" : "#111111";
-  const floorColor = roomLightsOn ? "#b5956a" : "#0d0d0d";
+  const floorColor = roomLightsOn ? "#2a1e1a" : "#0d0d0d"; // Dark wood brown vs pitch black
   const baseboardColor = roomLightsOn ? "#f5f5f0" : "#222222";
   const legsColor = roomLightsOn ? "#6b5944" : "#151515";
 

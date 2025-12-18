@@ -62,19 +62,19 @@ const RealisticCaustics = () => {
 
         void main() {
           // Create layered caustics for depth
-          vec2 uv = vUv * 3.0; // Larger scale patterns
+          vec2 uv = vUv * 2.0; // Reduced scale for larger, blobbier patterns
 
-          float c1 = causticPattern(uv, time * 0.5);
-          float c2 = causticPattern(uv * 0.8 + vec2(0.5), time * 0.4);
+          float c1 = causticPattern(uv, time * 0.4);
+          float c2 = causticPattern(uv * 0.7 + vec2(0.3), time * 0.3);
 
-          // Combined
-          float caustics = (c1 + c2 * 0.8) * intensity;
+          // Combined for softer effect
+          float caustics = (c1 + c2 * 0.8) * intensity * 1.2;
 
-          // Light color
-          vec3 lightColor = vec3(0.8, 0.9, 1.0); // Soft white-blue
+          // Light color - soft blue-white
+          vec3 lightColor = vec3(0.85, 0.95, 1.0); 
           
-          // Output only the light pattern (additive blending handles the rest)
-          gl_FragColor = vec4(lightColor, caustics * 0.5); // Soft alpha
+          // Output with soft alpha for "light" look
+          gl_FragColor = vec4(lightColor, caustics * 0.3); 
         }
       `,
       transparent: true,
