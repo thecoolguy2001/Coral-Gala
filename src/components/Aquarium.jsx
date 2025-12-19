@@ -88,9 +88,9 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* This creates the defined radius of light on the environment floor */}
       <spotLight
         position={[0, 60, 0]}
-        angle={0.5} // Precise cone for the pool radius
-        penumbra={0.4} // Soft falloff at the edge of the pool
-        intensity={3.5} // Strong enough to light the area in the dark
+        angle={0.4} // Tighter, focused cone
+        penumbra={0.15} // Sharp "Street Light" drop-off
+        intensity={8.0} // Blindingly bright center for high contrast
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -102,15 +102,15 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* High-intensity internal lighting so the aquarium always glows */}
       <directionalLight
         position={[0, 35, 5]}
-        intensity={2.0}
+        intensity={4.0} // Very bright tank contents
         color="#ffffff"
         castShadow
       />
       <pointLight
         position={[0, 5, 0]}
-        intensity={1.0}
+        intensity={2.5} // Strong inner glow
         color="#e0f0ff"
-        distance={30}
+        distance={25}
         decay={2}
       />
 
