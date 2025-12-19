@@ -13,15 +13,15 @@ const Environment = () => {
   const tableHeight = 2;
   const tableYPosition = -TANK_HEIGHT / 2 - FRAME_THICKNESS - tableHeight / 2 - 0.5;
 
-  // Wall dimensions
-  const wallWidth = 500; 
-  const wallHeight = 200; 
-  const wallYPosition = 20;
-  const wallZPosition = -TANK_DEPTH / 2 - 40; 
+  // Wall dimensions - Infinite feel
+  const wallWidth = 2000; 
+  const wallHeight = 1000; 
+  const wallYPosition = 200;
+  const wallZPosition = -800; // Far back to stay dark
 
   // Floor dimensions
-  const floorWidth = 1000;
-  const floorDepth = 1000;
+  const floorWidth = 2000;
+  const floorDepth = 2000;
   const floorYPosition = tableYPosition - tableHeight / 2 - 0.1;
 
   // Static colors - Lighting handles the "mode"

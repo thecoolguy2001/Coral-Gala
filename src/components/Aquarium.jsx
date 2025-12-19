@@ -84,13 +84,15 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         castShadow
       />
 
-      {/* 2. TANK PENDANT LIGHT (Always On - Source of the "Pool") */}
-      {/* This creates the defined radius of light on the environment floor */}
+      {/* --- LIGHT 2: OVERHEAD CAST (The "Pool of Light" - Always On) --- */}
+      {/* Updated to match user sketch: Wider radius, softer falloff, but distinct pool */}
       <spotLight
-        position={[0, 60, 0]}
-        angle={0.4} // Tighter, focused cone
-        penumbra={0.15} // Sharp "Street Light" drop-off
-        intensity={8.0} // Blindingly bright center for high contrast
+        position={[0, 80, 0]} // Higher up to cast a broader pool
+        angle={0.85} // Wider angle to match sketch radius (approx 50 degrees)
+        penumbra={0.6} // Softer edge fading into darkness (natural falloff)
+        intensity={roomLightsOn ? 2.0 : 6.0} // Brighter in dark mode to compensate for spread
+        distance={200}
+        decay={2}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -98,15 +100,16 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         target-position={[0, 0, 0]}
       />
 
-      {/* Volumetric Light Beam Visualization (Fake God Ray Cone) */}
-      <mesh position={[0, 30, 0]} rotation={[0, 0, 0]}>
-        <coneGeometry args={[14, 60, 32, 1, true]} />
+      {/* Volumetric Light Beam Visualization (Matches new wider cone) */}
+      <mesh position={[0, 40, 0]} rotation={[0, 0, 0]}>
+        {/* Wider cone to match the new spotlight angle */}
+        <coneGeometry args={[45, 80, 32, 1, true]} />
         <meshBasicMaterial 
           color="#ffffff" 
           transparent 
-          opacity={roomLightsOn ? 0.02 : 0.05} 
+          opacity={roomLightsOn ? 0.0 : 0.03} // Only visible in dark mode now for realism
           depthWrite={false}
-          side={2} // DoubleSide
+          side={2} 
         />
       </mesh>
 
