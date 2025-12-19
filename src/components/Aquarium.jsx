@@ -72,31 +72,25 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
 
   return (
     <>
-      {/* PROFESSIONAL AQUARIUM LIGHTING SYSTEM */}
+      {/* PROFESSIONAL 3-LIGHT SYSTEM */}
 
-      {/* 1. ROOM CEILING LIGHT (Controlled by Switch) */}
-      {/* Simulates the main room light bulb turning on/off */}
-      <pointLight
-        position={[0, 100, 0]}
-        intensity={roomLightsOn ? 0.8 : 0.0}
-        color="#fff5e0" // Slightly warm room light
+      {/* --- LIGHT 3: ROOM FILL (Controlled by Switch) --- */}
+      {/* This simulates the main ceiling lights turning on/off */}
+      <ambientLight intensity={roomLightsOn ? 0.6 : 0.0} color="#ffffff" />
+      <pointLight 
+        position={[0, 100, 0]} 
+        intensity={roomLightsOn ? 1.2 : 0.0} 
+        color="#fff5e0" 
         castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
       />
-      
-      {/* Base ambient - pure black when off, very dim when on to soften shadows */}
-      <ambientLight intensity={roomLightsOn ? 0.15 : 0.0} color="#ffffff" />
 
-      {/* 2. TANK PENDANT LIGHT (Always On - Source of the "Pool") */}
-      {/* Strictly focused beam creating the radius of light on the floor */}
+      {/* --- LIGHT 2: OVERHEAD CAST (The "Pool of Light" - Always On) --- */}
+      {/* This creates the defined radius of light on the environment floor */}
       <spotLight
-        position={[0, 50, 0]}
-        angle={0.55} // Tuned to cover tank + small radius of floor
-        penumbra={0.3} // Realistic soft edge
-        intensity={4.0} // High intensity to cut through dark
-        distance={150} // Physical falloff
-        decay={2} // Physical decay
+        position={[0, 60, 0]}
+        angle={0.5} // Precise cone for the pool radius
+        penumbra={0.4} // Soft falloff at the edge of the pool
+        intensity={3.5} // Strong enough to light the area in the dark
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -104,13 +98,19 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         target-position={[0, 0, 0]}
       />
 
-      {/* 3. TANK INTERNAL FILL (Subtle) */}
-      {/* Just enough to see fish faces, DOES NOT light the room */}
+      {/* --- LIGHT 1: TANK INTERNAL (The "Fish Light" - Always On) --- */}
+      {/* High-intensity internal lighting so the aquarium always glows */}
+      <directionalLight
+        position={[0, 35, 5]}
+        intensity={2.0}
+        color="#ffffff"
+        castShadow
+      />
       <pointLight
-        position={[0, 10, 5]}
-        intensity={0.5}
+        position={[0, 5, 0]}
+        intensity={1.0}
         color="#e0f0ff"
-        distance={20} // Very short range, inside tank only
+        distance={30}
         decay={2}
       />
 

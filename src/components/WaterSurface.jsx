@@ -161,7 +161,7 @@ const WaterSurface = () => {
           vec2 causticUv = vUv * 4.0;
           float c1 = causticPattern(causticUv, time * 0.5);
           float c2 = causticPattern(causticUv * 0.8 + vec2(0.5), time * 0.4);
-          float surfaceCaustics = (c1 + c2 * 0.7) * 2.0;
+          float surfaceCaustics = (c1 + c2 * 0.7) * 5.0; // Boosted intensity
           
           // Add sharp specular refraction highlights
           vec3 refractionColor = vec3(0.9, 0.95, 1.0);

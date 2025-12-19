@@ -26,7 +26,7 @@ const Environment = () => {
 
   // Static colors - Lighting handles the "mode"
   const wallColor = "#eeeeee"; // Neutral wall that reflects light
-  const floorColor = "#2a1e1a"; // Dark wood floor
+  const floorColor = "#4a3728"; // Matched to table wood
   const baseboardColor = "#ffffff";
   const legsColor = "#151515";
 
