@@ -20,8 +20,8 @@ const Environment = () => {
   const wallZPosition = -TANK_DEPTH / 2 - 40; 
 
   // Floor dimensions
-  const floorWidth = 500;
-  const floorDepth = 400;
+  const floorWidth = 1000;
+  const floorDepth = 1000;
   const floorYPosition = tableYPosition - tableHeight / 2 - 0.1;
 
   // Static colors - Lighting handles the "mode"

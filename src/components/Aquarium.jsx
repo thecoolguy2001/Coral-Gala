@@ -11,7 +11,7 @@ import RealisticCaustics from './RealisticCaustics';
 import Environment from './Environment';
 import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
 import { getDefaultFish } from '../models/fishModel';
-import { TANK_DEPTH } from '../constants/tankDimensions';
+import { TANK_DEPTH, WATER_LEVEL } from '../constants/tankDimensions';
 
 // Lazy load modal since it's only shown when user clicks a fish
 const FishInfoModal = lazy(() => import('./FishInfoModal'));
@@ -74,10 +74,21 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
     <>
       {/* PROFESSIONAL AQUARIUM LIGHTING SYSTEM */}
 
-      {/* Ambient base illumination - controlled by room switch */}
-      <ambientLight intensity={roomLightsOn ? 0.7 : 0.2} color="#e8f4ff" />
+      {/* 1. ROOM LIGHTS (Controlled by Switch) */}
+      
+      {/* Ambient base - only when room lights are on */}
+      <ambientLight intensity={roomLightsOn ? 0.5 : 0.0} color="#ffffff" />
+      
+      {/* Room fill light - soft white ceiling bounce */}
+      <hemisphereLight 
+        skyColor="#ffffff" 
+        groundColor="#b5956a" 
+        intensity={roomLightsOn ? 0.6 : 0.0} 
+      />
 
-      {/* Primary overhead light - Strong focus on tank */}
+      {/* 2. TANK LIGHTS (Always On) */}
+
+      {/* Primary overhead tank light - illuminates fish and casting shadows */}
       <directionalLight
         position={[0, 35, 5]}
         intensity={2.5}
@@ -91,30 +102,20 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         shadow-camera-bottom={-30}
       />
 
-      {/* Front fill light - gentle illumination */}
+      {/* Tank Spill Light - Illuminates the environment from the tank itself */}
+      <pointLight
+        position={[0, WATER_LEVEL + 5, 0]}
+        intensity={1.5}
+        color="#d0e8ff"
+        distance={50}
+        decay={2}
+      />
+
+      {/* Front fill light - gentle illumination for fish faces */}
       <directionalLight
         position={[5, 15, 35]}
-        intensity={1.2}
-        color="#f8f8ff"
-      />
-
-      {/* Subtle back rim light */}
-      <pointLight
-        position={[0, 15, -25]}
         intensity={0.8}
-        color="#d0e8ff"
-      />
-
-      {/* Side accent lights - subtle */}
-      <pointLight
-        position={[-20, 8, 0]}
-        intensity={0.5}
-        color="#ffe8d0"
-      />
-      <pointLight
-        position={[20, 8, 0]}
-        intensity={0.5}
-        color="#ffe8d0"
+        color="#f8f8ff"
       />
 
       {/* Render in correct order for transparency */}
