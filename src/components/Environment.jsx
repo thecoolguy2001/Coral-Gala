@@ -78,7 +78,7 @@ const Environment = () => {
         <planeGeometry args={[floorWidth, floorDepth]} />
         <meshStandardMaterial
           color={floorColor}
-          roughness={0.8}
+          roughness={0.5} // Smoother to catch the spotlight pool
           metalness={0.0}
         />
       </mesh>

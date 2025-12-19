@@ -84,7 +84,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         castShadow
       />
 
-      {/* --- LIGHT 2: OVERHEAD CAST (The "Pool of Light" - Always On) --- */}
+      {/* 2. TANK PENDANT LIGHT (Always On - Source of the "Pool") */}
       {/* This creates the defined radius of light on the environment floor */}
       <spotLight
         position={[0, 60, 0]}
@@ -97,6 +97,18 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         shadow-bias={-0.0001}
         target-position={[0, 0, 0]}
       />
+
+      {/* Volumetric Light Beam Visualization (Fake God Ray Cone) */}
+      <mesh position={[0, 30, 0]} rotation={[0, 0, 0]}>
+        <coneGeometry args={[14, 60, 32, 1, true]} />
+        <meshBasicMaterial 
+          color="#ffffff" 
+          transparent 
+          opacity={roomLightsOn ? 0.02 : 0.05} 
+          depthWrite={false}
+          side={2} // DoubleSide
+        />
+      </mesh>
 
       {/* --- LIGHT 1: TANK INTERNAL (The "Fish Light" - Always On) --- */}
       {/* High-intensity internal lighting so the aquarium always glows */}
