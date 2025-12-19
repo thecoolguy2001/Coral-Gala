@@ -74,41 +74,44 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
     <>
       {/* PROFESSIONAL AQUARIUM LIGHTING SYSTEM */}
 
-      {/* 1. ROOM LIGHTS (Controlled by Switch) */}
-      {/* When OFF: Pitch black room. When ON: Soft room fill. */}
-      <ambientLight intensity={roomLightsOn ? 0.4 : 0.0} color="#ffffff" />
-      <hemisphereLight 
-        skyColor="#ffffff" 
-        groundColor="#b5956a" 
-        intensity={roomLightsOn ? 0.5 : 0.0} 
+      {/* 1. ROOM CEILING LIGHT (Controlled by Switch) */}
+      {/* Simulates the main room light bulb turning on/off */}
+      <pointLight
+        position={[0, 100, 0]}
+        intensity={roomLightsOn ? 0.8 : 0.0}
+        color="#fff5e0" // Slightly warm room light
+        castShadow
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
       />
+      
+      {/* Base ambient - pure black when off, very dim when on to soften shadows */}
+      <ambientLight intensity={roomLightsOn ? 0.15 : 0.0} color="#ffffff" />
 
-      {/* 2. TANK LIGHT FIXTURE (The Source) */}
-      {/* This SpotLight creates the realistic "pool of light" on the floor/table */}
+      {/* 2. TANK PENDANT LIGHT (Always On - Source of the "Pool") */}
+      {/* Strictly focused beam creating the radius of light on the floor */}
       <spotLight
-        position={[0, 40, 0]}
-        angle={0.6} // Limits the radius on the floor
-        penumbra={0.5} // Soft fading edge into darkness
-        intensity={3.0}
+        position={[0, 50, 0]}
+        angle={0.55} // Tuned to cover tank + small radius of floor
+        penumbra={0.3} // Realistic soft edge
+        intensity={4.0} // High intensity to cut through dark
+        distance={150} // Physical falloff
+        decay={2} // Physical decay
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
         shadow-bias={-0.0001}
+        target-position={[0, 0, 0]}
       />
 
-      {/* 3. TANK INTERNAL LIGHTS (Focus on Fish) */}
-      <directionalLight
-        position={[0, 35, 5]}
-        intensity={1.5}
-        color="#ffffff"
-        castShadow
-      />
-
-      {/* Front fill light - gentle illumination for fish faces */}
-      <directionalLight
-        position={[5, 15, 35]}
+      {/* 3. TANK INTERNAL FILL (Subtle) */}
+      {/* Just enough to see fish faces, DOES NOT light the room */}
+      <pointLight
+        position={[0, 10, 5]}
         intensity={0.5}
-        color="#f8f8ff"
+        color="#e0f0ff"
+        distance={20} // Very short range, inside tank only
+        decay={2}
       />
 
       {/* Render in correct order for transparency */}
