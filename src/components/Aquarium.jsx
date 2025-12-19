@@ -75,46 +75,39 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* PROFESSIONAL AQUARIUM LIGHTING SYSTEM */}
 
       {/* 1. ROOM LIGHTS (Controlled by Switch) */}
-      
-      {/* Ambient base - only when room lights are on */}
-      <ambientLight intensity={roomLightsOn ? 0.5 : 0.0} color="#ffffff" />
-      
-      {/* Room fill light - soft white ceiling bounce */}
+      {/* When OFF: Pitch black room. When ON: Soft room fill. */}
+      <ambientLight intensity={roomLightsOn ? 0.4 : 0.0} color="#ffffff" />
       <hemisphereLight 
         skyColor="#ffffff" 
         groundColor="#b5956a" 
-        intensity={roomLightsOn ? 0.6 : 0.0} 
+        intensity={roomLightsOn ? 0.5 : 0.0} 
       />
 
-      {/* 2. TANK LIGHTS (Always On) */}
-
-      {/* Primary overhead tank light - illuminates fish and casting shadows */}
-      <directionalLight
-        position={[0, 35, 5]}
-        intensity={2.5}
-        color="#ffffff"
+      {/* 2. TANK LIGHT FIXTURE (The Source) */}
+      {/* This SpotLight creates the realistic "pool of light" on the floor/table */}
+      <spotLight
+        position={[0, 40, 0]}
+        angle={0.6} // Limits the radius on the floor
+        penumbra={0.5} // Soft fading edge into darkness
+        intensity={3.0}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
-        shadow-camera-left={-30}
-        shadow-camera-right={30}
-        shadow-camera-top={30}
-        shadow-camera-bottom={-30}
+        shadow-bias={-0.0001}
       />
 
-      {/* Tank Spill Light - Illuminates the environment from the tank itself */}
-      <pointLight
-        position={[0, WATER_LEVEL + 5, 0]}
+      {/* 3. TANK INTERNAL LIGHTS (Focus on Fish) */}
+      <directionalLight
+        position={[0, 35, 5]}
         intensity={1.5}
-        color="#d0e8ff"
-        distance={50}
-        decay={2}
+        color="#ffffff"
+        castShadow
       />
 
       {/* Front fill light - gentle illumination for fish faces */}
       <directionalLight
         position={[5, 15, 35]}
-        intensity={0.8}
+        intensity={0.5}
         color="#f8f8ff"
       />
 
