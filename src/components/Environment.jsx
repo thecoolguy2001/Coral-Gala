@@ -6,8 +6,8 @@ import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, FRAME_THICKNESS } from '../constan
  * Environment - Creates a realistic room environment for the aquarium
  * Includes table surface and wall background
  */
-const Environment = ({ roomLightsOn }) => {
-  // Table dimensions - Expansive wood surface
+const Environment = () => {
+  // Table dimensions
   const tableWidth = 200; // Much wider
   const tableDepth = 150; // Much deeper
   const tableHeight = 2;
@@ -24,11 +24,11 @@ const Environment = ({ roomLightsOn }) => {
   const floorDepth = 400;
   const floorYPosition = tableYPosition - tableHeight / 2 - 0.1;
 
-  // Colors based on light state
-  const wallColor = roomLightsOn ? "#d4cfc0" : "#111111";
-  const floorColor = roomLightsOn ? "#2a1e1a" : "#0d0d0d"; // Dark wood brown vs pitch black
-  const baseboardColor = roomLightsOn ? "#f5f5f0" : "#222222";
-  const legsColor = roomLightsOn ? "#6b5944" : "#151515";
+  // Static colors - Lighting handles the "mode"
+  const wallColor = "#eeeeee"; // Neutral wall that reflects light
+  const floorColor = "#2a1e1a"; // Dark wood floor
+  const baseboardColor = "#ffffff";
+  const legsColor = "#151515";
 
   return (
     <group>

@@ -120,7 +120,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* Render in correct order for transparency */}
 
       {/* 0. Environment (room, table, walls) */}
-      <Environment roomLightsOn={roomLightsOn} />
+      <Environment />
 
       {/* 1. Tank structure (opaque base) */}
       <TankContainer />
