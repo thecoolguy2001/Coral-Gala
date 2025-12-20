@@ -107,19 +107,24 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         <meshBasicMaterial 
           color="#ffffff" 
           transparent 
-          opacity={roomLightsOn ? 0.0 : 0.03} // Only visible in dark mode now for realism
+          opacity={roomLightsOn ? 0.0 : 0.08} // Increased visibility for the "Beam"
           depthWrite={false}
           side={2} 
         />
       </mesh>
 
       {/* --- LIGHT 1: TANK INTERNAL (The "Fish Light" - Always On) --- */}
-      {/* High-intensity internal lighting so the aquarium always glows */}
-      <directionalLight
-        position={[0, 35, 5]}
-        intensity={2.0}
+      {/* Replaced DirectionalLight with SpotLight to prevent leaking light onto the floor */}
+      <spotLight
+        position={[0, 20, 0]}
+        angle={0.7} // Confined to tank interior
+        penumbra={0.5}
+        intensity={3.0}
+        distance={35} // Dies out before hitting the room floor
+        decay={2}
         color="#ffffff"
         castShadow
+        target-position={[0, 0, 0]}
       />
       <pointLight
         position={[0, 5, 0]}
