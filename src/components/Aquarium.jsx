@@ -88,8 +88,8 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* Updated to match user sketch: Wider radius, softer falloff, but distinct pool */}
       <spotLight
         position={[0, 80, 0]} // Higher up to cast a broader pool
-        angle={0.85} // Wider angle to match sketch radius (approx 50 degrees)
-        penumbra={0.6} // Softer edge fading into darkness (natural falloff)
+        angle={0.75} // Slightly tighter to ensure darkness outside is visible
+        penumbra={0.2} // Sharper edge so the "darkness" outside is distinct
         intensity={roomLightsOn ? 2.0 : 6.0} // Brighter in dark mode to compensate for spread
         distance={200}
         decay={2}
@@ -103,7 +103,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* Volumetric Light Beam Visualization (Matches new wider cone) */}
       <mesh position={[0, 40, 0]} rotation={[0, 0, 0]}>
         {/* Wider cone to match the new spotlight angle */}
-        <coneGeometry args={[45, 80, 32, 1, true]} />
+        <coneGeometry args={[40, 80, 32, 1, true]} />
         <meshBasicMaterial 
           color="#ffffff" 
           transparent 
@@ -117,15 +117,15 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* High-intensity internal lighting so the aquarium always glows */}
       <directionalLight
         position={[0, 35, 5]}
-        intensity={4.0} // Very bright tank contents
+        intensity={2.0}
         color="#ffffff"
         castShadow
       />
       <pointLight
         position={[0, 5, 0]}
-        intensity={2.5} // Strong inner glow
+        intensity={1.0}
         color="#e0f0ff"
-        distance={25}
+        distance={18} // Reduced range to prevent leaking onto floor
         decay={2}
       />
 
