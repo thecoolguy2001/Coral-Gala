@@ -126,7 +126,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         position={[0, 20, 0]}
         angle={0.7} // Confined to tank interior
         penumbra={0.5}
-        intensity={3.0}
+        intensity={8.0} // Street light brightness
         distance={35} // Dies out before hitting the room floor
         decay={2}
         color="#ffffff"
@@ -135,7 +135,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       />
       <pointLight
         position={[0, 5, 0]}
-        intensity={1.0}
+        intensity={4.0} // Blinding inner glow
         color="#e0f0ff"
         distance={18} // Reduced range to prevent leaking onto floor
         decay={2}
