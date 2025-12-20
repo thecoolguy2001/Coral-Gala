@@ -83,6 +83,13 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         color="#fff5e0" 
         castShadow
       />
+      {/* RESTORED: Global sunlight for Room Mode only */}
+      <directionalLight
+        position={[0, 35, 5]}
+        intensity={roomLightsOn ? 2.0 : 0.0}
+        color="#ffffff"
+        castShadow
+      />
 
       {/* --- LIGHT 2: OVERHEAD CAST (The "Pool of Light" - Always On) --- */}
       {/* Updated to match user sketch: Wider radius, softer falloff, but distinct pool */}
