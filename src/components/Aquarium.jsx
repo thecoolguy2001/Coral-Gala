@@ -93,28 +93,38 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       />
 
       {/* --- LIGHT 2: OVERHEAD CAST (The "Pool of Light" - Always On) --- */}
-      {/* Updated: Linear decay (1) ensures light actually reaches the floor */}
+      {/* Updated: EXTREME intensity to guarantee visibility on dark floor */}
       <spotLight
-        position={[0, 80, 0]} 
-        angle={1.1} // Wide pool
+        position={[0, 100, 0]} 
+        angle={1.2} // Wide pool
         penumbra={0.5} // Soft edge
-        intensity={15.0} // High intensity with linear decay = Visible Pool
-        distance={300}
-        decay={1} // Linear decay (crucial for visibility)
+        intensity={100.0} // Massive intensity to force visibility
+        distance={500} // Reach infinite floor
+        decay={1} 
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
         shadow-bias={-0.001}
-        target-position={[0, 0, 0]}
+        target-position={[0, -100, 0]} // Point through the floor
+      />
+
+      {/* --- EXTRA: "RADIUS ENFORCER" LIGHT --- */}
+      {/* A local point light that guarantees the area around the tank is lit */}
+      <pointLight
+        position={[0, 10, 0]} // Just above tank
+        intensity={5.0} // Bright local sphere
+        distance={60} // Radius of ~60 units (covers table + immediate floor)
+        decay={1}
+        color="#ffffff"
       />
 
       {/* Volumetric Light Beam Visualization */}
       <mesh position={[0, 40, 0]} rotation={[0, 0, 0]}>
-        <coneGeometry args={[55, 80, 32, 1, true]} />
+        <coneGeometry args={[60, 80, 32, 1, true]} />
         <meshBasicMaterial 
           color="#ffffff" 
           transparent 
-          opacity={roomLightsOn ? 0.0 : 0.1} // More visible beam
+          opacity={roomLightsOn ? 0.0 : 0.15} // More visible beam
           depthWrite={false}
           side={2} 
         />
