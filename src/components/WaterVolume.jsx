@@ -77,11 +77,15 @@ const WaterVolume = () => {
     }
   });
 
-  // Interior water volume - fill from BOTTOM of tank to water surface
+  // Interior water volume - fill from BOTTOM of tank to just BELOW water surface
   const volumeWidth = INTERIOR_WIDTH + 0.1; // Tighter fit
-  const waterHeight = WATER_LEVEL - (-TANK_HEIGHT / 2) + 0.3; // Reduced padding slightly (0.4 -> 0.3)
+  // Calculate exact height to stop 0.2 units below the surface to avoid z-fighting
+  const topY = WATER_LEVEL - 0.2;
+  const bottomY = -TANK_HEIGHT / 2;
+  
+  const waterHeight = topY - bottomY; 
   const volumeDepth = INTERIOR_DEPTH + 0.1; // Tighter fit
-  const waterYPosition = (-TANK_HEIGHT / 2 + WATER_LEVEL) / 2 + 0.15; // Adjusted center downwards (0.2 -> 0.15)
+  const waterYPosition = (topY + bottomY) / 2;
 
   return (
     <mesh

@@ -76,30 +76,31 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
 
       {/* --- LIGHT 3: ROOM FILL (Controlled by Switch) --- */}
       {/* This simulates the main ceiling lights turning on/off */}
-      <ambientLight intensity={roomLightsOn ? 0.6 : 0.0} color="#ffffff" />
+      <ambientLight intensity={roomLightsOn ? 0.4 : 0.0} color="#ffffff" />
       <pointLight 
         position={[0, 100, 0]} 
-        intensity={roomLightsOn ? 1.2 : 0.0} 
+        intensity={roomLightsOn ? 1.0 : 0.0} 
         color="#fff5e0" 
         castShadow
+        decay={1}
       />
-      {/* RESTORED: Global sunlight for Room Mode only */}
+      {/* RESTORED: Global sunlight for Room Mode only - BOOSTED for contrast */}
       <directionalLight
         position={[0, 35, 5]}
-        intensity={roomLightsOn ? 2.0 : 0.0}
+        intensity={roomLightsOn ? 6.0 : 0.0} // Much brighter sun
         color="#ffffff"
         castShadow
       />
 
       {/* --- LIGHT 2: OVERHEAD CAST (The "Pool of Light" - Always On) --- */}
-      {/* Updated to match user sketch: Wider radius, softer falloff, but distinct pool */}
+      {/* Updated: Linear decay (1) ensures light actually reaches the floor */}
       <spotLight
-        position={[0, 80, 0]} // Higher up to cast a broader pool
-        angle={0.9} // Wider to ensure it hits the floor effectively
-        penumbra={0.4} // Softer edge for more natural falloff
-        intensity={roomLightsOn ? 5.0 : 50.0} // EXTREME intensity for Dark Mode visibility
+        position={[0, 80, 0]} 
+        angle={1.1} // Wide pool
+        penumbra={0.5} // Soft edge
+        intensity={15.0} // High intensity with linear decay = Visible Pool
         distance={300}
-        decay={2}
+        decay={1} // Linear decay (crucial for visibility)
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -107,38 +108,37 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         target-position={[0, 0, 0]}
       />
 
-      {/* Volumetric Light Beam Visualization (Matches new wider cone) */}
+      {/* Volumetric Light Beam Visualization */}
       <mesh position={[0, 40, 0]} rotation={[0, 0, 0]}>
-        {/* Wider cone to match the new spotlight angle */}
-        <coneGeometry args={[50, 80, 32, 1, true]} />
+        <coneGeometry args={[55, 80, 32, 1, true]} />
         <meshBasicMaterial 
           color="#ffffff" 
           transparent 
-          opacity={roomLightsOn ? 0.0 : 0.05} // Visible beam
+          opacity={roomLightsOn ? 0.0 : 0.1} // More visible beam
           depthWrite={false}
           side={2} 
         />
       </mesh>
 
       {/* --- LIGHT 1: TANK INTERNAL (The "Fish Light" - Always On) --- */}
-      {/* Replaced DirectionalLight with SpotLight to prevent leaking light onto the floor */}
+      {/* Internal lighting with linear decay for brightness */}
       <spotLight
-        position={[0, 30, 0]} // Higher inside tank
-        angle={1.2} // Wide enough to fill the whole tank
+        position={[0, 30, 0]} 
+        angle={1.2} 
         penumbra={0.5}
-        intensity={20.0} // Blindingly bright internal light
-        distance={60} // Reach bottom of tank easily
-        decay={2}
+        intensity={8.0} 
+        distance={60} 
+        decay={1} // Linear decay
         color="#ffffff"
         castShadow
         target-position={[0, 0, 0]}
       />
       <pointLight
         position={[0, 10, 0]}
-        intensity={10.0} // Massive inner glow
+        intensity={5.0} 
         color="#e0f0ff"
         distance={40} 
-        decay={2}
+        decay={1}
       />
 
       {/* Render in correct order for transparency */}
