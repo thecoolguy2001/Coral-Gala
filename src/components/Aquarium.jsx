@@ -109,11 +109,11 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       />
 
       {/* --- EXTRA: "RADIUS ENFORCER" LIGHT --- */}
-      {/* A local point light that guarantees the area around the tank is lit */}
+      {/* Moved higher to prevent "hump" hotspot in the middle */}
       <pointLight
-        position={[0, 10, 0]} // Just above tank
-        intensity={5.0} // Bright local sphere
-        distance={60} // Radius of ~60 units (covers table + immediate floor)
+        position={[0, 50, 0]} 
+        intensity={10.0} 
+        distance={100} 
         decay={1}
         color="#ffffff"
       />
@@ -124,7 +124,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         <meshBasicMaterial 
           color="#ffffff" 
           transparent 
-          opacity={roomLightsOn ? 0.0 : 0.15} // More visible beam
+          opacity={roomLightsOn ? 0.0 : 0.1} 
           depthWrite={false}
           side={2} 
         />
@@ -136,16 +136,16 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         position={[0, 30, 0]} 
         angle={1.2} 
         penumbra={0.5}
-        intensity={8.0} 
+        intensity={50.0} // EXTREME brightness for internal tank
         distance={60} 
-        decay={1} // Linear decay
+        decay={1} 
         color="#ffffff"
         castShadow
         target-position={[0, 0, 0]}
       />
       <pointLight
         position={[0, 10, 0]}
-        intensity={5.0} 
+        intensity={20.0} // Massive inner glow
         color="#e0f0ff"
         distance={40} 
         decay={1}
