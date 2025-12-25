@@ -95,26 +95,26 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* Updated to match user sketch: Wider radius, softer falloff, but distinct pool */}
       <spotLight
         position={[0, 80, 0]} // Higher up to cast a broader pool
-        angle={0.75} // Slightly tighter to ensure darkness outside is visible
-        penumbra={0.2} // Sharper edge so the "darkness" outside is distinct
-        intensity={roomLightsOn ? 2.0 : 6.0} // Brighter in dark mode to compensate for spread
-        distance={200}
+        angle={0.9} // Wider to ensure it hits the floor effectively
+        penumbra={0.4} // Softer edge for more natural falloff
+        intensity={roomLightsOn ? 5.0 : 50.0} // EXTREME intensity for Dark Mode visibility
+        distance={300}
         decay={2}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
-        shadow-bias={-0.0001}
+        shadow-bias={-0.001}
         target-position={[0, 0, 0]}
       />
 
       {/* Volumetric Light Beam Visualization (Matches new wider cone) */}
       <mesh position={[0, 40, 0]} rotation={[0, 0, 0]}>
         {/* Wider cone to match the new spotlight angle */}
-        <coneGeometry args={[40, 80, 32, 1, true]} />
+        <coneGeometry args={[50, 80, 32, 1, true]} />
         <meshBasicMaterial 
           color="#ffffff" 
           transparent 
-          opacity={roomLightsOn ? 0.0 : 0.08} // Increased visibility for the "Beam"
+          opacity={roomLightsOn ? 0.0 : 0.05} // Visible beam
           depthWrite={false}
           side={2} 
         />
@@ -123,21 +123,21 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* --- LIGHT 1: TANK INTERNAL (The "Fish Light" - Always On) --- */}
       {/* Replaced DirectionalLight with SpotLight to prevent leaking light onto the floor */}
       <spotLight
-        position={[0, 20, 0]}
-        angle={0.7} // Confined to tank interior
+        position={[0, 30, 0]} // Higher inside tank
+        angle={1.2} // Wide enough to fill the whole tank
         penumbra={0.5}
-        intensity={8.0} // Street light brightness
-        distance={35} // Dies out before hitting the room floor
+        intensity={20.0} // Blindingly bright internal light
+        distance={60} // Reach bottom of tank easily
         decay={2}
         color="#ffffff"
         castShadow
         target-position={[0, 0, 0]}
       />
       <pointLight
-        position={[0, 5, 0]}
-        intensity={4.0} // Blinding inner glow
+        position={[0, 10, 0]}
+        intensity={10.0} // Massive inner glow
         color="#e0f0ff"
-        distance={18} // Reduced range to prevent leaking onto floor
+        distance={40} 
         decay={2}
       />
 
