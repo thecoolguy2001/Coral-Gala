@@ -81,7 +81,7 @@ const WaterVolume = () => {
   const volumeWidth = INTERIOR_WIDTH + 0.1; // Tighter fit
   
   // Calculate exact height to reach just above WATER_LEVEL to close gap
-  const topY = WATER_LEVEL + 0.05; 
+  const topY = WATER_LEVEL + 0.1; 
   const bottomY = -TANK_HEIGHT / 2;
   
   const waterHeight = topY - bottomY; 

@@ -112,14 +112,15 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* Moved higher to prevent "hump" hotspot in the middle */}
       <pointLight
         position={[0, 50, 0]} 
-        intensity={10.0} 
+        intensity={8.0} 
         distance={100} 
         decay={1}
         color="#ffffff"
       />
 
       {/* Volumetric Light Beam Visualization */}
-      <mesh position={[0, 40, 0]} rotation={[0, 0, 0]}>
+      <mesh position={[0, 50, 0]} rotation={[0, 0, 0]}>
+        {/* Lifted Y=50 so bottom (Y=10) doesn't clip floor, removing geometry artifact */}
         <coneGeometry args={[60, 80, 32, 1, true]} />
         <meshBasicMaterial 
           color="#ffffff" 
@@ -136,7 +137,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         position={[0, 30, 0]} 
         angle={1.2} 
         penumbra={0.5}
-        intensity={50.0} // EXTREME brightness for internal tank
+        intensity={80.0} // EXTREME brightness for internal tank
         distance={60} 
         decay={1} 
         color="#ffffff"
@@ -145,7 +146,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       />
       <pointLight
         position={[0, 10, 0]}
-        intensity={20.0} // Massive inner glow
+        intensity={30.0} // Massive inner glow
         color="#e0f0ff"
         distance={40} 
         decay={1}
