@@ -93,8 +93,8 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* --- LIGHT 2: OVERHEAD CAST (The "Pool of Light" - Always On) --- */}
       <spotLight
         position={[0, 100, 0]} 
-        angle={1.0} // Wider pool at the bottom
-        penumbra={0.5} // Softer, realistic edges
+        angle={1.0} 
+        penumbra={1.0} // MAXIMUM softness (0-1 range) to remove hard edge
         intensity={100.0} 
         distance={500} 
         decay={1} 
@@ -106,23 +106,22 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       />
 
       {/* --- EXTRA: "RADIUS ENFORCER" LIGHT --- */}
-      {/* Increased distance to match wider pool */}
       <pointLight
         position={[0, 2, 0]} 
         intensity={8.0} 
-        distance={70} 
-        decay={1}
+        distance={90} // Further reach
+        decay={2} // Physical falloff for softer edge
         color="#ffffff"
       />
 
       {/* Volumetric Light Beam Visualization */}
       <mesh position={[0, 10, 0]} rotation={[0, 0, 0]}>
-        {/* Tighter cone to match spotlight */}
-        <coneGeometry args={[55, 150, 32, 1, true]} />
+        {/* Widened cone to hide edge in darkness */}
+        <coneGeometry args={[65, 150, 32, 1, true]} />
         <meshBasicMaterial 
           color="#ffffff" 
           transparent 
-          opacity={roomLightsOn ? 0.0 : 0.1} 
+          opacity={roomLightsOn ? 0.0 : 0.05} // Reduced opacity to hide hard lines
           depthWrite={false}
           side={2} 
         />
