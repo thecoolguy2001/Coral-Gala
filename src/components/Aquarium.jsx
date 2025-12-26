@@ -75,72 +75,64 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* PROFESSIONAL 3-LIGHT SYSTEM */}
 
       {/* --- LIGHT 3: ROOM FILL (Controlled by Switch) --- */}
-      {/* This simulates the main ceiling lights turning on/off */}
       <ambientLight intensity={roomLightsOn ? 0.4 : 0.0} color="#ffffff" />
       <pointLight 
         position={[0, 100, 0]} 
-        intensity={roomLightsOn ? 1.0 : 0.0} 
+        intensity={roomLightsOn ? 1.5 : 0.0} 
         color="#fff5e0" 
         castShadow
         decay={1}
       />
-      {/* RESTORED: Global sunlight for Room Mode only - BOOSTED for contrast */}
       <directionalLight
         position={[0, 35, 5]}
-        intensity={roomLightsOn ? 6.0 : 0.0} // Much brighter sun
+        intensity={roomLightsOn ? 10.0 : 0.0} // Brighter Sun for room mode
         color="#ffffff"
         castShadow
       />
 
       {/* --- LIGHT 2: OVERHEAD CAST (The "Pool of Light" - Always On) --- */}
-      {/* Updated: EXTREME intensity to guarantee visibility on dark floor */}
       <spotLight
         position={[0, 100, 0]} 
-        angle={1.2} // Wide pool
-        penumbra={0.5} // Soft edge
-        intensity={100.0} // Massive intensity to force visibility
-        distance={500} // Reach infinite floor
+        angle={1.2} 
+        penumbra={0.5} 
+        intensity={500.0} // MASSIVE intensity to ensure visibility
+        distance={500} 
         decay={1} 
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
         shadow-bias={-0.001}
-        target-position={[0, -100, 0]} // Point through the floor
+        target-position={[0, -100, 0]} 
       />
 
-      {/* --- EXTRA: "RADIUS ENFORCER" LIGHT --- */}
-      {/* A local point light that guarantees the area around the tank is lit */}
+      {/* Floor Under-Light: Ensures the floor isn't in total table shadow */}
       <pointLight
-        position={[0, 10, 0]} // Just above tank (Reverted)
-        intensity={5.0} // Bright local sphere (Reverted)
-        distance={60} // Radius of ~60 units (covers table + immediate floor) (Reverted)
+        position={[0, -15, 0]} 
+        intensity={20.0} 
+        distance={100} 
         decay={1}
         color="#ffffff"
       />
 
       {/* Volumetric Light Beam Visualization */}
-      <mesh position={[0, 60, 0]} rotation={[0, 0, 0]}>
-        {/* Lifted Y=60 so bottom (Y=0) is now shifted. Wait, 120 height centered at 60 means bottom is at 0. 
-            Let's shift it higher to AVOID the floor completely.
-            Position: 50. Height: 80. Bottom: 10. Top: 90. 
-            This avoids the floor intersection (hump). */}
-        <coneGeometry args={[60, 80, 32, 1, true]} />
+      <mesh position={[0, 10, 0]} rotation={[0, 0, 0]}>
+        {/* Extremely tall cone sunk deep into the floor to remove the "hump" edge */}
+        <coneGeometry args={[65, 150, 32, 1, true]} />
         <meshBasicMaterial 
           color="#ffffff" 
           transparent 
-          opacity={roomLightsOn ? 0.0 : 0.1} 
+          opacity={roomLightsOn ? 0.0 : 0.12} 
           depthWrite={false}
           side={2} 
         />
       </mesh>
 
       {/* --- LIGHT 1: TANK INTERNAL (The "Fish Light" - Always On) --- */}
-      {/* Internal lighting with linear decay for brightness */}
       <spotLight
         position={[0, 30, 0]} 
         angle={1.2} 
         penumbra={0.5}
-        intensity={100.0} // MAXIMUM brightness for internal tank
+        intensity={300.0} // MASSIVE internal brightness
         distance={60} 
         decay={1} 
         color="#ffffff"
@@ -149,7 +141,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       />
       <pointLight
         position={[0, 10, 0]}
-        intensity={50.0} // Massive inner glow
+        intensity={150.0} // MASSIVE inner glow
         color="#e0f0ff"
         distance={40} 
         decay={1}

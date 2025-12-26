@@ -141,9 +141,11 @@ const TankContainer = ({ isOutsideView }) => {
       <mesh position={[0, -tankHeight / 2 + 0.3, 0]} receiveShadow>
         <boxGeometry args={[tankWidth - 0.2, 0.6, tankDepth - 0.2]} />
         <meshStandardMaterial
-          color="#f0e8d8"
+          color="#d8e0f0" // Cooler blue-tinted sand
           roughness={0.85}
           metalness={0.0}
+          emissive="#4a8ac7" // Subtle underwater blue glow
+          emissiveIntensity={0.1}
         />
       </mesh>
 
