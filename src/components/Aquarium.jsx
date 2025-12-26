@@ -119,7 +119,11 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       />
 
       {/* Volumetric Light Beam Visualization */}
-      <mesh position={[0, 40, 0]} rotation={[0, 0, 0]}>
+      <mesh position={[0, 60, 0]} rotation={[0, 0, 0]}>
+        {/* Lifted Y=60 so bottom (Y=0) is now shifted. Wait, 120 height centered at 60 means bottom is at 0. 
+            Let's shift it higher to AVOID the floor completely.
+            Position: 50. Height: 80. Bottom: 10. Top: 90. 
+            This avoids the floor intersection (hump). */}
         <coneGeometry args={[60, 80, 32, 1, true]} />
         <meshBasicMaterial 
           color="#ffffff" 
