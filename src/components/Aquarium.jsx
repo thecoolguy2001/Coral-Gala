@@ -78,14 +78,14 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       <ambientLight intensity={roomLightsOn ? 0.4 : 0.0} color="#ffffff" />
       <pointLight 
         position={[0, 100, 0]} 
-        intensity={roomLightsOn ? 1.5 : 0.0} 
+        intensity={roomLightsOn ? 1.0 : 0.0} 
         color="#fff5e0" 
         castShadow
         decay={1}
       />
       <directionalLight
         position={[0, 35, 5]}
-        intensity={roomLightsOn ? 10.0 : 0.0} // Brighter Sun for room mode
+        intensity={roomLightsOn ? 6.0 : 0.0} 
         color="#ffffff"
         castShadow
       />
@@ -95,7 +95,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         position={[0, 100, 0]} 
         angle={1.2} 
         penumbra={0.5} 
-        intensity={500.0} // MASSIVE intensity to ensure visibility
+        intensity={100.0} // Reverted intensity
         distance={500} 
         decay={1} 
         castShadow
@@ -105,23 +105,24 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         target-position={[0, -100, 0]} 
       />
 
-      {/* Floor Under-Light: Ensures the floor isn't in total table shadow */}
+      {/* --- EXTRA: "RADIUS ENFORCER" LIGHT --- */}
+      {/* Reverted to floor level PointLight */}
       <pointLight
-        position={[0, -15, 0]} 
-        intensity={20.0} 
-        distance={100} 
+        position={[0, 2, 0]} 
+        intensity={8.0} 
+        distance={80} 
         decay={1}
         color="#ffffff"
       />
 
       {/* Volumetric Light Beam Visualization */}
       <mesh position={[0, 10, 0]} rotation={[0, 0, 0]}>
-        {/* Extremely tall cone sunk deep into the floor to remove the "hump" edge */}
+        {/* Keeping the fix for the hump (Low position, tall height) */}
         <coneGeometry args={[65, 150, 32, 1, true]} />
         <meshBasicMaterial 
           color="#ffffff" 
           transparent 
-          opacity={roomLightsOn ? 0.0 : 0.12} 
+          opacity={roomLightsOn ? 0.0 : 0.1} 
           depthWrite={false}
           side={2} 
         />
@@ -132,7 +133,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         position={[0, 30, 0]} 
         angle={1.2} 
         penumbra={0.5}
-        intensity={300.0} // MASSIVE internal brightness
+        intensity={150.0} // Reverted internal brightness
         distance={60} 
         decay={1} 
         color="#ffffff"
@@ -141,7 +142,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       />
       <pointLight
         position={[0, 10, 0]}
-        intensity={150.0} // MASSIVE inner glow
+        intensity={80.0} // Reverted inner glow
         color="#e0f0ff"
         distance={40} 
         decay={1}
