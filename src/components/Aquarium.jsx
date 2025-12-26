@@ -93,8 +93,8 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* --- LIGHT 2: OVERHEAD CAST (The "Pool of Light" - Always On) --- */}
       <spotLight
         position={[0, 100, 0]} 
-        angle={0.9} // Tighter pool for more darkness outside
-        penumbra={0.3} // Sharper drop-off
+        angle={1.0} // Wider pool at the bottom
+        penumbra={0.5} // Softer, realistic edges
         intensity={100.0} 
         distance={500} 
         decay={1} 
@@ -106,11 +106,11 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       />
 
       {/* --- EXTRA: "RADIUS ENFORCER" LIGHT --- */}
-      {/* Reduced distance to ensure pitch black outside the radius */}
+      {/* Increased distance to match wider pool */}
       <pointLight
         position={[0, 2, 0]} 
         intensity={8.0} 
-        distance={50} // Tighter radius
+        distance={70} 
         decay={1}
         color="#ffffff"
       />
@@ -118,7 +118,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* Volumetric Light Beam Visualization */}
       <mesh position={[0, 10, 0]} rotation={[0, 0, 0]}>
         {/* Tighter cone to match spotlight */}
-        <coneGeometry args={[45, 150, 32, 1, true]} />
+        <coneGeometry args={[55, 150, 32, 1, true]} />
         <meshBasicMaterial 
           color="#ffffff" 
           transparent 
