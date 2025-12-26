@@ -108,24 +108,13 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* --- EXTRA: "RADIUS ENFORCER" LIGHT --- */}
       <pointLight
         position={[0, 2, 0]} 
-        intensity={8.0} 
-        distance={90} // Further reach
-        decay={2} // Physical falloff for softer edge
+        intensity={5.0} 
+        distance={200} // Increased distance to remove hard cutoff ring
+        decay={2} 
         color="#ffffff"
       />
 
-      {/* Volumetric Light Beam Visualization */}
-      <mesh position={[0, 10, 0]} rotation={[0, 0, 0]}>
-        {/* Widened cone to hide edge in darkness */}
-        <coneGeometry args={[65, 150, 32, 1, true]} />
-        <meshBasicMaterial 
-          color="#ffffff" 
-          transparent 
-          opacity={roomLightsOn ? 0.0 : 0.05} // Reduced opacity to hide hard lines
-          depthWrite={false}
-          side={2} 
-        />
-      </mesh>
+      {/* Volumetric Cone Removed to eliminate hard geometry lines/artifacts */}
 
       {/* --- LIGHT 1: TANK INTERNAL (The "Fish Light" - Always On) --- */}
       <spotLight
