@@ -109,18 +109,17 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       />
 
       {/* --- EXTRA: "RADIUS ENFORCER" LIGHT --- */}
-      {/* Moved higher to prevent "hump" hotspot in the middle */}
+      {/* A local point light that guarantees the area around the tank is lit */}
       <pointLight
-        position={[0, 50, 0]} 
-        intensity={8.0} 
-        distance={100} 
+        position={[0, 10, 0]} // Just above tank (Reverted)
+        intensity={5.0} // Bright local sphere (Reverted)
+        distance={60} // Radius of ~60 units (covers table + immediate floor) (Reverted)
         decay={1}
         color="#ffffff"
       />
 
       {/* Volumetric Light Beam Visualization */}
-      <mesh position={[0, 50, 0]} rotation={[0, 0, 0]}>
-        {/* Lifted Y=50 so bottom (Y=10) doesn't clip floor, removing geometry artifact */}
+      <mesh position={[0, 40, 0]} rotation={[0, 0, 0]}>
         <coneGeometry args={[60, 80, 32, 1, true]} />
         <meshBasicMaterial 
           color="#ffffff" 
@@ -137,7 +136,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         position={[0, 30, 0]} 
         angle={1.2} 
         penumbra={0.5}
-        intensity={80.0} // EXTREME brightness for internal tank
+        intensity={100.0} // MAXIMUM brightness for internal tank
         distance={60} 
         decay={1} 
         color="#ffffff"
@@ -146,7 +145,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       />
       <pointLight
         position={[0, 10, 0]}
-        intensity={30.0} // Massive inner glow
+        intensity={50.0} // Massive inner glow
         color="#e0f0ff"
         distance={40} 
         decay={1}
