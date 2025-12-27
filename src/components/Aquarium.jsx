@@ -91,8 +91,8 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         intensity={roomLightsOn ? 3.0 : 0.0} 
         color="#fff0dd" // Warm sun
         castShadow
-        shadow-mapSize-width={1024} // Optimized
-        shadow-mapSize-height={1024} // Optimized
+        shadow-mapSize-width={2048} // Restored
+        shadow-mapSize-height={2048} // Restored
         shadow-bias={-0.0001}
       />
 
@@ -114,8 +114,8 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         distance={500} 
         decay={1} 
         castShadow
-        shadow-mapSize-width={1024} // Optimized
-        shadow-mapSize-height={1024} // Optimized
+        shadow-mapSize-width={2048} // Restored
+        shadow-mapSize-height={2048} // Restored
         shadow-bias={-0.001}
         target-position={[0, -100, 0]} 
       />
@@ -132,6 +132,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* Volumetric Cone Removed to eliminate hard geometry lines/artifacts */}
 
       {/* --- LIGHT 1: TANK INTERNAL (The "Fish Light" - Always On) --- */}
+      {/* Internal lighting with linear decay for brightness */}
       <spotLight
         position={[0, 30, 0]} 
         angle={1.2} 
@@ -140,7 +141,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         distance={60} 
         decay={1} 
         color="#ffffff"
-        // castShadow removed for performance
+        castShadow // Restored
         target-position={[0, 0, 0]}
       />
       <pointLight
@@ -246,6 +247,7 @@ const Aquarium = ({ fishData = [], events = [], loading = false, roomLightsOn })
     <>
       <ThreeErrorBoundary>
         <Canvas
+          dpr={[1, 1.5]} // Cap pixel ratio for performance on high-DPI screens
           camera={{
             position: cameraPosition,
             fov: 65, // Slightly wider field of view
