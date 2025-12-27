@@ -75,19 +75,34 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* PROFESSIONAL 3-LIGHT SYSTEM */}
 
       {/* --- LIGHT 3: ROOM FILL (Controlled by Switch) --- */}
-      <ambientLight intensity={roomLightsOn ? 0.4 : 0.0} color="#ffffff" />
-      <pointLight 
-        position={[0, 100, 0]} 
-        intensity={roomLightsOn ? 1.0 : 0.0} 
-        color="#fff5e0" 
-        castShadow
-        decay={1}
+      {/* REALISTIC ROOM LIGHTING: Hemisphere for depth + Angled Sun for shape */}
+      
+      {/* 1. Base Environment Fill (Hemisphere adds 3D depth) */}
+      {/* Cool light from above, warm bounce from wood floor below */}
+      <hemisphereLight
+        skyColor="#d6e6ff" 
+        groundColor="#5c4033" 
+        intensity={roomLightsOn ? 0.4 : 0.0}
       />
+      
+      {/* 2. "Window" Sunlight - Creates direction and gradients */}
       <directionalLight
-        position={[0, 35, 5]}
-        intensity={roomLightsOn ? 6.0 : 0.0} 
-        color="#ffffff"
+        position={[-50, 30, 20]} // Coming from the side
+        intensity={roomLightsOn ? 3.0 : 0.0} 
+        color="#fff0dd" // Warm sun
         castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-bias={-0.0001}
+      />
+
+      {/* 3. Soft Ceiling Fill */}
+      <pointLight 
+        position={[0, 80, 0]} 
+        intensity={roomLightsOn ? 0.6 : 0.0} 
+        color="#ffffff" 
+        decay={2}
+        distance={200}
       />
 
       {/* --- LIGHT 2: OVERHEAD CAST (The "Pool of Light" - Always On) --- */}
