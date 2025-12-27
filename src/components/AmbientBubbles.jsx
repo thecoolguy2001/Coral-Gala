@@ -13,7 +13,7 @@ const AmbientBubbles = () => {
   // Create bubble particles
   const bubblesGeometry = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
-    const count = 150; // Increased count for better fill
+    const count = 400; // Increased density
     const positions = new Float32Array(count * 3);
     const scales = new Float32Array(count);
     const velocities = new Float32Array(count * 3);
@@ -22,17 +22,17 @@ const AmbientBubbles = () => {
 
     for (let i = 0; i < count; i++) {
       // Random positions throughout the tank
-      positions[i * 3] = (Math.random() - 0.5) * (BOUNDS.x * 1.8); // Wide X spread
-      positions[i * 3 + 1] = bottomY + Math.random() * (WATER_LEVEL - bottomY); // Distributed height
-      positions[i * 3 + 2] = (Math.random() - 0.5) * (BOUNDS.z * 1.8); // Wide Z spread
+      positions[i * 3] = (Math.random() - 0.5) * (BOUNDS.x * 2.0); // Full width spread
+      positions[i * 3 + 1] = bottomY + Math.random() * (WATER_LEVEL - bottomY); 
+      positions[i * 3 + 2] = (Math.random() - 0.5) * (BOUNDS.z * 2.0); // Full depth spread
 
-      // Random sizes - slightly larger for visibility
-      scales[i] = Math.random() * 0.25 + 0.08;
+      // Varied sizes - mixed small and large for 3D depth
+      scales[i] = Math.random() * 0.5 + 0.1;
 
       // Slower upward velocity for ambient bubbles
-      velocities[i * 3] = (Math.random() - 0.5) * 0.01; // Tiny X drift
-      velocities[i * 3 + 1] = Math.random() * 0.02 + 0.01; // Slow upward
-      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.01; // Tiny Z drift
+      velocities[i * 3] = (Math.random() - 0.5) * 0.01; 
+      velocities[i * 3 + 1] = Math.random() * 0.02 + 0.01; 
+      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.01; 
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
