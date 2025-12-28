@@ -46,7 +46,7 @@ const TankContainer = () => {
   // Custom Sand Shader
   const sandMaterial = useMemo(() => {
     return new THREE.MeshStandardMaterial({
-      color: "#f0e8d8",
+      color: "#fcfaf0", // Lighter, cleaner sand
       roughness: 0.9,
       onBeforeCompile: (shader) => {
         shader.fragmentShader = shader.fragmentShader.replace(
@@ -78,13 +78,13 @@ const TankContainer = () => {
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
-          opacity={0.2}
-          roughness={0.02}
-          metalness={0.1}
-          transmission={0.98}
-          thickness={1.5}
+          opacity={0.1} // Reduced to minimize ghosting
+          roughness={0.01}
+          metalness={0.05}
+          transmission={0.99}
+          thickness={0.05} // MINIMIZED to stop the "double effect"
           attenuationColor="#c0ebd7"
-          attenuationDistance={10}
+          attenuationDistance={20}
           envMapIntensity={1}
           depthWrite={false} 
         />
@@ -95,42 +95,44 @@ const TankContainer = () => {
         <meshPhysicalMaterial
           color="#050a15"
           transparent
-          opacity={0.95}
+          opacity={0.8} // Slightly less opaque
           roughness={0.2}
           metalness={0.1}
-          transmission={0.1}
+          transmission={0.2}
           depthWrite={false} 
         />
       </mesh>
 
+      {/* Left Glass */}
       <mesh position={[-tankWidth / 2, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
         <boxGeometry args={[tankDepth, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
-          opacity={0.2}
-          roughness={0.02}
-          metalness={0.1}
-          transmission={0.98}
-          thickness={1.5}
+          opacity={0.1}
+          roughness={0.01}
+          metalness={0.05}
+          transmission={0.99}
+          thickness={0.05} // MINIMIZED
           attenuationColor="#c0ebd7"
-          attenuationDistance={10}
+          attenuationDistance={20}
           depthWrite={false} 
         />
       </mesh>
 
+      {/* Right Glass */}
       <mesh position={[tankWidth / 2, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
         <boxGeometry args={[tankDepth, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
-          opacity={0.2}
-          roughness={0.02}
-          metalness={0.1}
-          transmission={0.98}
-          thickness={1.5}
+          opacity={0.1}
+          roughness={0.01}
+          metalness={0.05}
+          transmission={0.99}
+          thickness={0.05} // MINIMIZED
           attenuationColor="#c0ebd7"
-          attenuationDistance={10}
+          attenuationDistance={20}
           depthWrite={false} 
         />
       </mesh>

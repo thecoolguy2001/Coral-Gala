@@ -61,24 +61,22 @@ const RealisticCaustics = () => {
 
         void main() {
           // Domain warping for fluid motion
-          vec2 uv = vUv * 0.8;
-          uv += vec2(sin(time * 0.1), cos(time * 0.15)) * 0.05; // Gentle drift
+          vec2 uv = vUv * 1.2; // Slightly higher frequency
+          uv += vec2(sin(time * 0.2), cos(time * 0.25)) * 0.08; // Faster drift
 
-          // Chromatic Aberration: Sample caustics at slightly different offsets/times
-          float r = causticPattern(uv + vec2(0.002), time * 0.2);
-          float g = causticPattern(uv, time * 0.2);
-          float b = causticPattern(uv - vec2(0.002), time * 0.2 + 0.05);
+          // Sample caustics with higher speed to mirror active surface
+          float r = causticPattern(uv + vec2(0.002), time * 0.5);
+          float g = causticPattern(uv, time * 0.5);
+          float b = causticPattern(uv - vec2(0.002), time * 0.5 + 0.05);
 
           // Combined for softer effect
-          vec3 caustics = vec3(r, g, b) * intensity; // RGB separate
+          vec3 caustics = vec3(r, g, b) * intensity * 1.5; 
 
-          // Light color - soft blue-white
-          // Multiply by the caustic pattern
-          vec3 finalColor = vec3(0.9, 0.95, 1.0) * caustics;
+          // Light color
+          vec3 finalColor = vec3(1.0, 1.0, 1.0) * caustics; // Brighter white for sand visibility
           
-          // Output with soft alpha for "light" look
-          // Use the green channel as representative luminance for alpha
-          gl_FragColor = vec4(finalColor, g * 0.4); 
+          // Output with higher alpha for visibility on beige sand
+          gl_FragColor = vec4(finalColor, g * 0.6); 
         }
       `,
       transparent: true,
