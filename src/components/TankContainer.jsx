@@ -1,7 +1,9 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { MeshReflectorMaterial } from '@react-three/drei';
 import * as THREE from 'three';
-import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, GLASS_THICKNESS, FRAME_THICKNESS, INTERIOR_WIDTH, INTERIOR_DEPTH, WATER_LEVEL } from '../constants/tankDimensions';
+import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, GLASS_THICKNESS, FRAME_THICKNESS } from '../constants/tankDimensions';
+import SandDust from './SandDust';
 
 /**
  * TankContainer - Renders the physical aquarium tank structure
@@ -13,13 +15,13 @@ const TankContainer = () => {
   const coralRef2 = useRef();
 
   // Use shared tank dimensions
-  const tankWidth = TANK_WIDTH - 0.4; // Slightly smaller to close gap with water
+  const tankWidth = TANK_WIDTH - 0.4;
   const tankHeight = TANK_HEIGHT;
   const tankDepth = TANK_DEPTH - 0.4;
   const glassThickness = GLASS_THICKNESS;
   const frameThickness = FRAME_THICKNESS;
 
-  // Animate plants and corals swaying in the current
+  // Animate plants and corals
   useFrame((state) => {
     const t = state.clock.elapsedTime;
     
@@ -43,11 +45,13 @@ const TankContainer = () => {
     }
   });
 
-  // Custom Sand Shader with Fake Normal/Bump Map for 3D look
+  // Custom Sand Shader with Emissive Glow to resist blue tint
   const sandMaterial = useMemo(() => {
     return new THREE.MeshStandardMaterial({
-      color: "#fffdf5", // Very pale beige to resist blue tint
-      roughness: 0.8,   // Slightly smoother to catch shadows
+      color: "#ffffff",
+      roughness: 0.8,
+      emissive: "#fff0d5", // Warm glow to counter blue water
+      emissiveIntensity: 0.25,
       onBeforeCompile: (shader) => {
         shader.fragmentShader = shader.fragmentShader.replace(
           '#include <common>',
@@ -67,10 +71,9 @@ const TankContainer = () => {
           '#include <normal_fragment_begin>',
           `
           #include <normal_fragment_begin>
-          // Perturb normal for grain effect
           float h = noise(vUv * 800.0);
-          vec3 grainNormal = normalize(vec3(dFdx(h), dFdy(h), 0.5)); // Fake normal from noise
-          normal = normalize(normal + grainNormal * 0.3); // Blend with surface normal
+          vec3 grainNormal = normalize(vec3(dFdx(h), dFdy(h), 0.5));
+          normal = normalize(normal + grainNormal * 0.3);
           `
         );
         shader.fragmentShader = shader.fragmentShader.replace(
@@ -78,10 +81,10 @@ const TankContainer = () => {
           `
           #include <color_fragment>
           float n = hash(vUv * 500.0);
-          float dust = noise(vUv * 20.0); // Larger dust patches
+          float dust = noise(vUv * 20.0);
           
-          diffuseColor.rgb *= (0.9 + n * 0.2); // Grainy value
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.8, 0.75, 0.7), dust * 0.3); // Darker dust patches
+          diffuseColor.rgb *= (0.9 + n * 0.2);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.9, 0.85, 0.8), dust * 0.3);
           `
         );
       }
@@ -90,68 +93,103 @@ const TankContainer = () => {
 
   return (
     <group ref={tankRef}>
-      {/* Glass Walls */}
+      {/* Front Glass (Transparent) */}
       <mesh position={[0, 0, tankDepth / 2]}>
         <boxGeometry args={[tankWidth, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
-          opacity={0.1} // Reduced to minimize ghosting
-          roughness={0.01}
-          metalness={0.05}
+          opacity={0.1}
+          roughness={0.05}
+          metalness={0.1}
           transmission={0.99}
-          thickness={0.05} // MINIMIZED to stop the "double effect"
-          attenuationColor="#c0ebd7"
-          attenuationDistance={20}
-          envMapIntensity={1}
+          thickness={0.1}
           depthWrite={false} 
         />
       </mesh>
 
+      {/* Back Glass - REFLECTIVE MIRROR */}
       <mesh position={[0, 0, -tankDepth / 2]}>
         <boxGeometry args={[tankWidth, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
-          color="#050a15"
-          transparent
-          opacity={0.8} // Slightly less opaque
-          roughness={0.2}
+          color="#000000" // Dark backing
+          roughness={0.5}
           metalness={0.1}
-          transmission={0.2}
-          depthWrite={false} 
+        />
+      </mesh>
+      {/* Internal Reflection Plane - Back */}
+      <mesh position={[0, 0, -tankDepth / 2 + 0.1]} rotation={[0, 0, 0]}>
+        <planeGeometry args={[tankWidth, tankHeight]} />
+        <MeshReflectorMaterial
+          blur={[300, 100]}
+          resolution={512}
+          mixBlur={1}
+          mixStrength={20} // Strength of reflection
+          roughness={0.1} // Glass-like
+          depthScale={1.2}
+          minDepthThreshold={0.4}
+          maxDepthThreshold={1.4}
+          color="#151515" // Dark tint for depth
+          metalness={0.8}
+          mirror={0.7} // High reflectivity
         />
       </mesh>
 
-      {/* Left Glass */}
+      {/* Left Glass - REFLECTIVE */}
       <mesh position={[-tankWidth / 2, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
         <boxGeometry args={[tankDepth, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
           opacity={0.1}
-          roughness={0.1} // Increased slightly to blur reflections
-          metalness={0.0} // Removed metalness to stop mirror reflections
-          transmission={0.99}
-          thickness={0.05} // MINIMIZED
-          attenuationColor="#c0ebd7"
-          attenuationDistance={20}
-          depthWrite={false} 
+          roughness={0.1}
+          transmission={0.9}
+        />
+      </mesh>
+      {/* Internal Reflection Plane - Left */}
+      <mesh position={[-tankWidth / 2 + 0.1, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[tankDepth, tankHeight]} />
+        <MeshReflectorMaterial
+          blur={[300, 100]}
+          resolution={256} // Lower res for sides
+          mixBlur={1}
+          mixStrength={15}
+          roughness={0.1}
+          depthScale={1.2}
+          minDepthThreshold={0.4}
+          maxDepthThreshold={1.4}
+          color="#151515"
+          metalness={0.8}
+          mirror={0.6}
         />
       </mesh>
 
-      {/* Right Glass */}
+      {/* Right Glass - REFLECTIVE */}
       <mesh position={[tankWidth / 2, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
         <boxGeometry args={[tankDepth, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
           opacity={0.1}
-          roughness={0.1} // Increased slightly
-          metalness={0.0} // Removed metalness
-          transmission={0.99}
-          thickness={0.05} // MINIMIZED
-          attenuationColor="#c0ebd7"
-          attenuationDistance={20}
-          depthWrite={false} 
+          roughness={0.1}
+          transmission={0.9}
+        />
+      </mesh>
+      {/* Internal Reflection Plane - Right */}
+      <mesh position={[tankWidth / 2 - 0.1, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
+        <planeGeometry args={[tankDepth, tankHeight]} />
+        <MeshReflectorMaterial
+          blur={[300, 100]}
+          resolution={256}
+          mixBlur={1}
+          mixStrength={15}
+          roughness={0.1}
+          depthScale={1.2}
+          minDepthThreshold={0.4}
+          maxDepthThreshold={1.4}
+          color="#151515"
+          metalness={0.8}
+          mirror={0.6}
         />
       </mesh>
 
@@ -162,42 +200,31 @@ const TankContainer = () => {
           color="#ffffff"
           transparent
           opacity={0.15}
-          roughness={0.05}
-          metalness={0.0}
           transmission={0.95}
-          depthWrite={false} 
         />
       </mesh>
 
-      {/* Tank Frame */}
-      {/* Front rim */}
+      {/* Tank Frame (Unchanged) */}
       <mesh position={[0, tankHeight / 2 + frameThickness / 2, tankDepth / 2 + frameThickness / 2]}>
         <boxGeometry args={[tankWidth + frameThickness * 2, frameThickness, frameThickness]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
       </mesh>
-      {/* Back rim */}
       <mesh position={[0, tankHeight / 2 + frameThickness / 2, -tankDepth / 2 - frameThickness / 2]}>
         <boxGeometry args={[tankWidth + frameThickness * 2, frameThickness, frameThickness]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
       </mesh>
-      {/* Left rim */}
       <mesh position={[-tankWidth / 2 - frameThickness / 2, tankHeight / 2 + frameThickness / 2, 0]}>
         <boxGeometry args={[frameThickness, frameThickness, tankDepth]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
       </mesh>
-      {/* Right rim */}
       <mesh position={[tankWidth / 2 + frameThickness / 2, tankHeight / 2 + frameThickness / 2, 0]}>
         <boxGeometry args={[frameThickness, frameThickness, tankDepth]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
       </mesh>
-
-      {/* Bottom Frame */}
       <mesh position={[0, -tankHeight / 2 - frameThickness / 2, 0]}>
         <boxGeometry args={[tankWidth + frameThickness * 2, frameThickness, tankDepth + frameThickness * 2]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.6} metalness={0.1} />
       </mesh>
-
-      {/* Vertical Corner Frames */}
       {[
         [-tankWidth / 2 - frameThickness / 2, 0, tankDepth / 2 + frameThickness / 2],
         [tankWidth / 2 + frameThickness / 2, 0, tankDepth / 2 + frameThickness / 2],
@@ -215,6 +242,9 @@ const TankContainer = () => {
         <boxGeometry args={[tankWidth - 0.2, 0.6, tankDepth - 0.2]} />
       </mesh>
 
+      {/* Sand Dust Particles */}
+      <SandDust />
+
       {/* DRIFTWOOD CENTERPIECE */}
       <group position={[-8, -tankHeight / 2 + 1.5, -2]}>
         <mesh rotation={[0, 0.4, -0.2]} castShadow receiveShadow>
@@ -227,7 +257,7 @@ const TankContainer = () => {
         </mesh>
       </group>
 
-      {/* JAVA FERN CLUSTER (Animated Sway) */}
+      {/* JAVA FERN CLUSTER */}
       <group ref={fernRef} position={[-8, -tankHeight / 2 + 2.5, -2]}>
         {[...Array(5)].map((_, i) => {
           const angle = (i / 5) * Math.PI * 0.6 - 0.3;
@@ -259,7 +289,7 @@ const TankContainer = () => {
         </mesh>
       </group>
 
-      {/* SOFT CORAL ACCENT (Animated Sway) */}
+      {/* SOFT CORAL ACCENT */}
       <group ref={coralRef2} position={[10, -tankHeight / 2 + 1, 3]}>
         <mesh castShadow receiveShadow>
           <sphereGeometry args={[0.8, 12, 12]} />
@@ -276,7 +306,7 @@ const TankContainer = () => {
         })}
       </group>
 
-      {/* BLUE CORAL ACCENT (Animated Sway) */}
+      {/* BLUE CORAL ACCENT */}
       <group ref={coralRef1} position={[-12, -tankHeight / 2 + 1, -4]}>
         {[...Array(5)].map((_, i) => {
           const angle = (i / 5) * Math.PI * 2;

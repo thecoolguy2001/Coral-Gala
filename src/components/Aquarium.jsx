@@ -82,7 +82,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       <hemisphereLight
         skyColor="#d6e6ff" 
         groundColor="#5c4033" 
-        intensity={roomLightsOn ? 0.4 : 0.0}
+        intensity={roomLightsOn ? 0.6 : 0.0}
       />
       
       {/* 2. "Window" Sunlight - Creates direction and gradients */}
@@ -91,56 +91,57 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         intensity={roomLightsOn ? 3.0 : 0.0} 
         color="#fff0dd" // Warm sun
         castShadow
-        shadow-mapSize-width={2048} // Restored
-        shadow-mapSize-height={2048} // Restored
+        shadow-mapSize-width={2048} 
+        shadow-mapSize-height={2048} 
         shadow-bias={-0.0001}
       />
 
       {/* 3. Soft Ceiling Fill */}
       <pointLight 
         position={[0, 80, 0]} 
-        intensity={roomLightsOn ? 0.6 : 0.0} 
+        intensity={roomLightsOn ? 1.5 : 0.0} 
         color="#ffffff" 
         decay={2}
         distance={200}
       />
 
       {/* --- LIGHT 2: OVERHEAD CAST (The "Pool of Light" - Always On) --- */}
+      {/* Main Tank Light - High Intensity */}
       <spotLight
         position={[0, 100, 0]} 
-        angle={1.0} 
-        penumbra={1.0} 
-        intensity={100.0} 
+        angle={0.6} // Tighter angle for focused tank lighting
+        penumbra={0.5} 
+        intensity={800.0} // SIGNIFICANTLY BOOSTED for brightness
         distance={500} 
         decay={1} 
         castShadow
         shadow-mapSize-width={2048} 
         shadow-mapSize-height={2048} 
-        shadow-bias={-0.0005} // Adjusted bias
-        shadow-radius={8} // Soft shadows
+        shadow-bias={-0.0001} 
+        shadow-radius={3} // Soft but visible shadows
         target-position={[0, -100, 0]} 
       />
 
       {/* --- LIGHT 1: TANK INTERNAL (The "Fish Light" - Always On) --- */}
-      {/* Internal lighting with linear decay for brightness */}
+      {/* Internal lighting for highlighting fish details */}
       <spotLight
         position={[0, 30, 0]} 
         angle={1.2} 
         penumbra={0.5}
-        intensity={500.0} // MAX brightness
+        intensity={600.0} // Boosted
         distance={60} 
         decay={1} 
         color="#ffffff"
-        castShadow // Re-enabled for fish shadows
+        castShadow // Vital for fish shadows on sand
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
-        shadow-bias={-0.00005} // Tighter bias to keep shadow attached
-        shadow-radius={4} // Less blur so shadows are actually visible
+        shadow-bias={-0.0001} 
+        shadow-radius={2} // Sharper shadows for definition
         target-position={[0, 0, 0]}
       />
       <pointLight
         position={[0, 10, 0]}
-        intensity={80.0} // Reverted inner glow
+        intensity={100.0} 
         color="#e0f0ff"
         distance={40} 
         decay={1}

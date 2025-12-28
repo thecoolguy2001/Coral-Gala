@@ -14,7 +14,7 @@ const RealisticCaustics = () => {
     return new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        intensity: { value: 0.4 }, // Lighter intensity
+        intensity: { value: 0.6 }, // Increased intensity
       },
       vertexShader: `
         varying vec2 vUv;
@@ -61,8 +61,8 @@ const RealisticCaustics = () => {
 
         void main() {
           // Domain warping for fluid motion
-          vec2 uv = vUv * 1.2; // Slightly higher frequency
-          uv += vec2(sin(time * 0.2), cos(time * 0.25)) * 0.08; // Faster drift
+          vec2 uv = vUv * 4.0; // Matched scale to WaterSurface (was 1.2)
+          uv += vec2(sin(time * 0.2), cos(time * 0.25)) * 0.02; // Slower drift
 
           // Sample caustics with higher speed to mirror active surface
           float r = causticPattern(uv + vec2(0.002), time * 0.5);
@@ -70,13 +70,13 @@ const RealisticCaustics = () => {
           float b = causticPattern(uv - vec2(0.002), time * 0.5 + 0.05);
 
           // Combined for softer effect
-          vec3 caustics = vec3(r, g, b) * intensity * 1.5; 
+          vec3 caustics = vec3(r, g, b) * intensity * 2.5; // Boosted brightness
 
           // Light color
-          vec3 finalColor = vec3(1.0, 1.0, 1.0) * caustics; // Brighter white for sand visibility
+          vec3 finalColor = vec3(1.0, 1.0, 1.0) * caustics;
           
-          // Output with higher alpha for visibility on beige sand
-          gl_FragColor = vec4(finalColor, g * 0.6); 
+          // Output with transparency
+          gl_FragColor = vec4(finalColor, g * 0.5); 
         }
       `,
       transparent: true,
@@ -97,7 +97,8 @@ const RealisticCaustics = () => {
     <group>
       {/* Bottom caustics - ONLY on the floor */}
       <mesh
-        position={[0, -TANK_HEIGHT / 2 + 0.5, 0]}
+        ref={causticsRef}
+        position={[0, -TANK_HEIGHT / 2 + 0.51, 0]} // Slightly above sand
         rotation={[-Math.PI / 2, 0, 0]}
         material={causticsMaterial}
       >
