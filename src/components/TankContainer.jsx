@@ -51,7 +51,7 @@ const TankContainer = () => {
       color: "#ffffff",
       roughness: 0.8,
       emissive: "#fff0d5", // Warm glow to counter blue water
-      emissiveIntensity: 0.45,
+      emissiveIntensity: 0.2,
       onBeforeCompile: (shader) => {
         shader.fragmentShader = shader.fragmentShader.replace(
           '#include <common>',
@@ -121,17 +121,17 @@ const TankContainer = () => {
       <mesh position={[0, 0, -tankDepth / 2 + 0.1]} rotation={[0, 0, 0]} castShadow={false} receiveShadow={false}>
         <planeGeometry args={[tankWidth, tankHeight]} />
         <MeshReflectorMaterial
-          blur={[300, 100]}
+          blur={[400, 400]}
           resolution={512}
           mixBlur={1}
-          mixStrength={20} // Strength of reflection
-          roughness={0.1} // Glass-like
+          mixStrength={8} // Subtle reflection
+          roughness={0.4} // Softer
           depthScale={1.2}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.4}
-          color="#151515" // Dark tint for depth
-          metalness={0.8}
-          mirror={0.7} // High reflectivity
+          color="#203040" // Deep blue-grey
+          metalness={0.4}
+          mirror={0.5}
         />
       </mesh>
 
@@ -150,17 +150,17 @@ const TankContainer = () => {
       <mesh position={[-tankWidth / 2 + 0.1, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow={false} receiveShadow={false}>
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
-          blur={[300, 100]}
-          resolution={256} // Lower res for sides
+          blur={[400, 400]}
+          resolution={256}
           mixBlur={1}
-          mixStrength={15}
-          roughness={0.1}
+          mixStrength={8}
+          roughness={0.4}
           depthScale={1.2}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.4}
-          color="#151515"
-          metalness={0.8}
-          mirror={0.6}
+          color="#203040"
+          metalness={0.4}
+          mirror={0.5}
         />
       </mesh>
 
@@ -179,17 +179,17 @@ const TankContainer = () => {
       <mesh position={[tankWidth / 2 - 0.1, 0, 0]} rotation={[0, -Math.PI / 2, 0]} castShadow={false} receiveShadow={false}>
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
-          blur={[300, 100]}
+          blur={[400, 400]}
           resolution={256}
           mixBlur={1}
-          mixStrength={15}
-          roughness={0.1}
+          mixStrength={8}
+          roughness={0.4}
           depthScale={1.2}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.4}
-          color="#151515"
-          metalness={0.8}
-          mirror={0.6}
+          color="#203040"
+          metalness={0.4}
+          mirror={0.5}
         />
       </mesh>
 

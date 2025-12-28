@@ -14,7 +14,7 @@ const RealisticCaustics = () => {
     return new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        intensity: { value: 0.6 }, // Increased intensity
+        intensity: { value: 0.3 }, // Reduced intensity
       },
       vertexShader: `
         varying vec2 vUv;
@@ -61,7 +61,7 @@ const RealisticCaustics = () => {
 
         void main() {
           // Domain warping for fluid motion
-          vec2 uv = vUv * 4.0; // Matched scale to WaterSurface (was 1.2)
+          vec2 uv = vUv * 5.0; // Higher frequency
           uv += vec2(sin(time * 0.2), cos(time * 0.25)) * 0.02; // Slower drift
 
           // Sample caustics with higher speed to mirror active surface
@@ -70,7 +70,7 @@ const RealisticCaustics = () => {
           float b = causticPattern(uv - vec2(0.002), time * 0.5 + 0.05);
 
           // Combined for softer effect
-          vec3 caustics = vec3(r, g, b) * intensity * 2.5; // Boosted brightness
+          vec3 caustics = vec3(r, g, b) * intensity * 1.5; 
 
           // Light color
           vec3 finalColor = vec3(1.0, 1.0, 1.0) * caustics;

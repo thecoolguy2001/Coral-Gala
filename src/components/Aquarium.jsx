@@ -75,7 +75,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* PROFESSIONAL 3-LIGHT SYSTEM */}
 
       {/* 0. Ambient Fill - Lifts all shadows immediately */}
-      <ambientLight intensity={0.5} color="#ffffff" />
+      <ambientLight intensity={0.2} color="#ffffff" />
 
       {/* --- LIGHT 3: ROOM FILL (Controlled by Switch) --- */}
       {/* REALISTIC ROOM LIGHTING: Hemisphere for depth + Angled Sun for shape */}
@@ -85,7 +85,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       <hemisphereLight
         skyColor="#d6e6ff" 
         groundColor="#5c4033" 
-        intensity={roomLightsOn ? 0.8 : 0.0}
+        intensity={roomLightsOn ? 0.5 : 0.0}
       />
       
       {/* 2. "Window" Sunlight - Creates direction and gradients */}
@@ -102,7 +102,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* 3. Soft Ceiling Fill */}
       <pointLight 
         position={[0, 80, 0]} 
-        intensity={roomLightsOn ? 1.5 : 0.0} 
+        intensity={roomLightsOn ? 0.8 : 0.0} 
         color="#ffffff" 
         decay={2}
         distance={200}
@@ -114,7 +114,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         position={[0, 100, 0]} 
         angle={0.6} // Tighter angle for focused tank lighting
         penumbra={0.5} 
-        intensity={800.0} // SIGNIFICANTLY BOOSTED for brightness
+        intensity={400.0} // SIGNIFICANTLY BOOSTED for brightness
         distance={500} 
         decay={1} 
         castShadow
@@ -131,7 +131,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         position={[0, 30, 0]} 
         angle={1.2} 
         penumbra={0.5}
-        intensity={600.0} // Boosted
+        intensity={400.0} // Boosted
         distance={60} 
         decay={1} 
         color="#ffffff"
