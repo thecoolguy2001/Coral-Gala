@@ -43,17 +43,34 @@ const TankContainer = () => {
     }
   });
 
-  // Custom Sand Shader
+  // Custom Sand Shader with Fake Normal/Bump Map for 3D look
   const sandMaterial = useMemo(() => {
     return new THREE.MeshStandardMaterial({
-      color: "#fcfaf0", // Lighter, cleaner sand
-      roughness: 0.9,
+      color: "#fffdf5", // Very pale beige to resist blue tint
+      roughness: 0.8,   // Slightly smoother to catch shadows
       onBeforeCompile: (shader) => {
         shader.fragmentShader = shader.fragmentShader.replace(
           '#include <common>',
           `
           #include <common>
           float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+          float noise(vec2 p) {
+              vec2 i = floor(p);
+              vec2 f = fract(p);
+              f = f*f*(3.0-2.0*f);
+              return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), f.x),
+                         mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), f.x), f.y);
+          }
+          `
+        );
+        shader.fragmentShader = shader.fragmentShader.replace(
+          '#include <normal_fragment_begin>',
+          `
+          #include <normal_fragment_begin>
+          // Perturb normal for grain effect
+          float h = noise(vUv * 800.0);
+          vec3 grainNormal = normalize(vec3(dFdx(h), dFdy(h), 0.5)); // Fake normal from noise
+          normal = normalize(normal + grainNormal * 0.3); // Blend with surface normal
           `
         );
         shader.fragmentShader = shader.fragmentShader.replace(
@@ -61,9 +78,10 @@ const TankContainer = () => {
           `
           #include <color_fragment>
           float n = hash(vUv * 500.0);
-          float n2 = hash(vUv * 10.0);
-          diffuseColor.rgb *= (0.95 + n * 0.1); // Grainy texture
-          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 0.9, n2 * 0.2); // Color patches
+          float dust = noise(vUv * 20.0); // Larger dust patches
+          
+          diffuseColor.rgb *= (0.9 + n * 0.2); // Grainy value
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.8, 0.75, 0.7), dust * 0.3); // Darker dust patches
           `
         );
       }

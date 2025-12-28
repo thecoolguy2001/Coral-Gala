@@ -127,15 +127,15 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         position={[0, 30, 0]} 
         angle={1.2} 
         penumbra={0.5}
-        intensity={300.0} // MASSIVE internal brightness
+        intensity={500.0} // MAX brightness
         distance={60} 
         decay={1} 
         color="#ffffff"
         castShadow // Re-enabled for fish shadows
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-        shadow-bias={-0.0001}
-        shadow-radius={12} // Very soft underwater shadows
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-bias={-0.00005} // Tighter bias to keep shadow attached
+        shadow-radius={4} // Less blur so shadows are actually visible
         target-position={[0, 0, 0]}
       />
       <pointLight

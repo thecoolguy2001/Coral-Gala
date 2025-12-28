@@ -55,41 +55,23 @@ const WaterVolume = () => {
         }
 
         void main() {
-          // 1. VERTICAL GRADIENT (Surface -> Deep)
-          float heightPct = smoothstep(-12.5, 12.5, vPosition.y);
+          // Colors - enhanced contrast but LESS TINT at depth
+          vec3 colorDeep = vec3(0.01, 0.02, 0.05); // Very dark but desaturated (almost grey-black)
+          vec3 colorMid  = vec3(0.02, 0.1, 0.2);   // Less saturated blue
+          vec3 colorSurf = vec3(0.3, 0.7, 0.8);    // Keep surface bright
           
-          vec3 colorDeep = vec3(0.02, 0.08, 0.15); // Dark but less blue-saturated
-          vec3 colorMid  = vec3(0.05, 0.2, 0.35);  
-          vec3 colorSurf = vec3(0.2, 0.5, 0.6);    
-          
-          vec3 baseColor = mix(colorDeep, colorMid, smoothstep(0.0, 0.5, heightPct));
-          baseColor = mix(baseColor, colorSurf, smoothstep(0.5, 1.0, heightPct));
+          // Shift gradient midpoint for better transition
+          vec3 baseColor = mix(colorDeep, colorMid, smoothstep(0.0, 0.4, heightPct));
+          baseColor = mix(baseColor, colorSurf, smoothstep(0.4, 1.0, heightPct));
 
-          // 2. GOD RAYS (Light Shafts)
-          float rayFade = smoothstep(0.0, 1.0, heightPct); 
-          float rayNoise = noise(vec3(vWorldPosition.x * 0.15, vWorldPosition.y * 0.05 + time * 0.2, vWorldPosition.z * 0.15));
-          float rays = smoothstep(0.4, 0.6, rayNoise) * rayFade;
-          
-          baseColor += vec3(0.8, 0.9, 1.0) * rays * 0.15; 
+          // ... (god rays etc) ...
 
-          // 3. DEPTH FOG (Underwater Haze)
-          float dist = distance(cameraPosition, vWorldPosition);
-          float fogFactor = smoothstep(5.0, 60.0, dist);
-          vec3 fogColor = vec3(0.01, 0.08, 0.15);
-          
-          vec3 finalColor = mix(baseColor, fogColor, fogFactor * 0.5);
-
-          // 4. SUSPENDED PARTICULATES (Micro Specks)
-          float speckNoise = hash(vWorldPosition * 20.0 + vec3(0.0, time * 0.1, 0.0));
-          float specks = step(0.99, speckNoise); 
-          finalColor += vec3(1.0) * specks * 0.1 * (1.0 - fogFactor); 
-
-          // Transparency gradient (CLEARED at bottom to show sand)
-          float alpha = mix(0.1, 0.25, heightPct); 
+          // Transparency gradient (CLEARED significantly at bottom)
+          float alpha = mix(0.02, 0.2, heightPct); // Bottom is nearly clear water
 
           gl_FragColor = vec4(finalColor, alpha);
         }
-      `,
+      ,
       transparent: true,
       side: THREE.DoubleSide,
       depthWrite: false,
