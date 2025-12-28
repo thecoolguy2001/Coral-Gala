@@ -51,7 +51,7 @@ const TankContainer = () => {
       color: "#ffffff",
       roughness: 0.8,
       emissive: "#fff0d5", // Warm glow to counter blue water
-      emissiveIntensity: 0.25,
+      emissiveIntensity: 0.45,
       onBeforeCompile: (shader) => {
         shader.fragmentShader = shader.fragmentShader.replace(
           '#include <common>',
@@ -84,7 +84,7 @@ const TankContainer = () => {
           float dust = noise(vUv * 20.0);
           
           diffuseColor.rgb *= (0.9 + n * 0.2);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.9, 0.85, 0.8), dust * 0.3);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.98, 0.9), dust * 0.3);
           `
         );
       }
@@ -94,7 +94,7 @@ const TankContainer = () => {
   return (
     <group ref={tankRef}>
       {/* Front Glass (Transparent) */}
-      <mesh position={[0, 0, tankDepth / 2]}>
+      <mesh position={[0, 0, tankDepth / 2]} castShadow={false} receiveShadow={false}>
         <boxGeometry args={[tankWidth, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
@@ -109,7 +109,7 @@ const TankContainer = () => {
       </mesh>
 
       {/* Back Glass - REFLECTIVE MIRROR */}
-      <mesh position={[0, 0, -tankDepth / 2]}>
+      <mesh position={[0, 0, -tankDepth / 2]} castShadow={false} receiveShadow={false}>
         <boxGeometry args={[tankWidth, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
           color="#000000" // Dark backing
@@ -118,7 +118,7 @@ const TankContainer = () => {
         />
       </mesh>
       {/* Internal Reflection Plane - Back */}
-      <mesh position={[0, 0, -tankDepth / 2 + 0.1]} rotation={[0, 0, 0]}>
+      <mesh position={[0, 0, -tankDepth / 2 + 0.1]} rotation={[0, 0, 0]} castShadow={false} receiveShadow={false}>
         <planeGeometry args={[tankWidth, tankHeight]} />
         <MeshReflectorMaterial
           blur={[300, 100]}
@@ -136,7 +136,7 @@ const TankContainer = () => {
       </mesh>
 
       {/* Left Glass - REFLECTIVE */}
-      <mesh position={[-tankWidth / 2, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+      <mesh position={[-tankWidth / 2, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow={false} receiveShadow={false}>
         <boxGeometry args={[tankDepth, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
@@ -147,7 +147,7 @@ const TankContainer = () => {
         />
       </mesh>
       {/* Internal Reflection Plane - Left */}
-      <mesh position={[-tankWidth / 2 + 0.1, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+      <mesh position={[-tankWidth / 2 + 0.1, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow={false} receiveShadow={false}>
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
           blur={[300, 100]}
@@ -165,7 +165,7 @@ const TankContainer = () => {
       </mesh>
 
       {/* Right Glass - REFLECTIVE */}
-      <mesh position={[tankWidth / 2, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+      <mesh position={[tankWidth / 2, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow={false} receiveShadow={false}>
         <boxGeometry args={[tankDepth, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
@@ -176,7 +176,7 @@ const TankContainer = () => {
         />
       </mesh>
       {/* Internal Reflection Plane - Right */}
-      <mesh position={[tankWidth / 2 - 0.1, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
+      <mesh position={[tankWidth / 2 - 0.1, 0, 0]} rotation={[0, -Math.PI / 2, 0]} castShadow={false} receiveShadow={false}>
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
           blur={[300, 100]}
@@ -194,7 +194,7 @@ const TankContainer = () => {
       </mesh>
 
       {/* Bottom Glass */}
-      <mesh position={[0, -tankHeight / 2, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh position={[0, -tankHeight / 2, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow={false} receiveShadow={false}>
         <boxGeometry args={[tankWidth, tankDepth, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
@@ -205,23 +205,23 @@ const TankContainer = () => {
       </mesh>
 
       {/* Tank Frame (Unchanged) */}
-      <mesh position={[0, tankHeight / 2 + frameThickness / 2, tankDepth / 2 + frameThickness / 2]}>
+      <mesh position={[0, tankHeight / 2 + frameThickness / 2, tankDepth / 2 + frameThickness / 2]} castShadow={false}>
         <boxGeometry args={[tankWidth + frameThickness * 2, frameThickness, frameThickness]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
       </mesh>
-      <mesh position={[0, tankHeight / 2 + frameThickness / 2, -tankDepth / 2 - frameThickness / 2]}>
+      <mesh position={[0, tankHeight / 2 + frameThickness / 2, -tankDepth / 2 - frameThickness / 2]} castShadow={false}>
         <boxGeometry args={[tankWidth + frameThickness * 2, frameThickness, frameThickness]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
       </mesh>
-      <mesh position={[-tankWidth / 2 - frameThickness / 2, tankHeight / 2 + frameThickness / 2, 0]}>
+      <mesh position={[-tankWidth / 2 - frameThickness / 2, tankHeight / 2 + frameThickness / 2, 0]} castShadow={false}>
         <boxGeometry args={[frameThickness, frameThickness, tankDepth]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
       </mesh>
-      <mesh position={[tankWidth / 2 + frameThickness / 2, tankHeight / 2 + frameThickness / 2, 0]}>
+      <mesh position={[tankWidth / 2 + frameThickness / 2, tankHeight / 2 + frameThickness / 2, 0]} castShadow={false}>
         <boxGeometry args={[frameThickness, frameThickness, tankDepth]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
       </mesh>
-      <mesh position={[0, -tankHeight / 2 - frameThickness / 2, 0]}>
+      <mesh position={[0, -tankHeight / 2 - frameThickness / 2, 0]} castShadow={false}>
         <boxGeometry args={[tankWidth + frameThickness * 2, frameThickness, tankDepth + frameThickness * 2]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.6} metalness={0.1} />
       </mesh>
@@ -231,7 +231,7 @@ const TankContainer = () => {
         [-tankWidth / 2 - frameThickness / 2, 0, -tankDepth / 2 - frameThickness / 2],
         [tankWidth / 2 + frameThickness / 2, 0, -tankDepth / 2 - frameThickness / 2],
       ].map((pos, i) => (
-        <mesh key={`corner-${i}`} position={pos}>
+        <mesh key={`corner-${i}`} position={pos} castShadow={false}>
           <boxGeometry args={[frameThickness, tankHeight + frameThickness * 2, frameThickness]} />
           <meshStandardMaterial color="#0a0a0a" roughness={0.6} metalness={0.1} />
         </mesh>

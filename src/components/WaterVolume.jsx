@@ -55,23 +55,29 @@ const WaterVolume = () => {
         }
 
         void main() {
+          // Calculate height percentage for gradient
+          // Assuming tank bottom ~ -15 and top ~ 10 based on typical scale
+          float heightPct = smoothstep(-15.0, 10.0, vPosition.y);
+
           // Colors - enhanced contrast but LESS TINT at depth
-          vec3 colorDeep = vec3(0.01, 0.02, 0.05); // Very dark but desaturated (almost grey-black)
+          vec3 colorDeep = vec3(0.01, 0.02, 0.05); // Very dark but desaturated
           vec3 colorMid  = vec3(0.02, 0.1, 0.2);   // Less saturated blue
-          vec3 colorSurf = vec3(0.3, 0.7, 0.8);    // Keep surface bright
+          vec3 colorSurf = vec3(0.3, 0.7, 0.8);    // Bright surface
           
           // Shift gradient midpoint for better transition
           vec3 baseColor = mix(colorDeep, colorMid, smoothstep(0.0, 0.4, heightPct));
           baseColor = mix(baseColor, colorSurf, smoothstep(0.4, 1.0, heightPct));
 
-          // ... (god rays etc) ...
+          // Simple "God Ray" style noise effect
+          float rayNoise = noise(vPosition * 0.2 + vec3(0.0, time * 0.5, 0.0));
+          vec3 finalColor = baseColor + vec3(rayNoise * 0.05);
 
           // Transparency gradient (CLEARED significantly at bottom)
           float alpha = mix(0.02, 0.2, heightPct); // Bottom is nearly clear water
 
           gl_FragColor = vec4(finalColor, alpha);
         }
-      ,
+      `,
       transparent: true,
       side: THREE.DoubleSide,
       depthWrite: false,
@@ -100,6 +106,8 @@ const WaterVolume = () => {
     <mesh
       ref={waterVolumeRef}
       position={[0, waterYPosition, 0]}
+      castShadow={false}
+      receiveShadow={false}
     >
       <boxGeometry args={[volumeWidth, waterHeight, volumeDepth]} />
       <primitive object={waterVolumeMaterial} />

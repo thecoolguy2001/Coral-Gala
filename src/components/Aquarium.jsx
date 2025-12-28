@@ -74,6 +74,9 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
     <>
       {/* PROFESSIONAL 3-LIGHT SYSTEM */}
 
+      {/* 0. Ambient Fill - Lifts all shadows immediately */}
+      <ambientLight intensity={0.5} color="#ffffff" />
+
       {/* --- LIGHT 3: ROOM FILL (Controlled by Switch) --- */}
       {/* REALISTIC ROOM LIGHTING: Hemisphere for depth + Angled Sun for shape */}
       
@@ -82,7 +85,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       <hemisphereLight
         skyColor="#d6e6ff" 
         groundColor="#5c4033" 
-        intensity={roomLightsOn ? 0.6 : 0.0}
+        intensity={roomLightsOn ? 0.8 : 0.0}
       />
       
       {/* 2. "Window" Sunlight - Creates direction and gradients */}
