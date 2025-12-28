@@ -10,29 +10,29 @@ import { BOUNDS, WATER_LEVEL } from '../constants/tankDimensions';
 const AmbientBubbles = () => {
   const bubblesRef = useRef();
 
-  // Create bubble particles
+  // Create micro-speck particles
   const bubblesGeometry = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
-    const count = 400; // Increased density
+    const count = 400; // High density for specks
     const positions = new Float32Array(count * 3);
     const scales = new Float32Array(count);
     const velocities = new Float32Array(count * 3);
 
-    const bottomY = BOUNDS.yMin + 0.5;
+    const bottomY = BOUNDS.yMin;
 
     for (let i = 0; i < count; i++) {
-      // Random positions throughout the tank
-      positions[i * 3] = (Math.random() - 0.5) * (BOUNDS.x * 2.0); // Full width spread
+      // Random positions throughout the whole tank
+      positions[i * 3] = (Math.random() - 0.5) * (BOUNDS.x * 2.0);
       positions[i * 3 + 1] = bottomY + Math.random() * (WATER_LEVEL - bottomY); 
-      positions[i * 3 + 2] = (Math.random() - 0.5) * (BOUNDS.z * 2.0); // Full depth spread
+      positions[i * 3 + 2] = (Math.random() - 0.5) * (BOUNDS.z * 2.0);
 
-      // Varied sizes - mixed small and large for 3D depth
-      scales[i] = Math.random() * 0.5 + 0.1;
+      // TINY sizes for micro specks
+      scales[i] = Math.random() * 0.1 + 0.02;
 
-      // Slower upward velocity for ambient bubbles
-      velocities[i * 3] = (Math.random() - 0.5) * 0.01; 
-      velocities[i * 3 + 1] = Math.random() * 0.02 + 0.01; 
-      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.01; 
+      // Slow drift velocities (Current-driven)
+      velocities[i * 3] = (Math.random() - 0.5) * 0.005; // Lateral
+      velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.002; // Vertical drift
+      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.005; // Depth
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -56,15 +56,18 @@ const AmbientBubbles = () => {
         void main() {
           vec3 pos = position;
 
-          // Gentle ambient wobble
-          pos.x += sin(time * 2.0 + position.y * 0.5) * 0.1;
-          pos.z += cos(time * 1.5 + position.x * 0.5) * 0.1;
+          // Gentle current-driven drift
+          pos.x += sin(time * 0.5 + position.y * 0.2) * 0.5;
+          pos.z += cos(time * 0.4 + position.x * 0.2) * 0.5;
+          pos.y += sin(time * 0.3 + position.z * 0.3) * 0.2;
 
-          // Fade out near surface
-          vAlpha = 1.0 - smoothstep(${(WATER_LEVEL - 1.0).toFixed(1)}, ${(WATER_LEVEL - 0.2).toFixed(1)}, pos.y);
+          // Fade out near surface and bottom
+          float surfaceFade = 1.0 - smoothstep(${(WATER_LEVEL - 1.0).toFixed(1)}, ${(WATER_LEVEL).toFixed(1)}, pos.y);
+          float bottomFade = smoothstep(${(BOUNDS.yMin).toFixed(1)}, ${(BOUNDS.yMin + 1.0).toFixed(1)}, pos.y);
+          vAlpha = surfaceFade * bottomFade;
 
           vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-          gl_PointSize = scale * (300.0 / -mvPosition.z);
+          gl_PointSize = scale * (500.0 / -mvPosition.z);
           gl_Position = projectionMatrix * mvPosition;
         }
       `,
@@ -72,24 +75,18 @@ const AmbientBubbles = () => {
         varying float vAlpha;
 
         void main() {
-          // Circular bubble shape
-          vec2 center = gl_PointCoord - vec2(0.5);
-          float dist = length(center);
+          // Circular speck shape
+          float dist = length(gl_PointCoord - vec2(0.5));
           if (dist > 0.5) discard;
 
-          // Subtle highlight
-          float highlight = 1.0 - smoothstep(0.0, 0.3, length(center - vec2(-0.15, -0.15)));
-          
-          // More transparent for ambient bubbles
-          vec3 bubbleColor = vec3(0.8, 0.9, 1.0);
-          bubbleColor += vec3(1.0) * highlight * 0.4;
-
-          float alpha = (1.0 - smoothstep(0.3, 0.5, dist)) * vAlpha * 0.8; // Increased visibility
-          gl_FragColor = vec4(bubbleColor, alpha);
+          // Low opacity for realism
+          vec3 color = vec3(0.8, 0.9, 1.0);
+          float alpha = (1.0 - smoothstep(0.2, 0.5, dist)) * vAlpha * 0.4;
+          gl_FragColor = vec4(color, alpha);
         }
       `,
       transparent: true,
-      blending: THREE.NormalBlending,
+      blending: THREE.AdditiveBlending, // Glowy specks
       depthWrite: false,
     });
   }, []);
@@ -100,21 +97,20 @@ const AmbientBubbles = () => {
 
       const positions = bubblesRef.current.geometry.attributes.position.array;
       const velocities = bubblesRef.current.geometry.attributes.velocity.array;
-      const bottomY = BOUNDS.yMin + 0.5;
 
       for (let i = 0; i < positions.length; i += 3) {
-        // Move bubbles upward
+        // Apply tiny constant drift
         positions[i] += velocities[i];
         positions[i + 1] += velocities[i + 1];
         positions[i + 2] += velocities[i + 2];
 
-        // Reset bubbles that reach the water surface
-        if (positions[i + 1] > WATER_LEVEL) {
-          // Respawn at random location at bottom
-          positions[i] = (Math.random() - 0.5) * (BOUNDS.x * 1.8);
-          positions[i + 1] = bottomY;
-          positions[i + 2] = (Math.random() - 0.5) * (BOUNDS.z * 1.8);
-        }
+        // Loop boundaries
+        if (positions[i] > BOUNDS.x) positions[i] = -BOUNDS.x;
+        if (positions[i] < -BOUNDS.x) positions[i] = BOUNDS.x;
+        if (positions[i + 1] > WATER_LEVEL) positions[i + 1] = BOUNDS.yMin;
+        if (positions[i + 1] < BOUNDS.yMin) positions[i + 1] = WATER_LEVEL;
+        if (positions[i + 2] > BOUNDS.z) positions[i + 2] = -BOUNDS.z;
+        if (positions[i + 2] < -BOUNDS.z) positions[i + 2] = BOUNDS.z;
       }
 
       bubblesRef.current.geometry.attributes.position.needsUpdate = true;

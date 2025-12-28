@@ -33,33 +33,67 @@ const WaterVolume = () => {
         varying vec3 vPosition;
         varying vec3 vWorldPosition;
 
-        // Noise for light rays
-        float simpleNoise(vec3 p) {
-          return fract(sin(dot(p, vec3(12.9898, 78.233, 45.164))) * 43758.5453);
+        // Gradient Noise for God Rays and Particulates
+        float hash(vec3 p) {
+          p  = fract( p*0.3183099+.1 );
+          p *= 17.0;
+          return fract( p.x*p.y*p.z*(p.x+p.y+p.z) );
+        }
+
+        float noise(vec3 x) {
+          vec3 i = floor(x);
+          vec3 f = fract(x);
+          f = f*f*(3.0-2.0*f);
+          return mix(mix(mix( hash(i+vec3(0,0,0)), 
+                              hash(i+vec3(1,0,0)),f.x),
+                         mix( hash(i+vec3(0,1,0)), 
+                              hash(i+vec3(1,1,0)),f.x),f.y),
+                     mix(mix( hash(i+vec3(0,0,1)), 
+                              hash(i+vec3(1,0,1)),f.x),
+                         mix( hash(i+vec3(0,1,1)), 
+                              hash(i+vec3(1,1,1)),f.x),f.y),f.z);
         }
 
         void main() {
-          // Pure gradient based on height
-          float heightFactor = smoothstep(-12.5, 12.5, vPosition.y);
-
-          // Colors
-          vec3 deepColor = vec3(0.02, 0.1, 0.25); 
-          vec3 surfaceColor = vec3(0.1, 0.3, 0.5); 
+          // 1. VERTICAL GRADIENT (Surface -> Deep)
+          // Map Y from approx -12.5 (bottom) to 12.5 (top)
+          float heightPct = smoothstep(-12.5, 12.5, vPosition.y);
           
-          vec3 finalColor = mix(deepColor, surfaceColor, heightFactor);
-
-          // VOLUMETRIC LIGHT RAYS (God Rays) - Top only
-          // Map Y to 0-1 for top section only
-          float rayFade = smoothstep(5.0, 12.0, vPosition.y); // Only visible in top ~7 units
+          vec3 colorDeep = vec3(0.0, 0.05, 0.15); // Deep Navy
+          vec3 colorMid  = vec3(0.05, 0.2, 0.35);  // Ocean Blue
+          vec3 colorSurf = vec3(0.2, 0.5, 0.6);    // Cyan Surface
           
-          if (rayFade > 0.01) {
-            float rayNoise = simpleNoise(vec3(vWorldPosition.x * 0.2, vWorldPosition.y * 0.1 + time * 0.5, vWorldPosition.z * 0.2));
-            float rayIntensity = smoothstep(0.4, 0.7, rayNoise) * rayFade;
-            finalColor += vec3(0.8, 0.9, 1.0) * rayIntensity * 0.3; // Add light
-          }
+          vec3 baseColor = mix(colorDeep, colorMid, smoothstep(0.0, 0.5, heightPct));
+          baseColor = mix(baseColor, colorSurf, smoothstep(0.5, 1.0, heightPct));
 
-          // Uniform transparency that increases slightly at the top
-          float alpha = mix(0.3, 0.15, heightFactor); 
+          // 2. GOD RAYS (Light Shafts)
+          // Only visible in top half, fading out downwards
+          float rayFade = smoothstep(0.0, 1.0, heightPct); 
+          // Animate rays with time
+          float rayNoise = noise(vec3(vWorldPosition.x * 0.15, vWorldPosition.y * 0.05 + time * 0.2, vWorldPosition.z * 0.15));
+          // Sharpen the noise to make distinct "beams"
+          float rays = smoothstep(0.4, 0.6, rayNoise) * rayFade;
+          
+          baseColor += vec3(0.8, 0.9, 1.0) * rays * 0.15; // Subtle additive light
+
+          // 3. DEPTH FOG (Underwater Haze)
+          // Calculate distance from camera to fragment
+          float dist = distance(cameraPosition, vWorldPosition);
+          // Fog starts at 5 units, fully dense at 60 units
+          float fogFactor = smoothstep(5.0, 60.0, dist);
+          // Fog color is the deep blue
+          vec3 fogColor = vec3(0.01, 0.08, 0.15);
+          
+          vec3 finalColor = mix(baseColor, fogColor, fogFactor * 0.5);
+
+          // 4. SUSPENDED PARTICULATES (Micro Specks)
+          // High frequency noise for tiny dots
+          float speckNoise = hash(vWorldPosition * 20.0 + vec3(0.0, time * 0.1, 0.0));
+          float specks = step(0.99, speckNoise); // Only top 1% are specks
+          finalColor += vec3(1.0) * specks * 0.1 * (1.0 - fogFactor); // Specks fade in fog
+
+          // Transparency gradient (clearer at top/front, murkier at bottom/back)
+          float alpha = mix(0.35, 0.15, heightPct); 
 
           gl_FragColor = vec4(finalColor, alpha);
         }

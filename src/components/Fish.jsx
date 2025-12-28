@@ -54,39 +54,52 @@ const Fish = ({ boid, onFishClick }) => {
     groupRef.current.scale.setScalar(newScale);
 
     // Gentle swimming animation speed based on actual velocity
-    const swimSpeed = THREE.MathUtils.clamp(boid.velocity.length() * 3.0, 0.3, 1.2);
+    const speed = boid.velocity.length();
+    // Animation speed scales with movement speed
+    const swimSpeed = THREE.MathUtils.clamp(speed * 5.0, 2.0, 8.0);
     setSwimPhase((prev) => prev + swimSpeed * delta);
 
-    // Subtle, realistic fish swimming animation
     if (modelRef.current) {
       const time = swimPhase;
-      const speed = boid.velocity.length(); // Use actual speed, no artificial minimum
+      
+      // 1. SWIMMING MOTION (Sine wave along body)
+      // Wiggle amplitude scales with speed
+      const amplitude = THREE.MathUtils.clamp(speed * 0.2, 0.05, 0.25);
+      
+      // Apply rotation to the whole group for "heading"
+      // But apply the "wiggle" to the model inside the group
+      
+      // Main body wobble
+      modelRef.current.rotation.y = Math.sin(time) * amplitude;
+      
+      // 2. BANKING (Tilting into turns)
+      // Calculate turn rate (cross product of current vs desired dir roughly)
+      // For now, use lateral velocity relative to forward
+      // We can approximate banking by using the "side slip" of velocity or just Z rotation
+      // A simple visual bank based on Y rotation delta would be good, but we don't have history here.
+      // Let's use a subtle bank based on the "wiggle" to make it look like physics
+      const bankAngle = Math.cos(time) * amplitude * 0.5; // Roll opposite to yaw
+      modelRef.current.rotation.z = bankAngle;
 
-      // Very subtle whole-body fish animation - minimal rocking
-      const swimWave = Math.sin(time * 2.5) * 0.04 * speed;
-      const tailWag = Math.sin(time * 3.0 + Math.PI * 0.5) * 0.08 * speed;
+      // 3. VERTICAL BOBBING (Breathing)
+      modelRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.5) * 0.05;
 
-      // Apply very subtle swimming motion
-      modelRef.current.rotation.z = swimWave;
-      modelRef.current.rotation.y = tailWag * 0.3;
-
-      // Minimal vertical bobbing
-      const bobbing = Math.sin(time * 1.5) * 0.02;
-      modelRef.current.position.y = bobbing;
-
-      // Animate tail/fins only - keep body stable
+      // 4. PROGRESSIVE SPINE BENDING (Fake Bones)
       modelRef.current.traverse((child) => {
         if (child.isMesh) {
-          // Animate back parts of fish more (likely tail)
-          if (child.position && child.position.x < -0.5) {
-            child.rotation.z = tailWag * 0.8;
-          }
-
-          // Find and animate by common fish part names
-          const name = child.name ? child.name.toLowerCase() : '';
+          // If the model has parts named 'Tail' or 'Fin', animate them extra
+          // Otherwise, generic mesh animation
+          
+          // Animate back parts of fish more (likely tail) based on geometry position
+          // This assumes the model is centered. 
+          // If Z is length, animate based on Z.
+          // Adjust rotation based on vertex position? No, expensive.
+          // Just animate specific known parts if possible, or keep the simple body wag.
+          
+          const name = child.name.toLowerCase();
           if (name.includes('tail') || name.includes('fin') || name.includes('back')) {
-            child.rotation.z = tailWag * 1.0;
-            child.rotation.y = swimWave * 0.5;
+             // Tail wags with a phase offset
+             child.rotation.y = Math.sin(time - 1.5) * amplitude * 2.0;
           }
         }
       });

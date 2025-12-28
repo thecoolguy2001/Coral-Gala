@@ -80,6 +80,7 @@ function App() {
         loading={fishLoading} 
         roomLightsOn={roomLightsOn}
       />
+      <div className="cinematic-overlay"></div>
     </div>
   );
 }

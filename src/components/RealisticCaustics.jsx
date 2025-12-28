@@ -35,14 +35,13 @@ const RealisticCaustics = () => {
         varying vec3 vPosition;
         varying vec3 vNormal;
 
-        // Improved caustic function for realistic water light patterns
+        // Improved caustic function with domain warping for fluid look
         float causticPattern(vec2 uv, float time) {
           vec2 p = mod(uv * 6.28318, 6.28318) - 250.0;
           vec2 i = vec2(p);
           float c = 1.0;
           float inten = 0.005;
 
-          // OPTIMIZED: Reduced iterations from 7 to 4 for performance
           for (int n = 0; n < 4; n++) {
             float t = time * (1.0 - (3.5 / float(n + 1)));
             i = p + vec2(
@@ -61,20 +60,25 @@ const RealisticCaustics = () => {
         }
 
         void main() {
-          // Create layered caustics for depth
-          vec2 uv = vUv * 0.8; // Large, soft, blobby patterns
+          // Domain warping for fluid motion
+          vec2 uv = vUv * 0.8;
+          uv += vec2(sin(time * 0.1), cos(time * 0.15)) * 0.05; // Gentle drift
 
-          float c1 = causticPattern(uv, time * 0.2); // Slower motion
-          float c2 = causticPattern(uv * 0.7 + vec2(0.3), time * 0.15);
+          // Chromatic Aberration: Sample caustics at slightly different offsets/times
+          float r = causticPattern(uv + vec2(0.002), time * 0.2);
+          float g = causticPattern(uv, time * 0.2);
+          float b = causticPattern(uv - vec2(0.002), time * 0.2 + 0.05);
 
           // Combined for softer effect
-          float caustics = (c1 + c2 * 0.8) * intensity;
+          vec3 caustics = vec3(r, g, b) * intensity; // RGB separate
 
           // Light color - soft blue-white
-          vec3 lightColor = vec3(0.85, 0.95, 1.0); 
+          // Multiply by the caustic pattern
+          vec3 finalColor = vec3(0.9, 0.95, 1.0) * caustics;
           
           // Output with soft alpha for "light" look
-          gl_FragColor = vec4(lightColor, caustics * 0.4); 
+          // Use the green channel as representative luminance for alpha
+          gl_FragColor = vec4(finalColor, g * 0.4); 
         }
       `,
       transparent: true,

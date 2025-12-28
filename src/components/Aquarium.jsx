@@ -109,39 +109,30 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       <spotLight
         position={[0, 100, 0]} 
         angle={1.0} 
-        penumbra={1.0} // MAXIMUM softness (0-1 range) to remove hard edge
+        penumbra={1.0} 
         intensity={100.0} 
         distance={500} 
         decay={1} 
         castShadow
-        shadow-mapSize-width={2048} // Restored
-        shadow-mapSize-height={2048} // Restored
-        shadow-bias={-0.001}
+        shadow-mapSize-width={2048} 
+        shadow-mapSize-height={2048} 
+        shadow-bias={-0.0005} // Adjusted bias
+        shadow-radius={8} // Soft shadows
         target-position={[0, -100, 0]} 
       />
 
-      {/* --- EXTRA: "RADIUS ENFORCER" LIGHT --- */}
-      <pointLight
-        position={[0, 2, 0]} 
-        intensity={5.0} 
-        distance={200} // Increased distance to remove hard cutoff ring
-        decay={2} 
-        color="#ffffff"
-      />
-
-      {/* Volumetric Cone Removed to eliminate hard geometry lines/artifacts */}
-
       {/* --- LIGHT 1: TANK INTERNAL (The "Fish Light" - Always On) --- */}
-      {/* Internal lighting with linear decay for brightness */}
       <spotLight
         position={[0, 30, 0]} 
         angle={1.2} 
         penumbra={0.5}
-        intensity={150.0} // Reverted internal brightness
+        intensity={150.0} 
         distance={60} 
         decay={1} 
         color="#ffffff"
-        castShadow // Restored
+        castShadow
+        shadow-bias={-0.0005}
+        shadow-radius={10} // Very soft internal shadows
         target-position={[0, 0, 0]}
       />
       <pointLight
