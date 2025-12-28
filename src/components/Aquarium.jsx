@@ -122,17 +122,20 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       />
 
       {/* --- LIGHT 1: TANK INTERNAL (The "Fish Light" - Always On) --- */}
+      {/* Internal lighting with linear decay for brightness */}
       <spotLight
         position={[0, 30, 0]} 
         angle={1.2} 
         penumbra={0.5}
-        intensity={150.0} 
+        intensity={300.0} // MASSIVE internal brightness
         distance={60} 
         decay={1} 
         color="#ffffff"
-        castShadow
-        shadow-bias={-0.0005}
-        shadow-radius={10} // Very soft internal shadows
+        castShadow // Re-enabled for fish shadows
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+        shadow-bias={-0.0001}
+        shadow-radius={12} // Very soft underwater shadows
         target-position={[0, 0, 0]}
       />
       <pointLight

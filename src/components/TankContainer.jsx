@@ -110,8 +110,8 @@ const TankContainer = () => {
           color="#ffffff"
           transparent
           opacity={0.1}
-          roughness={0.01}
-          metalness={0.05}
+          roughness={0.1} // Increased slightly to blur reflections
+          metalness={0.0} // Removed metalness to stop mirror reflections
           transmission={0.99}
           thickness={0.05} // MINIMIZED
           attenuationColor="#c0ebd7"
@@ -127,8 +127,8 @@ const TankContainer = () => {
           color="#ffffff"
           transparent
           opacity={0.1}
-          roughness={0.01}
-          metalness={0.05}
+          roughness={0.1} // Increased slightly
+          metalness={0.0} // Removed metalness
           transmission={0.99}
           thickness={0.05} // MINIMIZED
           attenuationColor="#c0ebd7"
