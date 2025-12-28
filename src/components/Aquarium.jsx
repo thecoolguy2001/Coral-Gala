@@ -120,8 +120,8 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         castShadow
         shadow-mapSize-width={2048} 
         shadow-mapSize-height={2048} 
-        shadow-bias={-0.0001} 
-        shadow-radius={3} // Soft but visible shadows
+        shadow-bias={-0.00001} 
+        shadow-radius={1} // Sharp shadows
         target-position={[0, -100, 0]} 
       />
 
@@ -138,8 +138,8 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         castShadow // Vital for fish shadows on sand
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
-        shadow-bias={-0.0001} 
-        shadow-radius={2} // Sharper shadows for definition
+        shadow-bias={-0.00001} 
+        shadow-radius={1} // Sharp shadows
         target-position={[0, 0, 0]}
       />
       <pointLight
