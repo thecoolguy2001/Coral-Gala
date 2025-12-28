@@ -1,5 +1,5 @@
-import React, { Suspense, useMemo, lazy } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { Suspense, useMemo, lazy, useRef, useEffect } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import Fish from './Fish';
 import TankContainer from './TankContainer';
 import WaterSurface from './WaterSurface';
@@ -7,16 +7,16 @@ import WaterVolume from './WaterVolume';
 import BubbleJet from './BubbleJet';
 import AmbientBubbles from './AmbientBubbles';
 import HOBFilter from './HOBFilter';
-import RealisticCaustics from './RealisticCaustics';
 import Environment from './Environment';
 import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
 import { getDefaultFish } from '../models/fishModel';
 import { TANK_DEPTH, WATER_LEVEL } from '../constants/tankDimensions';
+import * as THREE from 'three';
 
 // Lazy load modal since it's only shown when user clicks a fish
 const FishInfoModal = lazy(() => import('./FishInfoModal'));
 
-// Error boundary for Three.js errors
+// ... Error Boundary ... (Keep as is)
 class ThreeErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -54,20 +54,81 @@ class ThreeErrorBoundary extends React.Component {
   }
 }
 
+// Caustic Light Component
+const CausticLight = () => {
+  const textureRef = useRef();
+  
+  // Generate noise texture once
+  const causticTexture = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    
+    // Simple noise generation
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, 512, 512);
+    
+    // Draw random white/grey patterns for caustics
+    for (let i = 0; i < 500; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const r = Math.random() * 30 + 10;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.1})`;
+        ctx.fill();
+        
+        // Connect some nodes
+        if (i % 2 === 0) {
+           ctx.beginPath();
+           ctx.moveTo(x, y);
+           ctx.lineTo(x + Math.random() * 100 - 50, y + Math.random() * 100 - 50);
+           ctx.strokeStyle = `rgba(255, 255, 255, ${Math.random() * 0.05})`;
+           ctx.stroke();
+        }
+    }
+    
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+  }, []);
 
+  useFrame((state) => {
+    if (causticTexture) {
+      // Animate texture offset to simulate flowing water
+      const t = state.clock.elapsedTime;
+      causticTexture.offset.x = Math.sin(t * 0.1) * 0.1;
+      causticTexture.offset.y = Math.cos(t * 0.08) * 0.1;
+    }
+  });
+
+  return (
+    <spotLight
+      position={[0, 60, 0]}
+      angle={0.5}
+      penumbra={0.5}
+      intensity={300} // Visible but not blinding
+      map={causticTexture}
+      castShadow={false} // Don't cast shadow from caustics (expensive/messy)
+      distance={200}
+      decay={1}
+      color="#e0f0ff"
+    />
+  );
+};
 
 // Scene component - realistic aquarium view
 const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
   const initialFish = useMemo(() => {
     // Pass complete fish data, only add initialPosition if position exists
     return fishData.map(f => ({
-      ...f, // Keep all fish data (name, personality, etc.)
-      // Only add initialPosition if fish actually has a position - no default fallback
+      ...f, 
       ...(f.position && { initialPosition: f.position })
     }));
   }, [fishData]);
 
-  // Use realtime Firebase-synchronized aquarium simulation
   const { boids } = useRealtimeAquarium(initialFish);
 
   return (
@@ -78,21 +139,17 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       <ambientLight intensity={0.2} color="#ffffff" />
 
       {/* --- LIGHT 3: ROOM FILL (Controlled by Switch) --- */}
-      {/* REALISTIC ROOM LIGHTING: Hemisphere for depth + Angled Sun for shape */}
-      
-      {/* 1. Base Environment Fill (Hemisphere adds 3D depth) */}
-      {/* Cool light from above, warm bounce from wood floor below */}
       <hemisphereLight
         skyColor="#d6e6ff" 
         groundColor="#5c4033" 
         intensity={roomLightsOn ? 0.5 : 0.0}
       />
       
-      {/* 2. "Window" Sunlight - Creates direction and gradients */}
+      {/* 2. "Window" Sunlight */}
       <directionalLight
-        position={[-50, 30, 20]} // Coming from the side
+        position={[-50, 30, 20]} 
         intensity={roomLightsOn ? 3.0 : 0.0} 
-        color="#fff0dd" // Warm sun
+        color="#fff0dd" 
         castShadow
         shadow-mapSize-width={2048} 
         shadow-mapSize-height={2048} 
@@ -108,77 +165,70 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         distance={200}
       />
 
-      {/* --- LIGHT 2: OVERHEAD CAST (The "Pool of Light" - Always On) --- */}
-      {/* Main Tank Light - High Intensity */}
+      {/* --- LIGHT 2: OVERHEAD CAST --- */}
       <spotLight
         position={[0, 100, 0]} 
-        angle={0.6} // Tighter angle for focused tank lighting
+        angle={0.6} 
         penumbra={0.5} 
-        intensity={400.0} // SIGNIFICANTLY BOOSTED for brightness
+        intensity={400.0} 
         distance={500} 
         decay={1} 
         castShadow
         shadow-mapSize-width={2048} 
         shadow-mapSize-height={2048} 
         shadow-bias={-0.00001} 
-        shadow-radius={1} // Sharp shadows
+        shadow-radius={1} 
         target-position={[0, -100, 0]} 
       />
 
-      {/* --- LIGHT 1: TANK INTERNAL (The "Fish Light" - Always On) --- */}
-      {/* Internal lighting for highlighting fish details */}
+      {/* --- LIGHT 1: TANK INTERNAL --- */}
       <spotLight
         position={[0, 30, 0]} 
         angle={1.2} 
         penumbra={0.5}
-        intensity={400.0} // Boosted
+        intensity={400.0} 
         distance={60} 
         decay={1} 
         color="#ffffff"
-        castShadow // Vital for fish shadows on sand
+        castShadow 
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
         shadow-bias={-0.00001} 
-        shadow-radius={1} // Sharp shadows
+        shadow-radius={1} 
         target-position={[0, 0, 0]}
       />
-      <pointLight
-        position={[0, 10, 0]}
-        intensity={100.0} 
-        color="#e0f0ff"
-        distance={40} 
-        decay={1}
-      />
+      
+      {/* 4. CAUSTIC LIGHT PROJECTOR */}
+      <CausticLight />
 
       {/* Render in correct order for transparency */}
 
-      {/* 0. Environment (room, table, walls) */}
+      {/* 0. Environment */}
       <Environment />
 
-      {/* 1. Tank structure (opaque base) */}
+      {/* 1. Tank structure */}
       <TankContainer />
 
-      {/* 2. Realistic light caustics - subtle */}
-      <RealisticCaustics />
-
+      {/* 2. Realistic light caustics - REMOVED, replaced by CausticLight */}
+      
       {/* 3. Fish swimming in the tank */}
       {boids.map(boid => (
         <Fish key={boid.id} boid={boid} onFishClick={onFishClick} />
       ))}
 
-      {/* 4. HOB (Hang-On-Back) filter equipment */}
+      {/* 4. HOB Filter */}
       <HOBFilter />
 
-      {/* 5. Bubble jet aerator (must render after fish) */}
+      {/* 5. Bubble jet */}
       <BubbleJet />
       
-      {/* 5b. Ambient scattered bubbles */}
+      {/* 5b. Ambient bubbles */}
       <AmbientBubbles />
 
-      {/* 6. Volumetric water with refraction (subtle overlay) */}
+      {/* 6. Volumetric water */}
       <WaterVolume />
 
-      {/* 7. Water surface at top (render last for proper blending) */}
+      {/* 7. Water surface */}
       <WaterSurface />
     </>
   );

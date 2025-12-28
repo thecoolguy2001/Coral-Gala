@@ -45,48 +45,59 @@ const TankContainer = () => {
     }
   });
 
-  // Custom Sand Shader with Emissive Glow to resist blue tint
+  // Custom Sand Shader with Emissive Glow and Displacement
   const sandMaterial = useMemo(() => {
     return new THREE.MeshStandardMaterial({
-      color: "#ffffff",
-      roughness: 0.8,
-      emissive: "#fff0d5", // Warm glow to counter blue water
-      emissiveIntensity: 0.05,
+      color: "#fdf8e5", // Natural sand
+      roughness: 1.0,
+      emissive: "#dcb", // Subtle warm earth tone
+      emissiveIntensity: 0.0, // Shadows need to be visible!
       onBeforeCompile: (shader) => {
-        shader.fragmentShader = shader.fragmentShader.replace(
-          '#include <common>',
-          `
-          #include <common>
-          float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
-          float noise(vec2 p) {
-              vec2 i = floor(p);
-              vec2 f = fract(p);
-              f = f*f*(3.0-2.0*f);
-              return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), f.x),
-                         mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), f.x), f.y);
-          }
-          `
-        );
-        shader.fragmentShader = shader.fragmentShader.replace(
-          '#include <normal_fragment_begin>',
-          `
-          #include <normal_fragment_begin>
-          float h = noise(vUv * 800.0);
-          vec3 grainNormal = normalize(vec3(dFdx(h), dFdy(h), 0.5));
-          normal = normalize(normal + grainNormal * 0.3);
-          `
-        );
-        shader.fragmentShader = shader.fragmentShader.replace(
-          '#include <color_fragment>',
-          `
-          #include <color_fragment>
-          float n = hash(vUv * 500.0);
-          float dust = noise(vUv * 20.0);
-          
-          diffuseColor.rgb *= (0.9 + n * 0.2);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.98, 0.9), dust * 0.3);
-          `
-        );
+        shader.vertexShader = `
+          varying vec2 vUv;
+          ${shader.vertexShader.replace('#include <common>', `
+            #include <common>
+            float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+            float noise(vec2 p) {
+                vec2 i = floor(p);
+                vec2 f = fract(p);
+                f = f*f*(3.0-2.0*f);
+                return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), f.x),
+                           mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), f.x), f.y);
+            }
+          `).replace('#include <begin_vertex>', `
+            #include <begin_vertex>
+            vUv = uv;
+            // Create uneven dunes
+            float h = noise(uv * 4.0) * 0.4 + noise(uv * 10.0) * 0.1;
+            transformed.z += h; // Displace UP (Z in Plane geometry)
+          `)}
+        `;
+        shader.fragmentShader = `
+          ${shader.fragmentShader.replace('#include <common>', `
+            #include <common>
+            float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+            float noise(vec2 p) {
+                vec2 i = floor(p);
+                vec2 f = fract(p);
+                f = f*f*(3.0-2.0*f);
+                return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), f.x),
+                           mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), f.x), f.y);
+            }
+          `).replace('#include <normal_fragment_begin>', `
+            #include <normal_fragment_begin>
+            // Strong bump map for texture
+            float h = noise(vUv * 600.0);
+            vec3 grainNormal = normalize(vec3(dFdx(h), dFdy(h), 0.2)); 
+            normal = normalize(normal + grainNormal * 0.5);
+          `).replace('#include <color_fragment>', `
+            #include <color_fragment>
+            float n = hash(vUv * 500.0);
+            float patch = noise(vUv * 15.0);
+            diffuseColor.rgb *= (0.8 + n * 0.3); // Grain
+            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.9, 0.8, 0.7), patch * 0.2); // Patches
+          `)}
+        `;
       }
     });
   }, []);
@@ -99,8 +110,8 @@ const TankContainer = () => {
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
-          opacity={0.1}
-          roughness={0.05}
+          opacity={0.05}
+          roughness={0.0}
           metalness={0.1}
           transmission={0.99}
           thickness={0.1}
@@ -114,7 +125,7 @@ const TankContainer = () => {
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
-          opacity={0.1}
+          opacity={0.05}
           roughness={0.05}
           metalness={0.1}
           transmission={0.99}
@@ -126,19 +137,19 @@ const TankContainer = () => {
       <mesh position={[0, 0, -tankDepth / 2 + 0.1]} rotation={[0, 0, 0]} castShadow={false} receiveShadow={false}>
         <planeGeometry args={[tankWidth, tankHeight]} />
         <MeshReflectorMaterial
-          blur={[0, 0]}
+          blur={[200, 200]}
           resolution={512}
-          mixBlur={0}
-          mixStrength={4} // Subtle glass reflection
-          roughness={0} // Sharp
+          mixBlur={1}
+          mixStrength={2} // Subtle
+          roughness={0.2} // Blurry
           depthScale={1.2}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.4}
-          color="#ffffff" // Clear
+          color="#ffffff"
           metalness={0}
-          mirror={1}
+          mirror={0.5}
           transparent={true}
-          opacity={0.15}
+          opacity={0.1}
           depthWrite={false}
         />
       </mesh>
@@ -149,7 +160,7 @@ const TankContainer = () => {
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
-          opacity={0.1}
+          opacity={0.05}
           roughness={0.1}
           transmission={0.9}
         />
@@ -158,19 +169,19 @@ const TankContainer = () => {
       <mesh position={[-tankWidth / 2 + 0.1, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow={false} receiveShadow={false}>
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
-          blur={[0, 0]}
+          blur={[200, 200]}
           resolution={256}
-          mixBlur={0}
-          mixStrength={4}
-          roughness={0}
+          mixBlur={1}
+          mixStrength={2}
+          roughness={0.2}
           depthScale={1.2}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.4}
           color="#ffffff"
           metalness={0}
-          mirror={1}
+          mirror={0.5}
           transparent={true}
-          opacity={0.15}
+          opacity={0.1}
           depthWrite={false}
         />
       </mesh>
@@ -181,7 +192,7 @@ const TankContainer = () => {
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
-          opacity={0.1}
+          opacity={0.05}
           roughness={0.1}
           transmission={0.9}
         />
@@ -190,19 +201,19 @@ const TankContainer = () => {
       <mesh position={[tankWidth / 2 - 0.1, 0, 0]} rotation={[0, -Math.PI / 2, 0]} castShadow={false} receiveShadow={false}>
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
-          blur={[0, 0]}
+          blur={[200, 200]}
           resolution={256}
-          mixBlur={0}
-          mixStrength={4}
-          roughness={0}
+          mixBlur={1}
+          mixStrength={2}
+          roughness={0.2}
           depthScale={1.2}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.4}
           color="#ffffff"
           metalness={0}
-          mirror={1}
+          mirror={0.5}
           transparent={true}
-          opacity={0.15}
+          opacity={0.1}
           depthWrite={false}
         />
       </mesh>
@@ -251,9 +262,9 @@ const TankContainer = () => {
         </mesh>
       ))}
 
-      {/* Substrate */}
-      <mesh position={[0, -tankHeight / 2 + 0.3, 0]} receiveShadow material={sandMaterial}>
-        <boxGeometry args={[tankWidth - 0.2, 0.6, tankDepth - 0.2]} />
+      {/* Substrate - REPLACED with Plane for displacement */}
+      <mesh position={[0, -tankHeight / 2 + 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow material={sandMaterial}>
+        <planeGeometry args={[tankWidth - 0.2, tankDepth - 0.2, 64, 64]} />
       </mesh>
 
       {/* Sand Dust Particles */}
