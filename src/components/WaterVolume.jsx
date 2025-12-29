@@ -15,7 +15,7 @@ const WaterVolume = () => {
     return new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        waterColor: { value: new THREE.Color(0.05, 0.2, 0.35) },
+        waterColor: { value: new THREE.Color(0.0, 0.1, 0.5) }, // Deeper Blue
       },
       vertexShader: `
         varying vec3 vPosition;

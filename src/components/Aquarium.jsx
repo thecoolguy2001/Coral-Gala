@@ -77,7 +77,7 @@ const CausticLight = () => {
         const r = Math.random() * 30 + 10;
         ctx.beginPath();
         ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.1})`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.1})`; // Brighter
         ctx.fill();
         
         // Connect some nodes
@@ -85,7 +85,8 @@ const CausticLight = () => {
            ctx.beginPath();
            ctx.moveTo(x, y);
            ctx.lineTo(x + Math.random() * 100 - 50, y + Math.random() * 100 - 50);
-           ctx.strokeStyle = `rgba(255, 255, 255, ${Math.random() * 0.05})`;
+           ctx.strokeStyle = `rgba(255, 255, 255, ${Math.random() * 0.3})`;
+           ctx.lineWidth = Math.random() * 2 + 1;
            ctx.stroke();
         }
     }
@@ -108,9 +109,9 @@ const CausticLight = () => {
   return (
     <spotLight
       position={[0, 60, 0]}
-      angle={0.5}
-      penumbra={0.5}
-      intensity={2000} // Boosted significantly
+      angle={0.8} // Wider spread
+      penumbra={0.2} // Sharper
+      intensity={2500} // Stronger
       map={causticTexture}
       castShadow={false}
       distance={200}
