@@ -171,13 +171,14 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         position={[0, 100, 0]} 
         angle={0.6} 
         penumbra={0.5} 
-        intensity={1000.0} // Boosted
+        intensity={1500.0} // Boosted
         distance={500} 
         decay={1} 
         castShadow
         shadow-mapSize-width={2048} 
         shadow-mapSize-height={2048} 
-        shadow-bias={-0.00001} 
+        shadow-bias={-0.0001} 
+        shadow-normalBias={0.04}
         shadow-radius={1} 
         target-position={[0, -100, 0]} 
       />
@@ -187,14 +188,15 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         position={[0, 30, 0]} 
         angle={1.2} 
         penumbra={0.5}
-        intensity={800.0} // Boosted
+        intensity={1000.0} // Boosted
         distance={60} 
         decay={1} 
         color="#ffffff"
         castShadow 
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
-        shadow-bias={-0.00001} 
+        shadow-bias={-0.0001}
+        shadow-normalBias={0.04}
         shadow-radius={1} 
         target-position={[0, 0, 0]}
       />
