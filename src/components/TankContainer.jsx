@@ -140,16 +140,16 @@ const TankContainer = () => {
           blur={[200, 200]}
           resolution={512}
           mixBlur={1}
-          mixStrength={2} // Subtle
-          roughness={0.2} // Blurry
+          mixStrength={30} // Boosted reflection
+          roughness={0.2}
           depthScale={1.2}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.4}
           color="#ffffff"
           metalness={0}
-          mirror={0.5}
+          mirror={0.7}
           transparent={true}
-          opacity={0.1}
+          opacity={0.15}
           depthWrite={false}
         />
       </mesh>
@@ -160,7 +160,7 @@ const TankContainer = () => {
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
-          opacity={0.05}
+          opacity={0.1}
           roughness={0.1}
           transmission={0.9}
         />
@@ -172,16 +172,16 @@ const TankContainer = () => {
           blur={[200, 200]}
           resolution={256}
           mixBlur={1}
-          mixStrength={2}
+          mixStrength={30} // Boosted
           roughness={0.2}
           depthScale={1.2}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.4}
           color="#ffffff"
           metalness={0}
-          mirror={0.5}
+          mirror={0.7}
           transparent={true}
-          opacity={0.1}
+          opacity={0.15}
           depthWrite={false}
         />
       </mesh>
@@ -192,7 +192,7 @@ const TankContainer = () => {
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
-          opacity={0.05}
+          opacity={0.1}
           roughness={0.1}
           transmission={0.9}
         />
@@ -204,16 +204,16 @@ const TankContainer = () => {
           blur={[200, 200]}
           resolution={256}
           mixBlur={1}
-          mixStrength={2}
+          mixStrength={30} // Boosted
           roughness={0.2}
           depthScale={1.2}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.4}
           color="#ffffff"
           metalness={0}
-          mirror={0.5}
+          mirror={0.7}
           transparent={true}
-          opacity={0.1}
+          opacity={0.15}
           depthWrite={false}
         />
       </mesh>
