@@ -137,19 +137,19 @@ const TankContainer = () => {
       <mesh position={[0, 0, -tankDepth / 2 + 0.1]} rotation={[0, 0, 0]} castShadow={false} receiveShadow={false}>
         <planeGeometry args={[tankWidth, tankHeight]} />
         <MeshReflectorMaterial
-          blur={[200, 200]}
+          blur={[100, 100]}
           resolution={512}
           mixBlur={1}
-          mixStrength={30} // Boosted reflection
-          roughness={0.2}
+          mixStrength={80} // Aggressive reflection boost
+          roughness={0.1} // Sharper
           depthScale={1.2}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.4}
           color="#ffffff"
           metalness={0}
-          mirror={0.7}
+          mirror={1.0}
           transparent={true}
-          opacity={0.15}
+          opacity={0.25}
           depthWrite={false}
         />
       </mesh>
@@ -169,19 +169,19 @@ const TankContainer = () => {
       <mesh position={[-tankWidth / 2 + 0.1, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow={false} receiveShadow={false}>
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
-          blur={[200, 200]}
+          blur={[100, 100]}
           resolution={256}
           mixBlur={1}
-          mixStrength={30} // Boosted
-          roughness={0.2}
+          mixStrength={80} // Boosted
+          roughness={0.1}
           depthScale={1.2}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.4}
           color="#ffffff"
           metalness={0}
-          mirror={0.7}
+          mirror={1.0}
           transparent={true}
-          opacity={0.15}
+          opacity={0.25}
           depthWrite={false}
         />
       </mesh>
@@ -201,19 +201,19 @@ const TankContainer = () => {
       <mesh position={[tankWidth / 2 - 0.1, 0, 0]} rotation={[0, -Math.PI / 2, 0]} castShadow={false} receiveShadow={false}>
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
-          blur={[200, 200]}
+          blur={[100, 100]}
           resolution={256}
           mixBlur={1}
-          mixStrength={30} // Boosted
-          roughness={0.2}
+          mixStrength={80} // Boosted
+          roughness={0.1}
           depthScale={1.2}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.4}
           color="#ffffff"
           metalness={0}
-          mirror={0.7}
+          mirror={1.0}
           transparent={true}
-          opacity={0.15}
+          opacity={0.25}
           depthWrite={false}
         />
       </mesh>
