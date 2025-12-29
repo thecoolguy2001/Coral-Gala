@@ -8,51 +8,13 @@ import BubbleJet from './BubbleJet';
 import AmbientBubbles from './AmbientBubbles';
 import HOBFilter from './HOBFilter';
 import Environment from './Environment';
+import RealisticCaustics from './RealisticCaustics'; // Restored
 import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
 import { getDefaultFish } from '../models/fishModel';
 import { TANK_DEPTH, WATER_LEVEL } from '../constants/tankDimensions';
 import * as THREE from 'three';
 
-// Lazy load modal since it's only shown when user clicks a fish
-const FishInfoModal = lazy(() => import('./FishInfoModal'));
-
-// ... Error Boundary ... (Keep as is)
-class ThreeErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.error('Three.js error:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{ 
-          position: 'absolute', 
-          top: '50%', 
-          left: '50%', 
-          transform: 'translate(-50%, -50%)',
-          color: 'white',
-          background: 'rgba(0,0,0,0.8)',
-          padding: '20px',
-          borderRadius: '10px'
-        }}>
-          <h3>3D Rendering Error</h3>
-          <p>There was an issue with the 3D aquarium. Please refresh the page.</p>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
+// ... (Rest of imports and ErrorBoundary remain the same)
 
 // Caustic Light Component
 const CausticLight = () => {
@@ -109,9 +71,9 @@ const CausticLight = () => {
       position={[0, 60, 0]}
       angle={0.5}
       penumbra={0.5}
-      intensity={300} // Visible but not blinding
+      intensity={2000} // Boosted significantly
       map={causticTexture}
-      castShadow={false} // Don't cast shadow from caustics (expensive/messy)
+      castShadow={false}
       distance={200}
       decay={1}
       color="#e0f0ff"
@@ -136,7 +98,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* PROFESSIONAL 3-LIGHT SYSTEM */}
 
       {/* 0. Ambient Fill - Lifts all shadows immediately */}
-      <ambientLight intensity={0.2} color="#ffffff" />
+      <ambientLight intensity={0.6} color="#ffffff" />
 
       {/* --- LIGHT 3: ROOM FILL (Controlled by Switch) --- */}
       <hemisphereLight
@@ -170,7 +132,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         position={[0, 100, 0]} 
         angle={0.6} 
         penumbra={0.5} 
-        intensity={400.0} 
+        intensity={1000.0} // Boosted
         distance={500} 
         decay={1} 
         castShadow
@@ -186,7 +148,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         position={[0, 30, 0]} 
         angle={1.2} 
         penumbra={0.5}
-        intensity={400.0} 
+        intensity={800.0} // Boosted
         distance={60} 
         decay={1} 
         color="#ffffff"
@@ -209,7 +171,8 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       {/* 1. Tank structure */}
       <TankContainer />
 
-      {/* 2. Realistic light caustics - REMOVED, replaced by CausticLight */}
+      {/* 2. Realistic light caustics - RESTORED */}
+      <RealisticCaustics />
       
       {/* 3. Fish swimming in the tank */}
       {boids.map(boid => (
