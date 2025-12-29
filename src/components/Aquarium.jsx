@@ -14,7 +14,46 @@ import { getDefaultFish } from '../models/fishModel';
 import { TANK_DEPTH, WATER_LEVEL } from '../constants/tankDimensions';
 import * as THREE from 'three';
 
-// ... (Rest of imports and ErrorBoundary remain the same)
+// Lazy load modal since it's only shown when user clicks a fish
+const FishInfoModal = lazy(() => import('./FishInfoModal'));
+
+// Error boundary for Three.js errors
+class ThreeErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Three.js error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ 
+          position: 'absolute', 
+          top: '50%', 
+          left: '50%', 
+          transform: 'translate(-50%, -50%)',
+          color: 'white',
+          background: 'rgba(0,0,0,0.8)',
+          padding: '20px',
+          borderRadius: '10px'
+        }}>
+          <h3>3D Rendering Error</h3>
+          <p>There was an issue with the 3D aquarium. Please refresh the page.</p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // Caustic Light Component
 const CausticLight = () => {
