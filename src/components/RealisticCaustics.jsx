@@ -35,35 +35,54 @@ const RealisticCaustics = () => {
         varying vec3 vPosition;
         varying vec3 vWorldPosition;
 
-        // Simplified, robust caustic function
+        // Advanced caustic function with safety checks
         float causticPattern(vec2 uv, float time) {
-            float v = 0.0;
-            // Simple sine wave interference
-            v += sin(uv.x * 20.0 + time);
-            v += sin(uv.y * 15.0 + time * 0.7);
-            v += sin((uv.x + uv.y) * 10.0 + time * 0.5);
-            // Sharpen the result to create "lines" of light
-            return pow(0.5 + 0.5 * v / 3.0, 8.0);
+          vec2 p = mod(uv * 6.28318, 6.28318) - 250.0;
+          vec2 i = vec2(p);
+          float c = 1.0;
+          float inten = 0.005;
+
+          // Iterative layering for "ray" look
+          for (int n = 0; n < 3; n++) {
+            float t = time * (1.0 - (3.5 / float(n + 1)));
+            i = p + vec2(
+              cos(t - i.x) + sin(t + i.y),
+              sin(t - i.y) + cos(t + i.x)
+            );
+            
+            // SAFE calculation: add 0.001 to denominators to prevent Div/0 crash
+            vec2 lenVec = vec2(
+              p.x / (sin(i.x + t) / inten + 0.001), // Safety epsilon
+              p.y / (cos(i.y + t) / inten + 0.001)  // Safety epsilon
+            );
+            
+            c += 1.0 / (length(lenVec) + 0.001); // Safety epsilon
+          }
+
+          c /= float(3);
+          c = 1.17 - pow(c, 1.4);
+          return pow(abs(c), 8.0); // High contrast for sharp rays
         }
 
         void main() {
           vec3 pos = vWorldPosition;
+          float depthFactor = (pos.y + 12.0) / 25.0;
+          vec2 uv = pos.xz * 0.15; // Slightly larger scale
           
-          // Project from top (XZ plane)
-          vec2 uv = pos.xz * 0.05;
+          // Animate drift - FAST
+          uv += vec2(sin(time * 0.2), cos(time * 0.25)) * 0.1;
+
+          // Multi-layer caustics - FAST
+          float c1 = causticPattern(uv * 3.0, time * 0.8);
+          float c2 = causticPattern(uv * 2.5 + vec2(0.5), time * 0.7);
           
-          // Animate
-          float c1 = causticPattern(uv, time * 2.0);
-          float c2 = causticPattern(uv + vec2(0.3), time * 1.5 + 2.0);
+          float caustics = (c1 + c2 * 0.5) * intensity;
           
-          float caustics = (c1 * 0.6 + c2 * 0.4) * intensity;
+          // Fade vertically
+          caustics *= smoothstep(-15.0, 15.0, pos.y + 5.0);
           
-          // Fade edges vertically
-          float alpha = smoothstep(-12.0, 10.0, pos.y);
-          
-          vec3 color = vec3(0.7, 0.9, 1.0);
-          
-          gl_FragColor = vec4(color * caustics, caustics * 0.3);
+          vec3 color = vec3(0.8, 0.9, 1.0);
+          gl_FragColor = vec4(color, caustics * 0.6); // High visibility
         }
       `,
       transparent: true,
