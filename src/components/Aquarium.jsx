@@ -64,55 +64,42 @@ const CausticLight = () => {
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
     
-    // Background
+    // Simple noise generation
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, 512, 512);
     
-    // Draw more realistic web-like patterns for caustics
-    ctx.strokeStyle = 'white';
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    
-    for (let i = 0; i < 200; i++) {
+    // Draw random white/grey patterns for caustics (original dot style)
+    for (let i = 0; i < 500; i++) {
         const x = Math.random() * 512;
         const y = Math.random() * 512;
-        const size = Math.random() * 50 + 20;
-        
+        const r = Math.random() * 30 + 10;
         ctx.beginPath();
-        ctx.moveTo(x, y);
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.1})`; // Brighter
+        ctx.fill();
         
-        // Create irregular polygons/blobs
-        const sides = 5 + Math.floor(Math.random() * 3);
-        for(let j = 0; j < sides; j++) {
-          const angle = (j / sides) * Math.PI * 2 + Math.random();
-          const dx = Math.cos(angle) * size;
-          const dy = Math.sin(angle) * size;
-          ctx.lineTo(x + dx, y + dy);
-        }
-        
-        ctx.closePath();
-        ctx.lineWidth = Math.random() * 2 + 0.5;
-        ctx.globalAlpha = Math.random() * 0.4 + 0.1;
-        ctx.stroke();
-        
-        // Add a soft glow to some
-        if (i % 5 === 0) {
-          ctx.globalAlpha = 0.05;
-          ctx.fill();
+        // Connect some nodes
+        if (i % 2 === 0) {
+           ctx.beginPath();
+           ctx.moveTo(x, y);
+           ctx.lineTo(x + Math.random() * 100 - 50, y + Math.random() * 100 - 50);
+           ctx.strokeStyle = `rgba(255, 255, 255, ${Math.random() * 0.3})`;
+           ctx.lineWidth = Math.random() * 2 + 1;
+           ctx.stroke();
         }
     }
     
     const tex = new THREE.CanvasTexture(canvas);
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
-    // Tiling the texture more
-    tex.repeat.set(2, 2);
+    // Rotate texture slightly to align with look
+    tex.rotation = Math.PI / 4;
     return tex;
   }, []);
 
   useFrame((state) => {
     if (causticTexture) {
-      // Linear flow for more consistent movement
+      // Linear flow for more consistent movement (retained animation fix)
       const t = state.clock.elapsedTime;
       causticTexture.offset.x = t * 0.05;
       causticTexture.offset.y = t * 0.03;
@@ -124,7 +111,7 @@ const CausticLight = () => {
       position={[0, 60, 0]}
       angle={0.9}
       penumbra={0.3}
-      intensity={3000} // Increased for better visibility on environment
+      intensity={2500} // Restored intensity
       map={causticTexture}
       castShadow={false}
       distance={200}
