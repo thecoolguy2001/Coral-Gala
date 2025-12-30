@@ -42,8 +42,8 @@ const RealisticCaustics = () => {
           float c = 1.0;
           float inten = 0.005;
 
-          // Iterative layering for "ray" look
-          for (int n = 0; n < 3; n++) {
+          // Iterative layering for "ray" look - Original 4 iterations
+          for (int n = 0; n < 4; n++) {
             float t = time * (1.0 - (3.5 / float(n + 1)));
             i = p + vec2(
               cos(t - i.x) + sin(t + i.y),
@@ -59,20 +59,21 @@ const RealisticCaustics = () => {
             c += 1.0 / (length(lenVec) + 0.001); // Safety epsilon
           }
 
-          c /= float(3);
+          c /= float(4);
           c = 1.17 - pow(c, 1.4);
           return pow(abs(c), 8.0); // High contrast for sharp rays
         }
 
         void main() {
           vec3 pos = vWorldPosition;
-          float depthFactor = (pos.y + 12.0) / 25.0;
-          vec2 uv = pos.xz * 0.15; // Slightly larger scale
           
-          // Animate drift - FAST
+          // Original UV scaling
+          vec2 uv = pos.xz * 0.15; 
+          
+          // Animate drift - Faster than original but subtle
           uv += vec2(sin(time * 0.2), cos(time * 0.25)) * 0.1;
 
-          // Multi-layer caustics - FAST
+          // Multi-layer caustics
           float c1 = causticPattern(uv * 3.0, time * 0.8);
           float c2 = causticPattern(uv * 2.5 + vec2(0.5), time * 0.7);
           
@@ -81,8 +82,11 @@ const RealisticCaustics = () => {
           // Fade vertically
           caustics *= smoothstep(-15.0, 15.0, pos.y + 5.0);
           
-          vec3 color = vec3(0.8, 0.9, 1.0);
-          gl_FragColor = vec4(color, caustics * 0.6); // High visibility
+          // Original Color Composition (Additive Light)
+          vec3 finalColor = vec3(0.8, 0.9, 1.0) * caustics;
+          
+          // High alpha but transparent so it blends with EVERYTHING inside
+          gl_FragColor = vec4(finalColor, caustics * 0.8); 
         }
       `,
       transparent: true,
