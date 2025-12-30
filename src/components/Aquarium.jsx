@@ -57,8 +57,6 @@ class ThreeErrorBoundary extends React.Component {
 
 // Caustic Light Component
 const CausticLight = () => {
-  const textureRef = useRef();
-  
   // Generate noise texture once
   const causticTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
@@ -97,27 +95,62 @@ const CausticLight = () => {
     return tex;
   }, []);
 
+  // Create two independent texture instances for interference pattern
+  const [texture1, texture2] = useMemo(() => {
+    if (!causticTexture) return [null, null];
+    const t1 = causticTexture.clone();
+    const t2 = causticTexture.clone();
+    t1.needsUpdate = true;
+    t2.needsUpdate = true;
+    return [t1, t2];
+  }, [causticTexture]);
+
   useFrame((state) => {
-    if (causticTexture) {
-      // Animate texture offset to simulate flowing water
-      const t = state.clock.elapsedTime;
-      causticTexture.offset.x = Math.sin(t * 0.1) * 0.1;
-      causticTexture.offset.y = Math.cos(t * 0.08) * 0.1;
+    const t = state.clock.elapsedTime;
+    
+    if (texture1) {
+      // Texture 1: Flowing diagonal movement
+      texture1.offset.x = (t * 0.05) % 1;
+      texture1.offset.y = (t * 0.02) % 1;
+    }
+    
+    if (texture2) {
+      // Texture 2: Circular/Oscillating movement
+      texture2.offset.x = Math.sin(t * 0.1) * 0.1;
+      texture2.offset.y = Math.cos(t * 0.1) * 0.1;
+      // Add rotation to second layer for complexity
+      texture2.center.set(0.5, 0.5);
+      texture2.rotation = Math.sin(t * 0.05) * 0.2;
     }
   });
 
+  if (!texture1 || !texture2) return null;
+
   return (
-    <spotLight
-      position={[0, 60, 0]}
-      angle={0.8} // Wider spread
-      penumbra={0.2} // Sharper
-      intensity={2500} // Stronger
-      map={causticTexture}
-      castShadow={false}
-      distance={200}
-      decay={1}
-      color="#e0f0ff"
-    />
+    <group>
+      <spotLight
+        position={[0, 60, 0]}
+        angle={0.8}
+        penumbra={0.2}
+        intensity={1250} // Half intensity
+        map={texture1}
+        castShadow={false}
+        distance={200}
+        decay={1}
+        color="#e0f0ff"
+      />
+      <spotLight
+        position={[0, 60, 0]}
+        angle={0.8}
+        penumbra={0.2}
+        intensity={1250} // Half intensity
+        map={texture2}
+        castShadow={false}
+        distance={200}
+        decay={1}
+        color="#e0f0ff"
+      />
+    </group>
   );
 };
 
