@@ -48,9 +48,10 @@ const RealisticCaustics = () => {
               cos(t - i.x) + sin(t + i.y),
               sin(t - i.y) + cos(t + i.x)
             );
+            // Add epsilon to avoid division by zero
             c += 1.0 / length(vec2(
-              p.x / (sin(i.x + t) / inten),
-              p.y / (cos(i.y + t) / inten)
+              p.x / (sin(i.x + t) / inten + 0.001),
+              p.y / (cos(i.y + t) / inten + 0.001)
             ));
           }
 
@@ -63,14 +64,14 @@ const RealisticCaustics = () => {
           // Calculate caustics based on XZ world position (projecting from top)
           // Scale UV by Y depth to create light shafts look
           float depthFactor = (vWorldPosition.y + 12.0) / 25.0; // Normalized depth
-          vec2 uv = vWorldPosition.xz * 0.15; 
+          vec2 uv = vWorldPosition.xz * 0.2; 
           
-          // Animate drift
-          uv += vec2(sin(time * 0.1), cos(time * 0.15)) * 0.05;
+          // Animate drift - FASTER
+          uv += vec2(sin(time * 0.2), cos(time * 0.25)) * 0.1;
 
-          // Multi-layer caustics
-          float c1 = causticPattern(uv * 3.0, time * 0.5);
-          float c2 = causticPattern(uv * 2.5 + vec2(0.5), time * 0.4);
+          // Multi-layer caustics - FASTER
+          float c1 = causticPattern(uv * 3.0, time * 0.8);
+          float c2 = causticPattern(uv * 2.5 + vec2(0.5), time * 0.7);
           
           float caustics = (c1 + c2 * 0.5) * intensity;
 
