@@ -45,60 +45,13 @@ const TankContainer = () => {
     }
   });
 
-  // Custom Sand Shader with Emissive Glow and Displacement
+  // Standard Sand Material - Simplification to fix shadows
   const sandMaterial = useMemo(() => {
     return new THREE.MeshStandardMaterial({
-      color: "#fdf8e5", // Natural sand
+      color: "#fdf8e5",
       roughness: 1.0,
-      emissive: "#dcb", // Subtle warm earth tone
-      emissiveIntensity: 0.0, // Zero emissive for maximum shadow contrast
-      onBeforeCompile: (shader) => {
-        shader.vertexShader = `
-          varying vec2 vUv;
-          ${shader.vertexShader.replace('#include <common>', `
-            #include <common>
-            float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
-            float noise(vec2 p) {
-                vec2 i = floor(p);
-                vec2 f = fract(p);
-                f = f*f*(3.0-2.0*f);
-                return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), f.x),
-                           mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), f.x), f.y);
-            }
-          `).replace('#include <begin_vertex>', `
-            #include <begin_vertex>
-            vUv = uv;
-            // Create uneven dunes
-            float h = noise(uv * 4.0) * 0.4 + noise(uv * 10.0) * 0.1;
-            transformed.z += h; // Displace UP (Z in Plane geometry)
-          `)}
-        `;
-        shader.fragmentShader = `
-          ${shader.fragmentShader.replace('#include <common>', `
-            #include <common>
-            float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
-            float noise(vec2 p) {
-                vec2 i = floor(p);
-                vec2 f = fract(p);
-                f = f*f*(3.0-2.0*f);
-                return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), f.x),
-                           mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), f.x), f.y);
-            }
-          `).replace('#include <normal_fragment_begin>', `
-            #include <normal_fragment_begin>
-            // Strong bump map for texture
-            float h = noise(vUv * 600.0);
-            vec3 grainNormal = normalize(vec3(dFdx(h), dFdy(h), 0.2)); 
-            normal = normalize(normal + grainNormal * 0.5);
-          `).replace('#include <color_fragment>', `
-            #include <color_fragment>
-            float n = hash(vUv * 500.0);
-            float patch = noise(vUv * 15.0);
-            diffuseColor.rgb *= (0.8 + n * 0.3); // Grain
-            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.9, 0.8, 0.7), patch * 0.2); // Patches
-          `)}
-        `;
-      }
+      emissive: "#dcb",
+      emissiveIntensity: 0.0,
     });
   }, []);
 
