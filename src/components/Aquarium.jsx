@@ -99,10 +99,26 @@ const CausticLight = () => {
 
   useFrame((state) => {
     if (causticTexture) {
-      // Linear flow for more consistent movement (retained animation fix)
       const t = state.clock.elapsedTime;
-      causticTexture.offset.x = t * 0.05;
-      causticTexture.offset.y = t * 0.03;
+      
+      // 1. Linear Drift (Flow)
+      causticTexture.offset.x = (t * 0.02) % 1;
+      causticTexture.offset.y = (t * 0.015) % 1;
+
+      // 2. Organic Distortion (Swirl & Breathe)
+      // This mimics the refraction of water surface moving up and down
+      causticTexture.center.set(0.5, 0.5);
+      
+      // Gentle swaying rotation
+      causticTexture.rotation = (Math.PI / 4) + Math.sin(t * 0.5) * 0.05;
+      
+      // subtle stretching/compressing to simulate surface waves
+      const scaleBase = 2; // Match the repeat set in useMemo
+      const scaleVar = 0.05;
+      causticTexture.repeat.set(
+        scaleBase + Math.sin(t * 0.8) * scaleVar, 
+        scaleBase + Math.cos(t * 0.7) * scaleVar
+      );
     }
   });
 
