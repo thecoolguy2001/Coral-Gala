@@ -61,15 +61,21 @@ const WaterSurface = () => {
           float totalWave = swell1 + swell2 + wave1 + wave2 + cap1 + cap2 + filterRipple;
           pos.z += totalWave * edgeFactor;
 
-          float meniscus = smoothstep(0.88, 0.98, vDistanceFromEdge) * 0.15;
-          pos.z += meniscus;
+          // --- REALISTIC MENISCUS EFFECT ---
+          // Curves the water UP where it meets the glass
+          float meniscusWidth = 0.05; // Width of the curve
+          float meniscusHeight = 0.15; // Height of the climb
+          float meniscus = smoothstep(1.0 - meniscusWidth, 1.0, vDistanceFromEdge);
+          // Apply curve function (quadratic)
+          pos.z += meniscus * meniscus * meniscusHeight;
 
           vPosition = pos;
           vWorldPosition = (modelMatrix * vec4(pos, 1.0)).xyz;
 
+          // Re-calculate normal for lighting to respect the new curve
           float delta = 0.1;
-          vec3 tangent1 = vec3(1.0, 0.0, (totalWave) * 0.5 * edgeFactor); 
-          vec3 tangent2 = vec3(0.0, 1.0, (totalWave) * 0.5 * edgeFactor);
+          vec3 tangent1 = vec3(1.0, 0.0, (totalWave + meniscus * meniscusHeight) * 0.5); 
+          vec3 tangent2 = vec3(0.0, 1.0, (totalWave + meniscus * meniscusHeight) * 0.5);
           vNormal = normalize(cross(tangent1, tangent2));
 
           gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
@@ -125,34 +131,41 @@ const WaterSurface = () => {
         }
 
         void main() {
-          vec3 color = waterColor;
-
           vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
           float fresnel = pow(1.0 - max(dot(viewDirection, vNormal), 0.0), 3.0);
 
-          vec3 reflectionColor = vec3(0.5, 0.7, 0.8); // Natural sky-like reflections
-          color = mix(color, reflectionColor, fresnel * 0.7);
+          // CHROMATIC ABERRATION (RGB Split)
+          vec3 finalColor = waterColor;
+          vec2 causticsUv = vUv * 4.0;
+          
+          float cR = causticPattern(causticsUv + vec2(0.002, 0.0), time * 0.5);
+          float cG = causticPattern(causticsUv, time * 0.5);
+          float cB = causticPattern(causticsUv - vec2(0.002, 0.0), time * 0.5);
+          
+          float c2 = causticPattern(causticsUv * 0.8 + vec2(0.5), time * 0.4);
+          
+          vec3 surfaceCaustics = vec3(cR, cG, cB);
+          surfaceCaustics += c2 * 0.7; // Add second layer as white
+          surfaceCaustics *= 5.0;
+
+          vec3 reflectionColor = vec3(0.5, 0.7, 0.8); 
+          finalColor = mix(finalColor, reflectionColor, fresnel * 0.7);
 
           float edgeFoam = smoothstep(0.88, 0.96, vDistanceFromEdge);
           float foamNoise = noise(vUv * 50.0 + time * 0.5);
           edgeFoam *= foamNoise;
-          vec3 foamColor = vec3(0.8, 0.9, 1.0); // Natural white foam
-          color = mix(color, foamColor, edgeFoam * 0.8);
+          vec3 foamColor = vec3(0.8, 0.9, 1.0); 
+          finalColor = mix(finalColor, foamColor, edgeFoam * 0.8);
 
-          vec2 causticUv = vUv * 4.0;
-          float c1 = causticPattern(causticUv, time * 0.5);
-          float c2 = causticPattern(causticUv * 0.8 + vec2(0.5), time * 0.4);
-          float surfaceCaustics = (c1 + c2 * 0.7) * 5.0; 
-          
           vec3 refractionColor = vec3(0.8, 0.9, 1.0);
-          color += refractionColor * surfaceCaustics * (0.5 + fresnel * 0.5);
+          finalColor += refractionColor * surfaceCaustics * (0.5 + fresnel * 0.5);
 
           float depthVar = noise(vUv * 10.0 + time * 0.2) * 0.1;
-          color *= 1.0 + depthVar;
+          finalColor *= 1.0 + depthVar;
 
           float alpha = mix(0.5, 0.8, edgeFoam + fresnel * 0.5);
 
-          gl_FragColor = vec4(color, alpha);
+          gl_FragColor = vec4(finalColor, alpha);
         }
       `,
       transparent: true,

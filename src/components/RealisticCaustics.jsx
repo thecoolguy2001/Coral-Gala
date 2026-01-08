@@ -73,20 +73,34 @@ const RealisticCaustics = () => {
           // Animate drift - Faster than original but subtle
           uv += vec2(sin(time * 0.2), cos(time * 0.25)) * 0.1;
 
-          // Multi-layer caustics
-          float c1 = causticPattern(uv * 3.0, time * 0.8);
-          float c2 = causticPattern(uv * 2.5 + vec2(0.5), time * 0.7);
-          
-          float caustics = (c1 + c2 * 0.5) * intensity;
+          // Multi-layer caustics with CHROMATIC ABERRATION (RGB Split)
+          // Red Channel (Offset Left)
+          float c1_r = causticPattern((uv + vec2(0.005, 0.0)) * 3.0, time * 0.8);
+          float c2_r = causticPattern((uv + vec2(0.005, 0.0)) * 2.5 + vec2(0.5), time * 0.7);
+          float r = (c1_r + c2_r * 0.5) * intensity;
+
+          // Green Channel (Center)
+          float c1_g = causticPattern(uv * 3.0, time * 0.8);
+          float c2_g = causticPattern(uv * 2.5 + vec2(0.5), time * 0.7);
+          float g = (c1_g + c2_g * 0.5) * intensity;
+
+          // Blue Channel (Offset Right)
+          float c1_b = causticPattern((uv - vec2(0.005, 0.0)) * 3.0, time * 0.8);
+          float c2_b = causticPattern((uv - vec2(0.005, 0.0)) * 2.5 + vec2(0.5), time * 0.7);
+          float b = (c1_b + c2_b * 0.5) * intensity;
           
           // Fade vertically
-          caustics *= smoothstep(-15.0, 15.0, pos.y + 5.0);
+          float verticalFade = smoothstep(-15.0, 15.0, pos.y + 5.0);
+          
+          vec3 causticsColor = vec3(r, g, b) * verticalFade;
           
           // Original Color Composition (Additive Light)
-          vec3 finalColor = vec3(0.8, 0.9, 1.0) * caustics;
+          // Tint slightly blueish white but keep RGB separation
+          vec3 finalColor = vec3(0.8, 0.9, 1.0) * causticsColor;
           
           // High alpha but transparent so it blends with EVERYTHING inside
-          gl_FragColor = vec4(finalColor, caustics * 0.8); 
+          // Use Green channel for alpha approximation as it's the center
+          gl_FragColor = vec4(finalColor, g * verticalFade * 0.8); 
         }
       `,
       transparent: true,
