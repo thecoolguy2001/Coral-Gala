@@ -26,21 +26,17 @@ const WaterVolume = () => {
     >
       <boxGeometry args={[volumeWidth, waterHeight, volumeDepth]} />
       {/* 
-        MeshPhysicalMaterial with Transmission 
-        This is the "modern" way to render realistic water volumes in Three.js
+        Standard Material for reliable, clear transparency 
+        Avoids opacity/artifact issues caused by nested transmission (Glass + Water)
       */}
-      <meshPhysicalMaterial
-        color="#ffffff" // Pure white base for clarity
-        transmission={0.99} // High transmission (crystal clear)
-        opacity={1.0}
-        metalness={0.0}
-        roughness={0.0} // No roughness = no murkiness
-        ior={1.33} 
-        thickness={20.0}
-        attenuationColor="#a5f3fc" // Pale Cyan/Teal (Fresh water look)
-        attenuationDistance={40.0} // Light tint only, mostly clear
-        transparent={false}
-        depthWrite={false}
+      <meshStandardMaterial
+        color="#a5f3fc" // Pale Cyan (Fresh/Clean)
+        transparent={true}
+        opacity={0.12} // Low opacity to ensure tank contents are perfectly visible
+        roughness={0.1}
+        metalness={0.1}
+        side={THREE.DoubleSide} // Render inside and outside
+        depthWrite={false} // Prevent z-fighting with glass
       />
     </mesh>
   );
