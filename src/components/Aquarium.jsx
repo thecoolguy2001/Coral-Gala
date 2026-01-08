@@ -55,79 +55,103 @@ class ThreeErrorBoundary extends React.Component {
   }
 }
 
-// Caustic Light Component
-const CausticLight = () => {
-  // Generate noise texture once
-  const causticTexture = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
-    const ctx = canvas.getContext('2d');
+// Caustic Projector - Generates real-time animated caustic texture for the spotlight
+const CausticProjector = () => {
+  // Create a render target to draw the dynamic caustic pattern into
+  const renderTarget = useMemo(() => new THREE.WebGLRenderTarget(512, 512, {
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    format: THREE.RGBAFormat,
+    wrapS: THREE.RepeatWrapping,
+    wrapT: THREE.RepeatWrapping,
+  }), []);
+
+  // Off-screen scene setup
+  const { scene, camera, material } = useMemo(() => {
+    const s = new THREE.Scene();
+    const c = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     
-    // Simple noise generation
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, 512, 512);
-    
-    // Draw random white/grey patterns for caustics (original dot style)
-    for (let i = 0; i < 500; i++) {
-        const x = Math.random() * 512;
-        const y = Math.random() * 512;
-        const r = Math.random() * 30 + 10;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.1})`; // Brighter
-        ctx.fill();
-        
-        // Connect some nodes
-        if (i % 2 === 0) {
-           ctx.beginPath();
-           ctx.moveTo(x, y);
-           ctx.lineTo(x + Math.random() * 100 - 50, y + Math.random() * 100 - 50);
-           ctx.strokeStyle = `rgba(255, 255, 255, ${Math.random() * 0.3})`;
-           ctx.lineWidth = Math.random() * 2 + 1;
-           ctx.stroke();
+    // Shader that matches the internal RealisticCaustics logic
+    const m = new THREE.ShaderMaterial({
+      uniforms: {
+        time: { value: 0 },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = vec4(position, 1.0);
         }
-    }
+      `,
+      fragmentShader: `
+        uniform float time;
+        varying vec2 vUv;
+
+        // Same caustic logic as RealisticCaustics.jsx
+        float causticPattern(vec2 uv, float time) {
+          vec2 p = mod(uv * 6.28318, 6.28318) - 250.0;
+          vec2 i = vec2(p);
+          float c = 1.0;
+          float inten = 0.005;
+
+          for (int n = 0; n < 4; n++) {
+            float t = time * (1.0 - (3.5 / float(n + 1)));
+            i = p + vec2(
+              cos(t - i.x) + sin(t + i.y),
+              sin(t - i.y) + cos(t + i.x)
+            );
+            vec2 lenVec = vec2(
+              p.x / (sin(i.x + t) / inten + 0.001), 
+              p.y / (cos(i.y + t) / inten + 0.001)
+            );
+            c += 1.0 / (length(lenVec) + 0.001);
+          }
+          c /= float(4);
+          c = 1.17 - pow(c, 1.4);
+          return pow(abs(c), 8.0);
+        }
+
+        void main() {
+          vec2 uv = vUv * 2.0; // Scale pattern
+          
+          // Animate drift
+          uv += vec2(sin(time * 0.2), cos(time * 0.25)) * 0.1;
+
+          float c1 = causticPattern(uv * 3.0, time * 0.8);
+          float c2 = causticPattern(uv * 2.5 + vec2(0.5), time * 0.7);
+          
+          float caustics = (c1 + c2 * 0.5);
+          
+          // Output black and white mask for light
+          gl_FragColor = vec4(vec3(caustics), 1.0);
+        }
+      `,
+    });
+
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), m);
+    s.add(plane);
     
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    // Rotate texture slightly to align with look
-    tex.rotation = Math.PI / 4;
-    return tex;
+    return { scene: s, camera: c, material: m };
   }, []);
 
-  useFrame((state) => {
-    if (causticTexture) {
-      const t = state.clock.elapsedTime;
-      
-      // 1. Linear Drift (Flow) - Increased speed for visibility
-      causticTexture.offset.x = (t * 0.15) % 1;
-      causticTexture.offset.y = (t * 0.1) % 1;
-
-      // 2. Organic Distortion (Swirl & Breathe)
-      causticTexture.center.set(0.5, 0.5);
-      
-      // Gentle swaying rotation
-      causticTexture.rotation = (Math.PI / 4) + Math.sin(t * 1.5) * 0.1;
-      
-      // Stretching/compressing
-      const scaleBase = 2; 
-      const scaleVar = 0.08;
-      causticTexture.repeat.set(
-        scaleBase + Math.sin(t * 2.0) * scaleVar, 
-        scaleBase + Math.cos(t * 1.8) * scaleVar
-      );
-    }
+  useFrame(({ gl, clock }) => {
+    // Update shader time
+    material.uniforms.time.value = clock.elapsedTime;
+    
+    // Render the caustic pattern to the texture
+    const currentRenderTarget = gl.getRenderTarget();
+    gl.setRenderTarget(renderTarget);
+    gl.render(scene, camera);
+    gl.setRenderTarget(currentRenderTarget);
   });
 
   return (
     <spotLight
-      position={[0, 60, 0]}
-      angle={0.9}
-      penumbra={0.3}
-      intensity={2500} // Restored intensity
-      map={causticTexture}
+      position={[0, 80, 0]}
+      angle={1.0}
+      penumbra={0.5}
+      intensity={1500}
+      map={renderTarget.texture}
       castShadow={false}
       distance={200}
       decay={1}
@@ -218,7 +242,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       />
       
       {/* 4. CAUSTIC LIGHT PROJECTOR */}
-      <CausticLight />
+      <CausticProjector />
 
       {/* Render in correct order for transparency */}
 
