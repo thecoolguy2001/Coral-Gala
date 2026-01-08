@@ -147,10 +147,10 @@ const CausticProjector = () => {
 
   return (
     <spotLight
-      position={[0, 80, 0]}
-      angle={1.0}
+      position={[0, WATER_LEVEL + 0.5, 0]} // Positioned at water surface
+      angle={1.4} // Wide angle to project onto table/floor
       penumbra={0.5}
-      intensity={1500}
+      intensity={800} // Adjusted for closer distance
       map={renderTarget.texture}
       castShadow={false}
       distance={200}
