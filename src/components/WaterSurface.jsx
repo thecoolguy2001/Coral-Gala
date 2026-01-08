@@ -15,7 +15,7 @@ const WaterSurface = () => {
     return new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        waterColor: { value: new THREE.Color(0.0, 0.2, 0.8) }, // Richer Blue
+        waterColor: { value: new THREE.Color(0.1, 0.3, 0.4) }, // Natural Aquatic Teal
         tankWidth: { value: TANK_WIDTH - 0.5 },
         tankDepth: { value: TANK_DEPTH - 0.5 },
       },
@@ -130,13 +130,13 @@ const WaterSurface = () => {
           vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
           float fresnel = pow(1.0 - max(dot(viewDirection, vNormal), 0.0), 3.0);
 
-          vec3 reflectionColor = vec3(0.1, 0.4, 0.9); // Bluer reflections
+          vec3 reflectionColor = vec3(0.5, 0.7, 0.8); // Natural sky-like reflections
           color = mix(color, reflectionColor, fresnel * 0.7);
 
           float edgeFoam = smoothstep(0.88, 0.96, vDistanceFromEdge);
           float foamNoise = noise(vUv * 50.0 + time * 0.5);
           edgeFoam *= foamNoise;
-          vec3 foamColor = vec3(0.1, 0.3, 0.7); // Bluer foam
+          vec3 foamColor = vec3(0.8, 0.9, 1.0); // Natural white foam
           color = mix(color, foamColor, edgeFoam * 0.8);
 
           vec2 causticUv = vUv * 4.0;

@@ -15,7 +15,7 @@ const WaterVolume = () => {
     return new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        waterColor: { value: new THREE.Color(0.0, 0.1, 0.7) }, // Deeper Vibrant Blue
+        waterColor: { value: new THREE.Color(0.1, 0.2, 0.3) }, // Natural Soft Blue
       },
       vertexShader: `
         varying vec3 vPosition;
@@ -58,10 +58,10 @@ const WaterVolume = () => {
           // Calculate height percentage for gradient
           float heightPct = smoothstep(-15.0, 10.0, vPosition.y);
 
-          // Deep, vibrant blue palette
-          vec3 colorDeep = vec3(0.0, 0.02, 0.2); 
-          vec3 colorMid  = vec3(0.0, 0.1, 0.5);   
-          vec3 colorSurf = vec3(0.1, 0.4, 0.9);    
+          // Natural aquatic palette
+          vec3 colorDeep = vec3(0.01, 0.05, 0.1); 
+          vec3 colorMid  = vec3(0.1, 0.2, 0.3);   
+          vec3 colorSurf = vec3(0.3, 0.5, 0.6);    
           
           vec3 baseColor = mix(colorDeep, colorMid, smoothstep(0.0, 0.4, heightPct));
           baseColor = mix(baseColor, colorSurf, smoothstep(0.4, 1.0, heightPct));
