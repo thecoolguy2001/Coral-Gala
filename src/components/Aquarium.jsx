@@ -101,22 +101,22 @@ const CausticLight = () => {
     if (causticTexture) {
       const t = state.clock.elapsedTime;
       
-      // 1. Linear Drift (Flow) - Moderate Speed (Visible but calm)
-      causticTexture.offset.x = (t * 0.05) % 1;
-      causticTexture.offset.y = (t * 0.04) % 1;
+      // 1. Linear Drift (Flow) - Increased speed for visibility
+      causticTexture.offset.x = (t * 0.15) % 1;
+      causticTexture.offset.y = (t * 0.1) % 1;
 
       // 2. Organic Distortion (Swirl & Breathe)
       causticTexture.center.set(0.5, 0.5);
       
-      // Gentle swaying rotation - Moderate
-      causticTexture.rotation = (Math.PI / 4) + Math.sin(t * 1.0) * 0.08;
+      // Gentle swaying rotation
+      causticTexture.rotation = (Math.PI / 4) + Math.sin(t * 1.5) * 0.1;
       
-      // subtle stretching/compressing to simulate surface waves - Moderate
+      // Stretching/compressing
       const scaleBase = 2; 
-      const scaleVar = 0.05;
+      const scaleVar = 0.08;
       causticTexture.repeat.set(
-        scaleBase + Math.sin(t * 1.5) * scaleVar, 
-        scaleBase + Math.cos(t * 1.2) * scaleVar
+        scaleBase + Math.sin(t * 2.0) * scaleVar, 
+        scaleBase + Math.cos(t * 1.8) * scaleVar
       );
     }
   });
