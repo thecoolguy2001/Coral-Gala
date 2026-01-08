@@ -176,8 +176,8 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
     <>
       {/* PROFESSIONAL 3-LIGHT SYSTEM */}
 
-      {/* 0. Ambient Fill - Lifts all shadows immediately */}
-      <ambientLight intensity={0.6} color="#ffffff" />
+      {/* 0. Ambient Fill - Reduced to fix "too bright" complaint */}
+      <ambientLight intensity={0.4} color="#ffffff" />
 
       {/* --- LIGHT 3: ROOM FILL (Controlled by Switch) --- */}
       <hemisphereLight
