@@ -102,14 +102,20 @@ const RealisticCaustics = () => {
     }
   });
 
+  // Calculate correct size and position to stay BELOW water level
+  const topY = WATER_LEVEL - 0.2; // Stay slightly below surface
+  const bottomY = -TANK_HEIGHT / 2 + 1.0; // Stay slightly above substrate
+  const waterHeight = topY - bottomY;
+  const yPos = (topY + bottomY) / 2;
+
   // Box geometry fills the tank volume
   return (
     <mesh
       ref={causticsRef}
-      position={[0, 0, 0]}
+      position={[0, yPos, 0]}
       material={causticsMaterial}
     >
-      <boxGeometry args={[TANK_WIDTH - 1, TANK_HEIGHT - 1, TANK_DEPTH - 1]} />
+      <boxGeometry args={[TANK_WIDTH - 2, waterHeight, TANK_DEPTH - 2]} />
     </mesh>
   );
 };
