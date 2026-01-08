@@ -1,102 +1,20 @@
-import React, { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
+import React, { useRef } from 'react';
 import * as THREE from 'three';
-import { BOUNDS, WATER_LEVEL, TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, INTERIOR_WIDTH, INTERIOR_DEPTH } from '../constants/tankDimensions';
+import { WATER_LEVEL, TANK_HEIGHT, INTERIOR_WIDTH, INTERIOR_DEPTH } from '../constants/tankDimensions';
 
 /**
- * WaterVolume - Volumetric water effects with realistic refraction
- * Simulates light passing through water from overhead light source
+ * WaterVolume - Volumetric water effects using MeshPhysicalMaterial
+ * Simulates real water physics (transmission, refraction, attenuation)
  */
 const WaterVolume = () => {
   const waterVolumeRef = useRef();
 
-  // OPTIMIZED: Lightweight shader for better performance
-  const waterVolumeMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
-      uniforms: {
-        time: { value: 0 },
-        waterColor: { value: new THREE.Color(0.1, 0.2, 0.3) }, // Natural Soft Blue
-      },
-      vertexShader: `
-        varying vec3 vPosition;
-        varying vec3 vWorldPosition;
-
-        void main() {
-          vPosition = position;
-          vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform float time;
-        uniform vec3 waterColor;
-        varying vec3 vPosition;
-        varying vec3 vWorldPosition;
-
-        // Gradient Noise for God Rays and Particulates
-        float hash(vec3 p) {
-          p  = fract( p*0.3183099+.1 );
-          p *= 17.0;
-          return fract( p.x*p.y*p.z*(p.x+p.y+p.z) );
-        }
-
-        float noise(vec3 x) {
-          vec3 i = floor(x);
-          vec3 f = fract(x);
-          f = f*f*(3.0-2.0*f);
-          return mix(mix(mix( hash(i+vec3(0,0,0)), 
-                              hash(i+vec3(1,0,0)),f.x),
-                         mix( hash(i+vec3(0,1,0)), 
-                              hash(i+vec3(1,1,0)),f.x),f.y),
-                     mix(mix( hash(i+vec3(0,0,1)), 
-                              hash(i+vec3(1,0,1)),f.x),
-                         mix( hash(i+vec3(0,1,1)), 
-                              hash(i+vec3(1,1,1)),f.x),f.y),f.z);
-        }
-
-        void main() {
-          // Calculate height percentage for gradient
-          float heightPct = smoothstep(-15.0, 10.0, vPosition.y);
-
-        // More present aquatic palette (slightly more blue)
-        vec3 colorDeep = vec3(0.02, 0.08, 0.2); 
-        vec3 colorMid  = vec3(0.1, 0.3, 0.5);   
-        vec3 colorSurf = vec3(0.3, 0.5, 0.7);    
-        
-        vec3 baseColor = mix(colorDeep, colorMid, smoothstep(0.0, 0.4, heightPct));
-        baseColor = mix(baseColor, colorSurf, smoothstep(0.4, 1.0, heightPct));
-
-        float rayNoise = noise(vPosition * 0.2 + vec3(0.0, time * 0.5, 0.0));
-        vec3 finalColor = baseColor + vec3(rayNoise * 0.05);
-
-        // Increased opacity to make the water look less "clear"
-        float alpha = mix(0.15, 0.4, heightPct); 
-
-        gl_FragColor = vec4(finalColor, alpha);
-      }
-      `,
-      transparent: true,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-      blending: THREE.NormalBlending, // Changed from Additive to Normal for better visibility
-    });
-  }, []);
-
-  useFrame(({ clock }) => {
-    if (waterVolumeRef.current) {
-      waterVolumeMaterial.uniforms.time.value = clock.elapsedTime;
-    }
-  });
-
   // Interior water volume - fill from BOTTOM of tank to water surface
-  const volumeWidth = INTERIOR_WIDTH + 0.1; // Tighter fit
-  
-  // Calculate exact height to reach just above WATER_LEVEL to close gap
+  const volumeWidth = INTERIOR_WIDTH + 0.1;
   const topY = WATER_LEVEL + 0.1; 
   const bottomY = -TANK_HEIGHT / 2;
-  
   const waterHeight = topY - bottomY; 
-  const volumeDepth = INTERIOR_DEPTH + 0.1; // Tighter fit
+  const volumeDepth = INTERIOR_DEPTH + 0.1;
   const waterYPosition = (topY + bottomY) / 2;
 
   return (
@@ -107,7 +25,23 @@ const WaterVolume = () => {
       receiveShadow={false}
     >
       <boxGeometry args={[volumeWidth, waterHeight, volumeDepth]} />
-      <primitive object={waterVolumeMaterial} />
+      {/* 
+        MeshPhysicalMaterial with Transmission 
+        This is the "modern" way to render realistic water volumes in Three.js
+      */}
+      <meshPhysicalMaterial
+        color="#ffffff" // Base color should be white for transmission
+        transmission={0.9} // Glass-like transparency
+        opacity={1.0} // Must be 1.0 for transmission to work correctly
+        metalness={0.0}
+        roughness={0.1} // Slight internal scatter/blur
+        ior={1.33} // Index of Refraction for Water
+        thickness={25.0} // Volume thickness for refraction
+        attenuationColor="#2a9d8f" // Deep Teal/Blue tint for volume body
+        attenuationDistance={30.0} // Distance at which light is fully tinted (Density)
+        transparent={false} // Optimization: allow transmission pass to handle transparency
+        depthWrite={false}
+      />
     </mesh>
   );
 };
