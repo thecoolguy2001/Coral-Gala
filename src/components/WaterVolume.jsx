@@ -58,21 +58,22 @@ const WaterVolume = () => {
           // Calculate height percentage for gradient
           float heightPct = smoothstep(-15.0, 10.0, vPosition.y);
 
-          // Natural aquatic palette
-          vec3 colorDeep = vec3(0.01, 0.05, 0.1); 
-          vec3 colorMid  = vec3(0.1, 0.2, 0.3);   
-          vec3 colorSurf = vec3(0.3, 0.5, 0.6);    
-          
-          vec3 baseColor = mix(colorDeep, colorMid, smoothstep(0.0, 0.4, heightPct));
-          baseColor = mix(baseColor, colorSurf, smoothstep(0.4, 1.0, heightPct));
+        // More present aquatic palette (slightly more blue)
+        vec3 colorDeep = vec3(0.02, 0.08, 0.2); 
+        vec3 colorMid  = vec3(0.1, 0.3, 0.5);   
+        vec3 colorSurf = vec3(0.3, 0.5, 0.7);    
+        
+        vec3 baseColor = mix(colorDeep, colorMid, smoothstep(0.0, 0.4, heightPct));
+        baseColor = mix(baseColor, colorSurf, smoothstep(0.4, 1.0, heightPct));
 
-          float rayNoise = noise(vPosition * 0.2 + vec3(0.0, time * 0.5, 0.0));
-          vec3 finalColor = baseColor + vec3(rayNoise * 0.05);
+        float rayNoise = noise(vPosition * 0.2 + vec3(0.0, time * 0.5, 0.0));
+        vec3 finalColor = baseColor + vec3(rayNoise * 0.05);
 
-          float alpha = mix(0.05, 0.3, heightPct); 
+        // Increased opacity to make the water look less "clear"
+        float alpha = mix(0.15, 0.4, heightPct); 
 
-          gl_FragColor = vec4(finalColor, alpha);
-        }
+        gl_FragColor = vec4(finalColor, alpha);
+      }
       `,
       transparent: true,
       side: THREE.DoubleSide,
