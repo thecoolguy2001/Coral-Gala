@@ -30,15 +30,15 @@ const WaterVolume = () => {
         This is the "modern" way to render realistic water volumes in Three.js
       */}
       <meshPhysicalMaterial
-        color="#e0f2fe" // Very subtle blue tint base
-        transmission={0.9} // Allow seeing through, but catch some light
+        color="#ffffff" // Pure white base for clarity
+        transmission={0.99} // High transmission (crystal clear)
         opacity={1.0}
-        metalness={0.1} // Slight reflectivity
-        roughness={0.1} 
+        metalness={0.0}
+        roughness={0.0} // No roughness = no murkiness
         ior={1.33} 
-        thickness={20.0} // Matches tank depth
-        attenuationColor="#0284c7" // Stronger, deeper blue
-        attenuationDistance={8.0} // Color tint kicks in much faster (Denser water)
+        thickness={20.0}
+        attenuationColor="#a5f3fc" // Pale Cyan/Teal (Fresh water look)
+        attenuationDistance={40.0} // Light tint only, mostly clear
         transparent={false}
         depthWrite={false}
       />
