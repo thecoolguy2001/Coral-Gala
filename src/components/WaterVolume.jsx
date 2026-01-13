@@ -53,7 +53,7 @@ const WaterVolume = () => {
         }
       `,
       transparent: true,
-      side: THREE.BackSide, // Render from inside for volume effect
+      side: THREE.DoubleSide, // Render from inside for volume effect
       depthWrite: false,
     });
   }, []);
