@@ -150,7 +150,7 @@ const CausticProjector = () => {
       position={[0, WATER_LEVEL + 0.5, 0]} // Positioned at water surface
       angle={1.4} // Wide angle to project onto table/floor
       penumbra={0.5}
-      intensity={800} // Adjusted for closer distance
+      intensity={3000} // Significantly boosted to be visible on sand
       map={renderTarget.texture}
       castShadow={false}
       distance={200}

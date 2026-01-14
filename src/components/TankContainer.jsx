@@ -49,7 +49,7 @@ const TankContainer = () => {
   const sandMaterial = useMemo(() => {
     return new THREE.MeshStandardMaterial({
       color: "#fdf8e5",
-      roughness: 1.0,
+      roughness: 0.8, // Reduced from 1.0 to catch more light/caustics
       emissive: "#dcb",
       emissiveIntensity: 0.0,
     });
