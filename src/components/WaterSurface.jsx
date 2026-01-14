@@ -15,7 +15,7 @@ const WaterSurface = () => {
     return new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        waterColor: { value: new THREE.Color(0.1, 0.35, 0.5) }, // Slightly more blue aquatic tone
+        waterColor: { value: new THREE.Color(0.5, 0.8, 0.9) }, // Light, clear blue
         tankWidth: { value: TANK_WIDTH - 0.5 },
         tankDepth: { value: TANK_DEPTH - 0.5 },
       },
@@ -163,7 +163,7 @@ const WaterSurface = () => {
           float depthVar = noise(vUv * 10.0 + time * 0.2) * 0.1;
           finalColor *= 1.0 + depthVar;
 
-          float alpha = mix(0.5, 0.8, edgeFoam + fresnel * 0.5);
+          float alpha = mix(0.2, 0.5, edgeFoam + fresnel * 0.5);
 
           gl_FragColor = vec4(finalColor, alpha);
         }
