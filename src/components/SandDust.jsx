@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TANK_WIDTH, TANK_DEPTH, TANK_HEIGHT } from '../constants/tankDimensions';
 
-const SandDust = ({ count = 150 }) => {
+const SandDust = ({ count = 80 }) => {
   const meshRef = useRef();
   
   // Create random positions and speeds for dust particles

@@ -192,8 +192,8 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         intensity={roomLightsOn ? 3.0 : 0.0} 
         color="#fff0dd" 
         castShadow
-        shadow-mapSize-width={2048} 
-        shadow-mapSize-height={2048} 
+        shadow-mapSize-width={1024} 
+        shadow-mapSize-height={1024} 
         shadow-bias={-0.0001}
       />
 
@@ -215,8 +215,8 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         distance={500} 
         decay={1} 
         castShadow
-        shadow-mapSize-width={2048} 
-        shadow-mapSize-height={2048} 
+        shadow-mapSize-width={1024} 
+        shadow-mapSize-height={1024} 
         shadow-bias={-0.0001} 
         shadow-normalBias={0.04}
         shadow-radius={1} 
@@ -233,8 +233,8 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
         decay={1} 
         color="#ffffff"
         castShadow 
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
         shadow-bias={-0.0001}
         shadow-normalBias={0.04}
         shadow-radius={1} 

@@ -91,7 +91,7 @@ const TankContainer = () => {
         <planeGeometry args={[tankWidth, tankHeight]} />
         <MeshReflectorMaterial
           blur={[0, 0]}
-          resolution={2048} // Ultra high res for true reflection
+          resolution={1024} // High res (balanced for performance)
           mixBlur={0}
           mixStrength={100}
           roughness={0}
@@ -123,7 +123,7 @@ const TankContainer = () => {
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
           blur={[0, 0]}
-          resolution={2048}
+          resolution={1024}
           mixBlur={0}
           mixStrength={100}
           roughness={0}
@@ -155,7 +155,7 @@ const TankContainer = () => {
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
           blur={[0, 0]}
-          resolution={2048}
+          resolution={1024}
           mixBlur={0}
           mixStrength={100}
           roughness={0}

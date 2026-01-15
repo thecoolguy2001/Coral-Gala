@@ -59,7 +59,7 @@ const RealisticCaustics = () => {
             c += 1.0 / (length(lenVec) + 0.001); // Safety epsilon
           }
 
-          c /= float(4);
+          c /= float(3);
           c = 1.17 - pow(c, 1.4);
           return pow(abs(c), 8.0); // High contrast for sharp rays
         }

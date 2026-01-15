@@ -190,7 +190,7 @@ const WaterSurface = () => {
       castShadow={false}
       receiveShadow={false}
     >
-      <planeGeometry args={[INTERIOR_WIDTH + 0.1, INTERIOR_DEPTH + 0.1, 256, 256]} />
+      <planeGeometry args={[INTERIOR_WIDTH + 0.1, INTERIOR_DEPTH + 0.1, 128, 128]} />
       <primitive object={waterMaterial} />
     </mesh>
   );
