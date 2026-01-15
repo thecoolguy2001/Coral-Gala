@@ -73,14 +73,18 @@ const SandFloor = () => {
       y += Math.cos(x * 1.5 - z * 1.2) * 0.05;
       
       // Flatten edges
-      const border = 2.0;
+      const border = 3.0; // Wider border for smoother transition
       if (Math.abs(x) > width/2 - border || Math.abs(z) > depth/2 - border) {
-         // Smooth falloff
+         // Smooth falloff using smoothstep
          const xDist = (width/2) - Math.abs(x);
          const zDist = (depth/2) - Math.abs(z);
          const dist = Math.min(xDist, zDist);
+         
          if (dist < border) {
-            y *= (dist / border);
+            // smoothstep returns 0.0 to 1.0
+            const t = dist / border;
+            // distinct smoothstep: 3t^2 - 2t^3
+            y *= t * t * (3.0 - 2.0 * t);
          }
       }
       return y;
@@ -92,16 +96,9 @@ const SandFloor = () => {
       vertex.z = height; 
       posAttribute.setZ(i, height);
 
-      // Vertex Color - subtle AO effect only
-      const baseColor = new THREE.Color("#ffffff"); // Use texture for main color
-      const shadowColor = new THREE.Color("#ddd5c5"); 
-      
-      // Much subtler mixing to prevent "big shaded areas"
-      // Map height range roughly -1 to +1 -> 0 to 1
-      const mixFactor = THREE.MathUtils.smoothstep(height, -1.0, 0.5); 
-      const finalColor = shadowColor.clone().lerp(baseColor, mixFactor * 0.8 + 0.2);
-      
-      colors.push(finalColor.r, finalColor.g, finalColor.b);
+      // Vertex Color - Set to white to remove forced shading
+      // The texture and real lighting will handle the look
+      colors.push(1.0, 1.0, 1.0);
     }
 
     geo.computeVertexNormals();
