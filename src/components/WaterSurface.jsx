@@ -15,7 +15,7 @@ const WaterSurface = () => {
     return new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        waterColor: { value: new THREE.Color(0.2, 0.5, 0.7) }, // Balanced clear blue
+        waterColor: { value: new THREE.Color(0.6, 0.85, 1.0) }, // Very light blue
         tankWidth: { value: TANK_WIDTH - 0.5 },
         tankDepth: { value: TANK_DEPTH - 0.5 },
       },
