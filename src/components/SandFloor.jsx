@@ -65,13 +65,16 @@ const SandFloor = () => {
 
     const noise = (x, z) => {
       let y = 0;
-      // Large dunes - Reduced amplitude to avoid deep dark valleys
-      y += Math.sin(x * 0.15) * Math.cos(z * 0.1) * 0.6; 
+      // Large dunes - ABSOLUTE value to keep positive (mounds only)
+      y += Math.abs(Math.sin(x * 0.15) * Math.cos(z * 0.1)) * 0.6; 
       // Medium ripples
       y += Math.sin(x * 0.5 + z * 0.2) * 0.2;
       // Small irregularities
       y += Math.cos(x * 1.5 - z * 1.2) * 0.05;
       
+      // Ensure strictly positive height with a small base
+      y = Math.max(0, y + 0.1);
+
       // Flatten edges
       const border = 3.0; // Wider border for smoother transition
       if (Math.abs(x) > width/2 - border || Math.abs(z) > depth/2 - border) {

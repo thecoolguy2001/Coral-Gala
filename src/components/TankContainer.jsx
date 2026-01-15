@@ -217,7 +217,7 @@ const TankContainer = () => {
       ))}
 
       {/* Substrate - REPLACED with Realistic Sand Floor */}
-      <group position={[0, -tankHeight / 2 + 0.1, 0]}>
+      <group position={[0, -tankHeight / 2 + 0.4, 0]}>
         <SandFloor />
       </group>
 
