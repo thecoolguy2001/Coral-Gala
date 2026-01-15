@@ -20,29 +20,47 @@ const SandFloor = () => {
   // 1. Generate Procedural Sand Texture (Noise)
   const sandTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
+    canvas.width = 1024; // Higher resolution
+    canvas.height = 1024;
     const ctx = canvas.getContext('2d');
 
-    // Base Fill
-    ctx.fillStyle = '#fdf8e5';
-    ctx.fillRect(0, 0, 512, 512);
+    // 1. Base Sand Gradient (Subtle variation across the whole area)
+    const gradient = ctx.createLinearGradient(0, 0, 1024, 1024);
+    gradient.addColorStop(0, '#fdfcf0'); // Pale
+    gradient.addColorStop(1, '#f5e6cc'); // Tan
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 1024, 1024);
 
-    // Noise Grain
-    const imageData = ctx.getImageData(0, 0, 512, 512);
+    // 2. Heavy Noise Grain
+    const imageData = ctx.getImageData(0, 0, 1024, 1024);
     const data = imageData.data;
     
     for (let i = 0; i < data.length; i += 4) {
-      // Random grain variation
-      const grain = (Math.random() - 0.5) * 30; // +/- 15 brightness
+      const randomVal = Math.random();
       
-      // Add scattered "black sand" particles (obsidian/volcanic bits)
-      const blackSpeck = Math.random() > 0.99 ? -100 : 0;
+      // Grain Brightness (High contrast)
+      const grain = (Math.random() - 0.5) * 40; 
       
-      data[i] = Math.max(0, Math.min(255, data[i] + grain + blackSpeck));     // R
-      data[i+1] = Math.max(0, Math.min(255, data[i+1] + grain + blackSpeck)); // G
-      data[i+2] = Math.max(0, Math.min(255, data[i+2] + grain + blackSpeck)); // B
-      // Alpha stays 255
+      // Color Variation:
+      // 5% - Dark specks (Obsidian/Dirt)
+      // 10% - White specks (Quartz)
+      // 85% - Regular Sand
+      
+      let r = data[i] + grain;
+      let g = data[i+1] + grain;
+      let b = data[i+2] + grain;
+
+      if (randomVal > 0.95) {
+        // Dark Speck
+        r *= 0.6; g *= 0.6; b *= 0.6; 
+      } else if (randomVal < 0.1) {
+        // White Speck (Quartz sparkle)
+        r += 50; g += 50; b += 50;
+      }
+
+      data[i] = Math.max(0, Math.min(255, r));
+      data[i+1] = Math.max(0, Math.min(255, g));
+      data[i+2] = Math.max(0, Math.min(255, b));
     }
     
     ctx.putImageData(imageData, 0, 0);
@@ -50,7 +68,8 @@ const SandFloor = () => {
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(6, 4); // Repeat for detail
+    texture.repeat.set(4, 4); // Repeat less for more detailed texture per unit
+    // texture.anisotropy = 16; // Enable if available, but let's stick to basics
     
     return texture;
   }, []);
@@ -65,28 +84,27 @@ const SandFloor = () => {
 
     const noise = (x, z) => {
       let y = 0;
-      // Large dunes - ABSOLUTE value to keep positive (mounds only)
-      y += Math.abs(Math.sin(x * 0.15) * Math.cos(z * 0.1)) * 0.6; 
-      // Medium ripples
-      y += Math.sin(x * 0.5 + z * 0.2) * 0.2;
-      // Small irregularities
-      y += Math.cos(x * 1.5 - z * 1.2) * 0.05;
+      // Large dunes - INCREASED HEIGHT (1.2 units)
+      y += Math.abs(Math.sin(x * 0.12) * Math.cos(z * 0.08)) * 1.2; 
       
-      // Ensure strictly positive height with a small base
-      y = Math.max(0, y + 0.1);
+      // Secondary asymmetrical drift (wind blown look)
+      y += Math.sin(x * 0.3 + z * 0.1) * 0.4;
+
+      // Small ripples
+      y += Math.sin(x * 2.0) * 0.1;
+      
+      // Ensure strictly positive height with a base
+      y = Math.max(0, y + 0.2);
 
       // Flatten edges
-      const border = 3.0; // Wider border for smoother transition
+      const border = 3.0; 
       if (Math.abs(x) > width/2 - border || Math.abs(z) > depth/2 - border) {
-         // Smooth falloff using smoothstep
          const xDist = (width/2) - Math.abs(x);
          const zDist = (depth/2) - Math.abs(z);
          const dist = Math.min(xDist, zDist);
          
          if (dist < border) {
-            // smoothstep returns 0.0 to 1.0
             const t = dist / border;
-            // distinct smoothstep: 3t^2 - 2t^3
             y *= t * t * (3.0 - 2.0 * t);
          }
       }
@@ -99,8 +117,7 @@ const SandFloor = () => {
       vertex.z = height; 
       posAttribute.setZ(i, height);
 
-      // Vertex Color - Set to white to remove forced shading
-      // The texture and real lighting will handle the look
+      // White vertex colors (relying on texture)
       colors.push(1.0, 1.0, 1.0);
     }
 
@@ -112,13 +129,13 @@ const SandFloor = () => {
 
   const material = useMemo(() => {
     return new THREE.MeshStandardMaterial({
-      map: sandTexture,        // Diffuse Texture
-      bumpMap: sandTexture,    // Bump for 3D grain
-      bumpScale: 0.05,         // Subtle bump
-      vertexColors: true,      // Keep subtle AO
-      roughness: 1.0,          // Sand is very rough (matte)
-      metalness: 0.0,
-      color: "#ffffff"         // White to let texture show true
+      map: sandTexture,
+      bumpMap: sandTexture,
+      bumpScale: 0.15,         // Stronger bump for texture depth
+      vertexColors: true,
+      roughness: 0.8,          // Slightly less rough to allow some "sparkle"
+      metalness: 0.1,          // Tiny bit of reflection for wet sand look
+      color: "#ffffff"
     });
   }, [sandTexture]);
 
