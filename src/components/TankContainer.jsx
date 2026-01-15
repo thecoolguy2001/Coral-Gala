@@ -4,6 +4,7 @@ import { MeshReflectorMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, GLASS_THICKNESS, FRAME_THICKNESS } from '../constants/tankDimensions';
 import SandDust from './SandDust';
+import SandFloor from './SandFloor';
 
 /**
  * TankContainer - Renders the physical aquarium tank structure
@@ -215,10 +216,10 @@ const TankContainer = () => {
         </mesh>
       ))}
 
-      {/* Substrate - REPLACED with Plane for displacement */}
-      <mesh position={[0, -tankHeight / 2 + 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow material={sandMaterial}>
-        <planeGeometry args={[tankWidth - 0.2, tankDepth - 0.2, 64, 64]} />
-      </mesh>
+      {/* Substrate - REPLACED with Realistic Sand Floor */}
+      <group position={[0, -tankHeight / 2 + 0.1, 0]}>
+        <SandFloor />
+      </group>
 
       {/* Sand Dust Particles */}
       <SandDust />
