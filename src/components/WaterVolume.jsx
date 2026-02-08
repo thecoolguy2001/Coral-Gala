@@ -14,11 +14,11 @@ const WaterVolume = () => {
   const volumeMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
       uniforms: {
-        // Natural Blue Water Palette - "Hint of Light Blue"
-        colorShallow: { value: new THREE.Color("#b3e5fc") }, // Light blue
-        colorDeep: { value: new THREE.Color("#81d4fa") },    // Slightly deeper light blue
-        opacityShallow: { value: 0.12 }, // Visible hint
-        opacityDeep: { value: 0.22 },    // Subtle depth without darkening sand too much
+        // Natural Deep Blue Water Palette
+        colorShallow: { value: new THREE.Color("#0077be") }, // Ocean Blue
+        colorDeep: { value: new THREE.Color("#002147") },    // Deep Navy
+        opacityShallow: { value: 0.15 }, // More visible
+        opacityDeep: { value: 0.45 },    // Deeper look at bottom
       },
       vertexShader: `
         varying vec3 vPosition;

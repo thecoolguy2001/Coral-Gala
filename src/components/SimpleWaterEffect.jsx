@@ -15,7 +15,7 @@ const SimpleWaterEffect = () => {
     return new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        waterColor: { value: new THREE.Color(0.2, 0.45, 0.65) }, // Visible blue/aqua
+        waterColor: { value: new THREE.Color("#004d80") }, // Deeper blue
       },
       vertexShader: `
         varying vec2 vUv;

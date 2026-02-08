@@ -19,9 +19,9 @@ const BasicWater = () => {
       <mesh position={[0, waterYPosition, 0]}>
         <boxGeometry args={[waterWidth, waterHeight, waterDepth]} />
         <meshStandardMaterial
-          color="#3da8ff"
+          color="#005b96"
           transparent={true}
-          opacity={0.5}
+          opacity={0.4}
           roughness={0.05}
           metalness={0.1}
           side={THREE.DoubleSide}
