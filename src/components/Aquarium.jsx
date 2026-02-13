@@ -1,6 +1,6 @@
 import React, { Suspense, useMemo, lazy, useRef, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import Fish from './Fish';
+import ProceduralFish from './ProceduralFish';
 import TankContainer from './TankContainer';
 import WaterSurface from './WaterSurface';
 import WaterVolume from './WaterVolume';
@@ -257,7 +257,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       
       {/* 3. Fish swimming in the tank */}
       {boids.map(boid => (
-        <Fish key={boid.id} boid={boid} onFishClick={onFishClick} />
+        <ProceduralFish key={boid.id} boid={boid} onFishClick={onFishClick} />
       ))}
 
       {/* 4. HOB Filter */}
