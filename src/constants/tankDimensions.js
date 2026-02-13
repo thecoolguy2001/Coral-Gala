@@ -28,7 +28,8 @@ const SUBSTRATE_TOP = SUBSTRATE_Y_POSITION + SUBSTRATE_HEIGHT / 2;
 
 // Fish swim boundaries - STRICT CONTAINMENT
 // Fish MUST stay well within visible tank area
-const FISH_Y_MIN = SUBSTRATE_TOP + 1.0;  // 1 unit above substrate
+// Increased buffer above substrate to prevent fish going into sand
+const FISH_Y_MIN = SUBSTRATE_TOP + 2.5;  // 2.5 units above substrate (accounts for sand dunes)
 const FISH_Y_MAX = WATER_LEVEL - 2.0;    // 2 units below water surface
 
 export const BOUNDS = {
