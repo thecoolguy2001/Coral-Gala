@@ -137,13 +137,19 @@ const Fish = ({ boid, onFishClick }) => {
   useFrame((state, delta) => {
     if (!groupRef.current || !boid || !boid.position || !boid.ref) return;
 
-    // 1. PHYSICAL MOVEMENT
-    groupRef.current.position.copy(boid.position);
-    groupRef.current.quaternion.copy(boid.ref.quaternion);
+    // 1. SMOOTH PHYSICAL MOVEMENT - interpolate for extra smoothness
+    groupRef.current.position.lerp(boid.position, 0.3);
 
-    // Apply banking roll from simulation
+    // Smooth rotation - slerp toward target quaternion
+    groupRef.current.quaternion.slerp(boid.ref.quaternion, 0.15);
+
+    // Apply subtle banking roll from simulation
     if (boid.bankAngle) {
-      groupRef.current.rotateOnAxis(new THREE.Vector3(0, 0, 1), boid.bankAngle);
+      const bankQuat = new THREE.Quaternion().setFromAxisAngle(
+        new THREE.Vector3(0, 0, 1),
+        boid.bankAngle * 0.5
+      );
+      groupRef.current.quaternion.multiply(bankQuat);
     }
 
     // 2. INTERACTIVE SCALE

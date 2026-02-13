@@ -227,14 +227,8 @@ const useRealtimeAquarium = (fishData) => {
       lastUpdateTime.current = now;
     }
 
-    // SMOOTH, REALISTIC FISH MOVEMENT
-    const separationDistance = 4.0;
-    const alignmentDistance = 10.0;
-    const cohesionDistance = 10.0;
-    const baseMaxSpeed = 0.5;
-    const baseMinSpeed = 0.15;
-    const maxForce = 0.015;
-    const damping = 0.98;
+    // NATURAL INDIVIDUAL FISH MOVEMENT (not schooling/boid behavior)
+    // Each fish swims independently with its own personality
 
     boids.forEach(boid => {
       // Get individual fish properties
@@ -246,163 +240,169 @@ const useRealtimeAquarium = (fishData) => {
         phaseOffset: 0,
       };
 
-      // Individual speed limits based on fish personality
-      const maxSpeed = baseMaxSpeed * randoms.speedMultiplier;
-      const minSpeed = baseMinSpeed * randoms.speedMultiplier;
+      // Individual speed based on fish personality
+      const baseSpeed = 0.12 * randoms.speedMultiplier;
+      const maxSpeed = 0.35 * randoms.speedMultiplier;
 
-      const separation = new THREE.Vector3();
-      const alignment = new THREE.Vector3();
-      const cohesion = new THREE.Vector3();
-      let separationCount = 0;
-      let alignmentCount = 0;
-      let cohesionCount = 0;
+      // Initialize target position if not set (lazy swimming target)
+      if (!boid.targetPosition || boid.targetReached) {
+        // Pick a new random target within the tank
+        const safeMargin = 3.0;
+        boid.targetPosition = new THREE.Vector3(
+          (Math.random() - 0.5) * (BOUNDS.x * 2 - safeMargin * 2),
+          BOUNDS.yMin + safeMargin + Math.random() * (BOUNDS.yMax - BOUNDS.yMin - safeMargin * 2),
+          (Math.random() - 0.5) * (BOUNDS.z * 2 - safeMargin * 2)
+        );
+        // Add vertical bias preference
+        boid.targetPosition.y += randoms.verticalBias * 3;
+        boid.targetPosition.y = Math.max(BOUNDS.yMin + 2, Math.min(BOUNDS.yMax - 2, boid.targetPosition.y));
+        boid.targetReached = false;
+        // Random pause duration before moving to next target
+        boid.pauseUntil = time + Math.random() * 2;
+      }
 
+      // Calculate direction to target
+      const toTarget = new THREE.Vector3().subVectors(boid.targetPosition, boid.position);
+      const distanceToTarget = toTarget.length();
+
+      // Check if reached target
+      if (distanceToTarget < 2.0) {
+        boid.targetReached = true;
+      }
+
+      // NATURAL SWIMMING with smooth curves (not straight lines)
+      // Use sine waves with individual phase for organic curved paths
+      const wanderTime = time + randoms.phaseOffset;
+
+      // Primary direction toward target (gentle steering)
+      const steerStrength = 0.002 * randoms.turnRate;
+      if (distanceToTarget > 1.0 && time > (boid.pauseUntil || 0)) {
+        toTarget.normalize();
+        // Gradually steer toward target
+        boid.velocity.x += (toTarget.x * baseSpeed - boid.velocity.x) * steerStrength;
+        boid.velocity.y += (toTarget.y * baseSpeed * 0.5 - boid.velocity.y) * steerStrength * 0.5;
+        boid.velocity.z += (toTarget.z * baseSpeed * 0.3 - boid.velocity.z) * steerStrength * 0.3;
+      }
+
+      // ORGANIC WANDERING - smooth curves using multiple sine waves
+      // Each fish has unique frequencies based on phaseOffset
+      const freq1 = 0.3 + randoms.phaseOffset * 0.1;
+      const freq2 = 0.17 + randoms.phaseOffset * 0.05;
+      const freq3 = 0.23 + randoms.phaseOffset * 0.08;
+
+      const wanderX = Math.sin(wanderTime * freq1) * Math.cos(wanderTime * freq2 * 0.7);
+      const wanderY = Math.sin(wanderTime * freq2) * 0.3;
+      const wanderZ = Math.cos(wanderTime * freq3) * Math.sin(wanderTime * freq1 * 0.5);
+
+      boid.velocity.x += wanderX * 0.003 * randoms.wanderIntensity;
+      boid.velocity.y += wanderY * 0.001 * randoms.wanderIntensity;
+      boid.velocity.z += wanderZ * 0.001 * randoms.wanderIntensity;
+
+      // Occasional direction changes (fish randomly decide to turn)
+      if (Math.random() < 0.002) {
+        boid.velocity.x += (Math.random() - 0.5) * 0.05;
+        boid.velocity.y += (Math.random() - 0.5) * 0.02;
+      }
+
+      // COLLISION AVOIDANCE with other fish (gentle, not boid-like)
       boids.forEach(other => {
         if (boid === other) return;
         const dist = boid.position.distanceTo(other.position);
-
-        // Only perceive local neighbors
-        if (dist > 15.0) return;
-
-        if (dist > 0 && dist < separationDistance) {
-          const diff = new THREE.Vector3().subVectors(boid.position, other.position);
-          diff.normalize();
-          diff.divideScalar(dist);
-          separation.add(diff);
-          separationCount++;
-        }
-
-        if (dist > 0 && dist < alignmentDistance) {
-          alignment.add(other.velocity);
-          alignmentCount++;
-        }
-
-        if (dist > 0 && dist < cohesionDistance) {
-          cohesion.add(other.position);
-          cohesionCount++;
+        if (dist < 3.0 && dist > 0) {
+          // Gently move away from nearby fish
+          const away = new THREE.Vector3().subVectors(boid.position, other.position);
+          away.normalize();
+          const avoidStrength = (3.0 - dist) * 0.002;
+          boid.velocity.add(away.multiplyScalar(avoidStrength));
         }
       });
 
-      // Apply boid forces
-      if (separationCount > 0) {
-        separation.divideScalar(separationCount);
-        separation.normalize();
-        separation.multiplyScalar(maxForce * 1.5);
-      }
-      if (alignmentCount > 0) {
-        alignment.divideScalar(alignmentCount);
-        alignment.normalize();
-        alignment.sub(boid.velocity.clone().normalize());
-        alignment.multiplyScalar(maxForce * 0.8 * randoms.turnRate);
-      }
-      if (cohesionCount > 0) {
-        cohesion.divideScalar(cohesionCount);
-        cohesion.sub(boid.position);
-        cohesion.normalize();
-        cohesion.multiplyScalar(maxForce * 0.4);
-      }
+      // Apply gentle damping (fish glide through water)
+      boid.velocity.multiplyScalar(0.995);
 
-      // Apply forces
-      boid.velocity.add(separation);
-      boid.velocity.add(alignment);
-      boid.velocity.add(cohesion);
+      // SMOOTH BOUNDARY AVOIDANCE (gradual turns, not bouncing)
+      const softMargin = 4.0;
+      const turnForce = 0.008;
 
-      // INDIVIDUAL WANDERING - makes each fish unique
-      // Use phase offset so each fish wanders at different times
-      const wanderPhase = time * 0.5 + randoms.phaseOffset;
-      const wanderForce = new THREE.Vector3(
-        Math.sin(wanderPhase * 1.3) * 0.008 * randoms.wanderIntensity,
-        Math.sin(wanderPhase * 0.7 + randoms.verticalBias) * 0.004 * randoms.wanderIntensity,
-        Math.cos(wanderPhase * 0.9) * 0.003 * randoms.wanderIntensity
-      );
-      boid.velocity.add(wanderForce);
-
-      // Vertical preference bias - some fish prefer top, some prefer bottom
-      const yCenter = (BOUNDS.yMax + BOUNDS.yMin) / 2;
-      const preferredY = yCenter + randoms.verticalBias * (BOUNDS.yMax - BOUNDS.yMin) * 0.25;
-      const yDiff = preferredY - boid.position.y;
-      boid.velocity.y += yDiff * 0.001;
-
-      // Apply damping
-      boid.velocity.multiplyScalar(damping);
-
-      // Constrain Z movement to keep fish swimming more horizontally
-      boid.velocity.z *= 0.4;
-
-      // SOFT BOUNDARY CONTAINMENT with stronger floor avoidance
-      const margin = 5.0;
-      const floorMargin = 6.0; // Larger margin for floor to prevent going into sand
-      const turnStrength = 0.003;
-      const floorTurnStrength = 0.006; // Stronger turn away from floor
-
-      // X bounds
-      if (boid.position.x > BOUNDS.x - margin) {
-        const dist = boid.position.x - (BOUNDS.x - margin);
-        boid.velocity.x -= turnStrength * dist * dist;
-      } else if (boid.position.x < -BOUNDS.x + margin) {
-        const dist = (-BOUNDS.x + margin) - boid.position.x;
-        boid.velocity.x += turnStrength * dist * dist;
+      // X boundaries - smooth turn
+      if (boid.position.x > BOUNDS.x - softMargin) {
+        const proximity = (boid.position.x - (BOUNDS.x - softMargin)) / softMargin;
+        boid.velocity.x -= turnForce * proximity * proximity;
+        if (boid.velocity.x > 0) boid.velocity.x *= (1 - proximity * 0.3);
+      } else if (boid.position.x < -BOUNDS.x + softMargin) {
+        const proximity = ((-BOUNDS.x + softMargin) - boid.position.x) / softMargin;
+        boid.velocity.x += turnForce * proximity * proximity;
+        if (boid.velocity.x < 0) boid.velocity.x *= (1 - proximity * 0.3);
       }
 
-      // Y bounds - STRONGER floor avoidance
-      if (boid.position.y > BOUNDS.yMax - margin) {
-        const dist = boid.position.y - (BOUNDS.yMax - margin);
-        boid.velocity.y -= turnStrength * dist * dist;
-      } else if (boid.position.y < BOUNDS.yMin + floorMargin) {
-        // Much stronger upward force near the floor
-        const dist = (BOUNDS.yMin + floorMargin) - boid.position.y;
-        boid.velocity.y += floorTurnStrength * dist * dist;
-        // Also reduce downward velocity when near floor
-        if (boid.velocity.y < 0) {
-          boid.velocity.y *= 0.5;
-        }
+      // Y boundaries - stronger floor avoidance
+      if (boid.position.y > BOUNDS.yMax - softMargin) {
+        const proximity = (boid.position.y - (BOUNDS.yMax - softMargin)) / softMargin;
+        boid.velocity.y -= turnForce * proximity * proximity;
+        if (boid.velocity.y > 0) boid.velocity.y *= (1 - proximity * 0.5);
+      } else if (boid.position.y < BOUNDS.yMin + softMargin + 2) {
+        // Extra margin for floor
+        const proximity = ((BOUNDS.yMin + softMargin + 2) - boid.position.y) / (softMargin + 2);
+        boid.velocity.y += turnForce * 1.5 * proximity * proximity;
+        if (boid.velocity.y < 0) boid.velocity.y *= (1 - proximity * 0.7);
       }
 
-      // Z bounds
-      if (boid.position.z > BOUNDS.z - margin) {
-        const dist = boid.position.z - (BOUNDS.z - margin);
-        boid.velocity.z -= turnStrength * dist * dist;
-      } else if (boid.position.z < -BOUNDS.z + margin) {
-        const dist = (-BOUNDS.z + margin) - boid.position.z;
-        boid.velocity.z += turnStrength * dist * dist;
+      // Z boundaries
+      if (boid.position.z > BOUNDS.z - softMargin) {
+        const proximity = (boid.position.z - (BOUNDS.z - softMargin)) / softMargin;
+        boid.velocity.z -= turnForce * proximity * proximity;
+        if (boid.velocity.z > 0) boid.velocity.z *= (1 - proximity * 0.3);
+      } else if (boid.position.z < -BOUNDS.z + softMargin) {
+        const proximity = ((-BOUNDS.z + softMargin) - boid.position.z) / softMargin;
+        boid.velocity.z += turnForce * proximity * proximity;
+        if (boid.velocity.z < 0) boid.velocity.z *= (1 - proximity * 0.3);
       }
 
-      // Random wandering if moving too slow (prevents getting stuck)
-      if (boid.velocity.length() < 0.05) {
-        boid.velocity.add(new THREE.Vector3(
-          (Math.random() - 0.5) * 0.08,
-          (Math.random() - 0.5) * 0.04,
-          (Math.random() - 0.5) * 0.03
-        ));
-      }
-
-      // Clamp speed with individual variation
+      // Maintain minimum swimming speed (fish always moving slightly)
       const speed = boid.velocity.length();
-      if (speed > maxSpeed) {
+      if (speed < baseSpeed * 0.5) {
+        // Gently accelerate in current direction or pick new direction
+        if (speed > 0.01) {
+          boid.velocity.normalize().multiplyScalar(baseSpeed * 0.6);
+        } else {
+          // Pick a random direction
+          boid.velocity.set(
+            (Math.random() - 0.5) * baseSpeed,
+            (Math.random() - 0.5) * baseSpeed * 0.3,
+            (Math.random() - 0.5) * baseSpeed * 0.2
+          );
+        }
+      } else if (speed > maxSpeed) {
         boid.velocity.multiplyScalar(maxSpeed / speed);
-      } else if (speed < minSpeed) {
-        boid.velocity.normalize().multiplyScalar(minSpeed);
       }
 
-      // Update position FIRST
+      // Update position
       boid.position.add(boid.velocity.clone().multiplyScalar(delta * 60));
 
-      // THEN hard clamp as safety (fish should NEVER escape these bounds)
-      // This ensures fish can never go below sand or outside tank
-      boid.position.x = Math.max(-BOUNDS.x, Math.min(BOUNDS.x, boid.position.x));
-      boid.position.y = Math.max(BOUNDS.yMin, Math.min(BOUNDS.yMax, boid.position.y));
-      boid.position.z = Math.max(-BOUNDS.z, Math.min(BOUNDS.z, boid.position.z));
+      // Hard boundary clamp (safety net)
+      boid.position.x = Math.max(-BOUNDS.x + 0.5, Math.min(BOUNDS.x - 0.5, boid.position.x));
+      boid.position.y = Math.max(BOUNDS.yMin + 0.5, Math.min(BOUNDS.yMax - 0.5, boid.position.y));
+      boid.position.z = Math.max(-BOUNDS.z + 0.5, Math.min(BOUNDS.z - 0.5, boid.position.z));
 
       boid.ref.position.copy(boid.position);
 
-      // Smooth rotation with individual turn rate
-      if (boid.velocity.length() > 0.1) {
-        const lookTarget = boid.position.clone().add(boid.velocity.clone().normalize());
-        boid.ref.lookAt(lookTarget);
+      // SMOOTH ROTATION - fish turn gradually, not instantly
+      if (boid.velocity.length() > 0.02) {
+        const targetQuat = new THREE.Quaternion();
+        const lookDir = boid.velocity.clone().normalize();
+        const lookMatrix = new THREE.Matrix4().lookAt(
+          new THREE.Vector3(0, 0, 0),
+          lookDir,
+          new THREE.Vector3(0, 1, 0)
+        );
+        targetQuat.setFromRotationMatrix(lookMatrix);
 
-        // Calculate banking angle based on horizontal turn rate
-        const turnAmount = boid.velocity.x * randoms.turnRate;
-        boid.bankAngle = -turnAmount * 0.3; // Subtle banking
+        // Slerp for smooth rotation (fish don't snap to new directions)
+        boid.ref.quaternion.slerp(targetQuat, 0.05 * randoms.turnRate);
+
+        // Subtle banking when turning
+        const turnAmount = boid.velocity.x;
+        boid.bankAngle = -turnAmount * 0.2;
       }
     });
 
