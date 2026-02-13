@@ -66,20 +66,28 @@ const useRealtimeAquarium = (fishData) => {
       } else if (f.position && isValidPosition(f.position)) {
         positionArray = f.position;
       } else {
-        // Fallback positions spread across the tank interior (well within bounds)
+        // Generate unique spawn position based on fish's random properties
+        const fishRandoms = fishRandomsRef.current[f.id];
+        const phase = fishRandoms ? fishRandoms.phaseOffset : Math.random() * Math.PI * 2;
         const yRange = BOUNDS.yMax - BOUNDS.yMin;
         const yMid = (BOUNDS.yMax + BOUNDS.yMin) / 2;
-        // Add randomness to spawn positions
-        const randomOffset = () => (Math.random() - 0.5) * 2;
-        const safePositions = [
-          [-BOUNDS.x * 0.5 + randomOffset(), yMid + yRange * 0.2 + randomOffset(), randomOffset()],
-          [BOUNDS.x * 0.5 + randomOffset(), yMid - yRange * 0.1 + randomOffset(), randomOffset()],
-          [randomOffset() * 3, yMid + yRange * 0.25 + randomOffset(), BOUNDS.z * 0.3 + randomOffset()],
-          [randomOffset() * 3, yMid + randomOffset(), -BOUNDS.z * 0.3 + randomOffset()],
-          [-BOUNDS.x * 0.4 + randomOffset(), yMid + randomOffset(), BOUNDS.z * 0.2 + randomOffset()],
-          [BOUNDS.x * 0.4 + randomOffset(), yMid + yRange * 0.1 + randomOffset(), -BOUNDS.z * 0.2 + randomOffset()],
+
+        // Spread fish across tank using their unique phase
+        const xSpread = Math.cos(phase * 2.7) * BOUNDS.x * 0.6;
+        const zSpread = Math.sin(phase * 1.9) * BOUNDS.z * 0.5;
+        const yOffset = Math.sin(phase * 3.1) * yRange * 0.25;
+
+        positionArray = [
+          xSpread + (Math.random() - 0.5) * 3,
+          yMid + yOffset + (fishRandoms?.verticalBias || 0) * 2,
+          zSpread + (Math.random() - 0.5) * 2
         ];
-        positionArray = safePositions[index % safePositions.length];
+
+        // Clamp to safe bounds
+        positionArray[0] = Math.max(-BOUNDS.x + 2, Math.min(BOUNDS.x - 2, positionArray[0]));
+        positionArray[1] = Math.max(BOUNDS.yMin + 2, Math.min(BOUNDS.yMax - 2, positionArray[1]));
+        positionArray[2] = Math.max(-BOUNDS.z + 1, Math.min(BOUNDS.z - 1, positionArray[2]));
+
         console.log(`🐠 Fish ${f.name} spawned at:`, positionArray);
       }
 
@@ -91,13 +99,14 @@ const useRealtimeAquarium = (fishData) => {
       } else if (f.velocity && Array.isArray(f.velocity) && f.velocity.length === 3) {
         velocityArray = f.velocity;
       } else {
-        // Random initial velocity with random direction
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 0.2 + Math.random() * 0.2;
+        // Use the fish's unique phase offset for initial direction
+        const fishRandoms = fishRandomsRef.current[f.id];
+        const angle = fishRandoms ? fishRandoms.phaseOffset * 3 : Math.random() * Math.PI * 2;
+        const speed = 0.06 + Math.random() * 0.04;
         velocityArray = [
           Math.cos(angle) * speed,
-          (Math.random() - 0.5) * 0.1,
-          Math.sin(angle) * speed * 0.3, // Less Z movement
+          (Math.random() - 0.5) * 0.02,
+          Math.sin(angle) * speed * 0.3,
         ];
       }
 
@@ -221,17 +230,16 @@ const useRealtimeAquarium = (fishData) => {
 
     // Master browser: run simulation EVERY FRAME for smooth movement
     const now = Date.now();
-    const time = now * 0.001; // Time in seconds for wandering
-    const shouldUpdateFirebase = (now - lastUpdateTime.current >= 150); // Update Firebase every 150ms
+    const time = now * 0.001; // Time in seconds
+    const shouldUpdateFirebase = (now - lastUpdateTime.current >= 150);
     if (shouldUpdateFirebase) {
       lastUpdateTime.current = now;
     }
 
-    // NATURAL INDIVIDUAL FISH MOVEMENT (not schooling/boid behavior)
-    // Each fish swims independently with its own personality
+    // FLOWING FISH MOVEMENT - No targets, just continuous swimming
+    // Each fish has a "heading" that slowly drifts using noise-like patterns
 
-    boids.forEach(boid => {
-      // Get individual fish properties
+    boids.forEach((boid, index) => {
       const randoms = boid.randoms || {
         speedMultiplier: 1.0,
         verticalBias: 0,
@@ -240,169 +248,150 @@ const useRealtimeAquarium = (fishData) => {
         phaseOffset: 0,
       };
 
-      // Individual speed based on fish personality
-      const baseSpeed = 0.12 * randoms.speedMultiplier;
-      const maxSpeed = 0.35 * randoms.speedMultiplier;
-
-      // Initialize target position if not set (lazy swimming target)
-      if (!boid.targetPosition || boid.targetReached) {
-        // Pick a new random target within the tank
-        const safeMargin = 3.0;
-        boid.targetPosition = new THREE.Vector3(
-          (Math.random() - 0.5) * (BOUNDS.x * 2 - safeMargin * 2),
-          BOUNDS.yMin + safeMargin + Math.random() * (BOUNDS.yMax - BOUNDS.yMin - safeMargin * 2),
-          (Math.random() - 0.5) * (BOUNDS.z * 2 - safeMargin * 2)
-        );
-        // Add vertical bias preference
-        boid.targetPosition.y += randoms.verticalBias * 3;
-        boid.targetPosition.y = Math.max(BOUNDS.yMin + 2, Math.min(BOUNDS.yMax - 2, boid.targetPosition.y));
-        boid.targetReached = false;
-        // Random pause duration before moving to next target
-        boid.pauseUntil = time + Math.random() * 2;
+      // Initialize heading angle if not set
+      if (boid.headingAngle === undefined) {
+        boid.headingAngle = randoms.phaseOffset * 2; // Start facing different directions
+        boid.verticalAngle = randoms.verticalBias * 0.3;
+        boid.currentSpeed = 0.08 + Math.random() * 0.04;
       }
 
-      // Calculate direction to target
-      const toTarget = new THREE.Vector3().subVectors(boid.targetPosition, boid.position);
-      const distanceToTarget = toTarget.length();
+      // Individual timing - each fish on completely different cycle
+      const fishTime = time * (0.8 + randoms.speedMultiplier * 0.4) + randoms.phaseOffset * 10;
 
-      // Check if reached target
-      if (distanceToTarget < 2.0) {
-        boid.targetReached = true;
+      // ORGANIC HEADING DRIFT - multiple layered sine waves create natural curves
+      // Using prime-ish multipliers to avoid repetitive patterns
+      const drift1 = Math.sin(fishTime * 0.13) * 0.015;
+      const drift2 = Math.sin(fishTime * 0.09 + 2.1) * 0.01;
+      const drift3 = Math.sin(fishTime * 0.21 + 4.3) * 0.008;
+      const drift4 = Math.cos(fishTime * 0.07 + 1.7) * 0.012;
+
+      // Combine drifts with individual intensity
+      const headingDrift = (drift1 + drift2 + drift3 + drift4) * randoms.wanderIntensity;
+      boid.headingAngle += headingDrift;
+
+      // Vertical drift (more subtle)
+      const vDrift1 = Math.sin(fishTime * 0.11 + 3.2) * 0.004;
+      const vDrift2 = Math.cos(fishTime * 0.17 + 1.1) * 0.003;
+      boid.verticalAngle += (vDrift1 + vDrift2) * randoms.wanderIntensity;
+
+      // Keep vertical angle small (fish swim mostly horizontal)
+      boid.verticalAngle *= 0.98;
+      boid.verticalAngle = Math.max(-0.4, Math.min(0.4, boid.verticalAngle));
+
+      // Speed variation - fish speed up and slow down naturally
+      const speedVar = Math.sin(fishTime * 0.19 + randoms.phaseOffset) * 0.03;
+      const targetSpeed = (0.06 + speedVar) * randoms.speedMultiplier;
+      boid.currentSpeed += (targetSpeed - boid.currentSpeed) * 0.02;
+      boid.currentSpeed = Math.max(0.03, Math.min(0.15, boid.currentSpeed));
+
+      // Convert heading to velocity
+      const cosH = Math.cos(boid.headingAngle);
+      const sinH = Math.sin(boid.headingAngle);
+      const cosV = Math.cos(boid.verticalAngle);
+      const sinV = Math.sin(boid.verticalAngle);
+
+      boid.velocity.x = cosH * cosV * boid.currentSpeed;
+      boid.velocity.y = sinV * boid.currentSpeed * 0.5;
+      boid.velocity.z = sinH * cosV * boid.currentSpeed * 0.4;
+
+      // BOUNDARY AVOIDANCE - smoothly turn away from edges
+      const margin = 5.0;
+      const strongMargin = 2.0;
+
+      // X boundaries
+      if (boid.position.x > BOUNDS.x - margin) {
+        const urgency = (boid.position.x - (BOUNDS.x - margin)) / margin;
+        if (cosH > 0) boid.headingAngle += 0.03 * urgency * urgency;
+      } else if (boid.position.x < -BOUNDS.x + margin) {
+        const urgency = ((-BOUNDS.x + margin) - boid.position.x) / margin;
+        if (cosH < 0) boid.headingAngle -= 0.03 * urgency * urgency;
       }
 
-      // NATURAL SWIMMING with smooth curves (not straight lines)
-      // Use sine waves with individual phase for organic curved paths
-      const wanderTime = time + randoms.phaseOffset;
-
-      // Primary direction toward target (gentle steering)
-      const steerStrength = 0.002 * randoms.turnRate;
-      if (distanceToTarget > 1.0 && time > (boid.pauseUntil || 0)) {
-        toTarget.normalize();
-        // Gradually steer toward target
-        boid.velocity.x += (toTarget.x * baseSpeed - boid.velocity.x) * steerStrength;
-        boid.velocity.y += (toTarget.y * baseSpeed * 0.5 - boid.velocity.y) * steerStrength * 0.5;
-        boid.velocity.z += (toTarget.z * baseSpeed * 0.3 - boid.velocity.z) * steerStrength * 0.3;
-      }
-
-      // ORGANIC WANDERING - smooth curves using multiple sine waves
-      // Each fish has unique frequencies based on phaseOffset
-      const freq1 = 0.3 + randoms.phaseOffset * 0.1;
-      const freq2 = 0.17 + randoms.phaseOffset * 0.05;
-      const freq3 = 0.23 + randoms.phaseOffset * 0.08;
-
-      const wanderX = Math.sin(wanderTime * freq1) * Math.cos(wanderTime * freq2 * 0.7);
-      const wanderY = Math.sin(wanderTime * freq2) * 0.3;
-      const wanderZ = Math.cos(wanderTime * freq3) * Math.sin(wanderTime * freq1 * 0.5);
-
-      boid.velocity.x += wanderX * 0.003 * randoms.wanderIntensity;
-      boid.velocity.y += wanderY * 0.001 * randoms.wanderIntensity;
-      boid.velocity.z += wanderZ * 0.001 * randoms.wanderIntensity;
-
-      // Occasional direction changes (fish randomly decide to turn)
-      if (Math.random() < 0.002) {
-        boid.velocity.x += (Math.random() - 0.5) * 0.05;
-        boid.velocity.y += (Math.random() - 0.5) * 0.02;
-      }
-
-      // COLLISION AVOIDANCE with other fish (gentle, not boid-like)
-      boids.forEach(other => {
-        if (boid === other) return;
-        const dist = boid.position.distanceTo(other.position);
-        if (dist < 3.0 && dist > 0) {
-          // Gently move away from nearby fish
-          const away = new THREE.Vector3().subVectors(boid.position, other.position);
-          away.normalize();
-          const avoidStrength = (3.0 - dist) * 0.002;
-          boid.velocity.add(away.multiplyScalar(avoidStrength));
-        }
-      });
-
-      // Apply gentle damping (fish glide through water)
-      boid.velocity.multiplyScalar(0.995);
-
-      // SMOOTH BOUNDARY AVOIDANCE (gradual turns, not bouncing)
-      const softMargin = 4.0;
-      const turnForce = 0.008;
-
-      // X boundaries - smooth turn
-      if (boid.position.x > BOUNDS.x - softMargin) {
-        const proximity = (boid.position.x - (BOUNDS.x - softMargin)) / softMargin;
-        boid.velocity.x -= turnForce * proximity * proximity;
-        if (boid.velocity.x > 0) boid.velocity.x *= (1 - proximity * 0.3);
-      } else if (boid.position.x < -BOUNDS.x + softMargin) {
-        const proximity = ((-BOUNDS.x + softMargin) - boid.position.x) / softMargin;
-        boid.velocity.x += turnForce * proximity * proximity;
-        if (boid.velocity.x < 0) boid.velocity.x *= (1 - proximity * 0.3);
-      }
-
-      // Y boundaries - stronger floor avoidance
-      if (boid.position.y > BOUNDS.yMax - softMargin) {
-        const proximity = (boid.position.y - (BOUNDS.yMax - softMargin)) / softMargin;
-        boid.velocity.y -= turnForce * proximity * proximity;
-        if (boid.velocity.y > 0) boid.velocity.y *= (1 - proximity * 0.5);
-      } else if (boid.position.y < BOUNDS.yMin + softMargin + 2) {
-        // Extra margin for floor
-        const proximity = ((BOUNDS.yMin + softMargin + 2) - boid.position.y) / (softMargin + 2);
-        boid.velocity.y += turnForce * 1.5 * proximity * proximity;
-        if (boid.velocity.y < 0) boid.velocity.y *= (1 - proximity * 0.7);
+      // Hard turn if very close to wall
+      if (boid.position.x > BOUNDS.x - strongMargin && cosH > 0) {
+        boid.headingAngle += 0.08;
+      } else if (boid.position.x < -BOUNDS.x + strongMargin && cosH < 0) {
+        boid.headingAngle -= 0.08;
       }
 
       // Z boundaries
-      if (boid.position.z > BOUNDS.z - softMargin) {
-        const proximity = (boid.position.z - (BOUNDS.z - softMargin)) / softMargin;
-        boid.velocity.z -= turnForce * proximity * proximity;
-        if (boid.velocity.z > 0) boid.velocity.z *= (1 - proximity * 0.3);
-      } else if (boid.position.z < -BOUNDS.z + softMargin) {
-        const proximity = ((-BOUNDS.z + softMargin) - boid.position.z) / softMargin;
-        boid.velocity.z += turnForce * proximity * proximity;
-        if (boid.velocity.z < 0) boid.velocity.z *= (1 - proximity * 0.3);
+      if (boid.position.z > BOUNDS.z - margin) {
+        const urgency = (boid.position.z - (BOUNDS.z - margin)) / margin;
+        if (sinH > 0) boid.headingAngle -= 0.02 * urgency;
+      } else if (boid.position.z < -BOUNDS.z + margin) {
+        const urgency = ((-BOUNDS.z + margin) - boid.position.z) / margin;
+        if (sinH < 0) boid.headingAngle += 0.02 * urgency;
       }
 
-      // Maintain minimum swimming speed (fish always moving slightly)
-      const speed = boid.velocity.length();
-      if (speed < baseSpeed * 0.5) {
-        // Gently accelerate in current direction or pick new direction
-        if (speed > 0.01) {
-          boid.velocity.normalize().multiplyScalar(baseSpeed * 0.6);
-        } else {
-          // Pick a random direction
-          boid.velocity.set(
-            (Math.random() - 0.5) * baseSpeed,
-            (Math.random() - 0.5) * baseSpeed * 0.3,
-            (Math.random() - 0.5) * baseSpeed * 0.2
-          );
-        }
-      } else if (speed > maxSpeed) {
-        boid.velocity.multiplyScalar(maxSpeed / speed);
+      // Y boundaries (floor and surface)
+      if (boid.position.y > BOUNDS.yMax - margin) {
+        boid.verticalAngle -= 0.02;
+        if (boid.velocity.y > 0) boid.velocity.y *= 0.9;
+      } else if (boid.position.y < BOUNDS.yMin + margin + 1) {
+        boid.verticalAngle += 0.03;
+        if (boid.velocity.y < 0) boid.velocity.y *= 0.8;
       }
+
+      // Gentle vertical preference (some fish like top, some like bottom)
+      const yCenter = (BOUNDS.yMax + BOUNDS.yMin) / 2;
+      const preferredY = yCenter + randoms.verticalBias * 5;
+      if (boid.position.y < preferredY - 2) {
+        boid.verticalAngle += 0.002;
+      } else if (boid.position.y > preferredY + 2) {
+        boid.verticalAngle -= 0.002;
+      }
+
+      // FISH AVOIDANCE - gentle steering away from other fish
+      boids.forEach((other, otherIndex) => {
+        if (index === otherIndex) return;
+        const dx = boid.position.x - other.position.x;
+        const dy = boid.position.y - other.position.y;
+        const dz = boid.position.z - other.position.z;
+        const distSq = dx * dx + dy * dy + dz * dz;
+
+        if (distSq < 16 && distSq > 0.1) { // Within 4 units
+          const dist = Math.sqrt(distSq);
+          const urgency = (4 - dist) / 4;
+
+          // Turn away from the other fish
+          const angleToOther = Math.atan2(dz, dx);
+          const angleDiff = boid.headingAngle - angleToOther;
+
+          // Steer in the direction that increases angle difference
+          if (Math.abs(angleDiff) < Math.PI / 2) {
+            boid.headingAngle += (angleDiff > 0 ? 0.02 : -0.02) * urgency;
+          }
+        }
+      });
 
       // Update position
       boid.position.add(boid.velocity.clone().multiplyScalar(delta * 60));
 
-      // Hard boundary clamp (safety net)
-      boid.position.x = Math.max(-BOUNDS.x + 0.5, Math.min(BOUNDS.x - 0.5, boid.position.x));
-      boid.position.y = Math.max(BOUNDS.yMin + 0.5, Math.min(BOUNDS.yMax - 0.5, boid.position.y));
-      boid.position.z = Math.max(-BOUNDS.z + 0.5, Math.min(BOUNDS.z - 0.5, boid.position.z));
+      // Hard clamp (safety)
+      boid.position.x = Math.max(-BOUNDS.x + 0.3, Math.min(BOUNDS.x - 0.3, boid.position.x));
+      boid.position.y = Math.max(BOUNDS.yMin + 0.3, Math.min(BOUNDS.yMax - 0.3, boid.position.y));
+      boid.position.z = Math.max(-BOUNDS.z + 0.3, Math.min(BOUNDS.z - 0.3, boid.position.z));
 
       boid.ref.position.copy(boid.position);
 
-      // SMOOTH ROTATION - fish turn gradually, not instantly
-      if (boid.velocity.length() > 0.02) {
+      // SMOOTH ROTATION toward swimming direction
+      if (boid.velocity.length() > 0.01) {
         const targetQuat = new THREE.Quaternion();
         const lookDir = boid.velocity.clone().normalize();
+        const up = new THREE.Vector3(0, 1, 0);
         const lookMatrix = new THREE.Matrix4().lookAt(
           new THREE.Vector3(0, 0, 0),
           lookDir,
-          new THREE.Vector3(0, 1, 0)
+          up
         );
         targetQuat.setFromRotationMatrix(lookMatrix);
 
-        // Slerp for smooth rotation (fish don't snap to new directions)
-        boid.ref.quaternion.slerp(targetQuat, 0.05 * randoms.turnRate);
+        // Very smooth rotation
+        boid.ref.quaternion.slerp(targetQuat, 0.08);
 
-        // Subtle banking when turning
-        const turnAmount = boid.velocity.x;
-        boid.bankAngle = -turnAmount * 0.2;
+        // Subtle banking on turns
+        const turnRate = headingDrift * 10;
+        boid.bankAngle = -turnRate * 0.3;
       }
     });
 
