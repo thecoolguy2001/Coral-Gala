@@ -14,11 +14,11 @@ const WaterVolume = () => {
   const volumeMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
       uniforms: {
-        // Natural Deep Blue Water Palette
-        colorShallow: { value: new THREE.Color("#0077be") }, // Ocean Blue
-        colorDeep: { value: new THREE.Color("#002147") },    // Deep Navy
-        opacityShallow: { value: 0.15 }, // More visible
-        opacityDeep: { value: 0.45 },    // Deeper look at bottom
+        // Bright Sunlit Aquarium Water - Light shining through
+        colorShallow: { value: new THREE.Color("#40E0D0") }, // Turquoise/Bright Cyan
+        colorDeep: { value: new THREE.Color("#0099CC") },    // Bright Ocean Blue
+        opacityShallow: { value: 0.08 }, // Very clear at top (light shining through)
+        opacityDeep: { value: 0.25 },    // Slightly denser at bottom
       },
       vertexShader: `
         varying vec3 vPosition;
