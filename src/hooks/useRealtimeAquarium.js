@@ -237,16 +237,24 @@ const useRealtimeAquarium = (fishData) => {
 
     // Master browser: run simulation EVERY FRAME for smooth movement
     const now = Date.now();
-    const time = now * 0.001; // Time in seconds
+    const time = now * 0.001;
     const shouldUpdateFirebase = (now - lastUpdateTime.current >= 150);
     if (shouldUpdateFirebase) {
       lastUpdateTime.current = now;
     }
 
-    // REALISTIC FISH BEHAVIOR with states: RESTING, CRUISING, ACTIVE
-    // Based on research: fish move with purpose, rest periodically, and explore naturally
+    // POINTS OF INTEREST in the tank - fish are aware of their environment
+    const pointsOfInterest = [
+      { pos: new THREE.Vector3(-8, -8, -2), type: 'driftwood' },   // Driftwood
+      { pos: new THREE.Vector3(0, -8, -7), type: 'rocks' },        // Rock formation
+      { pos: new THREE.Vector3(10, -8, 3), type: 'coral' },        // Pink coral
+      { pos: new THREE.Vector3(-12, -8, -4), type: 'coral' },      // Blue coral
+      { pos: new THREE.Vector3(14, 5, -8), type: 'filter' },       // HOB filter area
+      { pos: new THREE.Vector3(0, 0, 0), type: 'center' },         // Tank center
+    ];
 
-    boids.forEach(boid => {
+    // INTELLIGENT FISH MOVEMENT
+    boids.forEach((boid, index) => {
       const randoms = boid.randoms || {
         speedMultiplier: 1.0,
         verticalBias: 0,
@@ -255,200 +263,232 @@ const useRealtimeAquarium = (fishData) => {
         phaseOffset: 0,
         laziness: 0.5,
         curiosity: 0.5,
-        preferredZoneX: 0.5,
-        preferredZoneZ: 0.5,
       };
 
-      // Initialize behavioral state
-      if (!boid.behaviorState) {
-        boid.behaviorState = Math.random() < randoms.laziness ? 'RESTING' : 'CRUISING';
-        boid.stateChangeTime = time + 3 + Math.random() * 10;
-        boid.restingSpot = null;
+      // Fish-specific time offset for varied behavior
+      const fishTime = time + randoms.phaseOffset * 100;
+
+      // Initialize fish state
+      if (!boid.state) {
+        boid.state = {
+          mode: 'swimming', // swimming, investigating, resting, following
+          modeStartTime: time,
+          modeDuration: 8 + Math.random() * 12,
+          currentInterest: null,
+          swimDirection: Math.random() * Math.PI * 2,
+          verticalPreference: (BOUNDS.yMax + BOUNDS.yMin) / 2 + randoms.verticalBias * 5,
+          energy: 0.5 + Math.random() * 0.5, // Energy level affects behavior
+        };
       }
 
-      // STATE TRANSITIONS - fish change behavior over time
-      if (time > boid.stateChangeTime) {
+      const state = boid.state;
+
+      // Energy fluctuates over time - affects activity level
+      state.energy += (Math.sin(fishTime * 0.05) * 0.001);
+      state.energy = Math.max(0.2, Math.min(1.0, state.energy));
+
+      // MODE TRANSITIONS based on time and random chance
+      if (time > state.modeStartTime + state.modeDuration) {
+        const energyFactor = state.energy;
         const roll = Math.random();
-        const lazinessThreshold = randoms.laziness * 0.4; // Lazy fish rest more
-        const activeThreshold = lazinessThreshold + (1 - randoms.laziness) * 0.3;
 
-        if (roll < lazinessThreshold) {
-          boid.behaviorState = 'RESTING';
-          boid.stateChangeTime = time + 5 + Math.random() * 15; // Rest for 5-20 seconds
-          boid.restingSpot = boid.position.clone();
-        } else if (roll < activeThreshold) {
-          boid.behaviorState = 'ACTIVE';
-          boid.stateChangeTime = time + 3 + Math.random() * 8; // Active for 3-11 seconds
+        if (roll < 0.1 * (1 - energyFactor)) {
+          // Low energy = more likely to rest
+          state.mode = 'resting';
+          state.modeDuration = 8 + Math.random() * 20;
+        } else if (roll < 0.3 && randoms.curiosity > 0.4) {
+          // Curious fish investigate points of interest
+          state.mode = 'investigating';
+          state.currentInterest = pointsOfInterest[Math.floor(Math.random() * pointsOfInterest.length)];
+          state.modeDuration = 5 + Math.random() * 10;
+        } else if (roll < 0.4 && boids.length > 1) {
+          // Sometimes follow another fish briefly
+          state.mode = 'following';
+          state.followTarget = boids[(index + 1 + Math.floor(Math.random() * (boids.length - 1))) % boids.length];
+          state.modeDuration = 3 + Math.random() * 6;
         } else {
-          boid.behaviorState = 'CRUISING';
-          boid.stateChangeTime = time + 5 + Math.random() * 12; // Cruise for 5-17 seconds
+          // Default: free swimming
+          state.mode = 'swimming';
+          state.swimDirection = Math.random() * Math.PI * 2;
+          state.modeDuration = 10 + Math.random() * 15;
         }
+        state.modeStartTime = time;
       }
 
-      // PREFERRED ZONE - fish like to stay in their comfort area (center-biased)
-      const preferredX = (randoms.preferredZoneX - 0.5) * BOUNDS.x * 0.6;
-      const preferredZ = (randoms.preferredZoneZ - 0.5) * BOUNDS.z * 0.6;
-      const preferredY = (BOUNDS.yMax + BOUNDS.yMin) / 2 + randoms.verticalBias * 4;
+      // Calculate desired velocity based on mode
+      let desiredVelocity = new THREE.Vector3();
+      let maxSpeed = 0.2 * randoms.speedMultiplier * state.energy;
 
-      // Speed based on state and personality
-      let targetSpeed;
-      let steerStrength;
+      switch (state.mode) {
+        case 'swimming':
+          // Smooth, curved swimming path
+          // Direction gradually changes using sine waves
+          const turnRate = 0.3 + randoms.wanderIntensity * 0.3;
+          state.swimDirection += Math.sin(fishTime * turnRate) * 0.02;
+          state.swimDirection += Math.cos(fishTime * turnRate * 0.7) * 0.015;
 
-      switch (boid.behaviorState) {
-        case 'RESTING':
-          // Fish hovers in place with minimal movement
-          targetSpeed = 0.02 + Math.random() * 0.02;
-          steerStrength = 0.001;
-          // Gentle drift toward resting spot
-          if (boid.restingSpot) {
-            const toRest = new THREE.Vector3().subVectors(boid.restingSpot, boid.position);
-            if (toRest.length() > 0.5) {
-              toRest.normalize().multiplyScalar(0.001);
-              boid.velocity.add(toRest);
+          // Horizontal movement
+          desiredVelocity.x = Math.cos(state.swimDirection) * maxSpeed;
+          desiredVelocity.z = Math.sin(state.swimDirection) * maxSpeed * 0.5;
+
+          // Vertical: gently move toward preferred depth
+          const yDiff = state.verticalPreference - boid.position.y;
+          desiredVelocity.y = yDiff * 0.02;
+
+          // Occasionally change vertical preference
+          if (Math.random() < 0.002) {
+            state.verticalPreference = (BOUNDS.yMax + BOUNDS.yMin) / 2 +
+              randoms.verticalBias * 5 + (Math.random() - 0.5) * 6;
+            state.verticalPreference = Math.max(BOUNDS.yMin + 3, Math.min(BOUNDS.yMax - 2, state.verticalPreference));
+          }
+          break;
+
+        case 'investigating':
+          // Swim toward point of interest
+          if (state.currentInterest) {
+            const toInterest = new THREE.Vector3().subVectors(state.currentInterest.pos, boid.position);
+            const dist = toInterest.length();
+
+            if (dist > 2) {
+              // Approach smoothly
+              toInterest.normalize();
+              desiredVelocity.copy(toInterest).multiplyScalar(maxSpeed * 0.8);
+            } else {
+              // Circle around the point of interest
+              const circleAngle = fishTime * 0.5;
+              desiredVelocity.x = Math.cos(circleAngle) * maxSpeed * 0.4;
+              desiredVelocity.z = Math.sin(circleAngle) * maxSpeed * 0.3;
+              desiredVelocity.y = Math.sin(fishTime * 0.8) * maxSpeed * 0.2;
             }
           }
-          // Very slow, subtle fin movements
-          const restWobble = Math.sin(time * 2 + randoms.phaseOffset) * 0.002;
-          boid.velocity.x += restWobble;
-          boid.velocity.y += Math.sin(time * 1.5 + randoms.phaseOffset) * 0.001;
           break;
 
-        case 'CRUISING':
-          // Relaxed, purposeful swimming
-          targetSpeed = 0.15 * randoms.speedMultiplier;
-          steerStrength = 0.003;
+        case 'following':
+          // Follow another fish at a distance
+          if (state.followTarget && state.followTarget.position) {
+            const toTarget = new THREE.Vector3().subVectors(state.followTarget.position, boid.position);
+            const dist = toTarget.length();
 
-          // Gentle pull toward preferred zone
-          const toPrefCruise = new THREE.Vector3(
-            preferredX - boid.position.x,
-            preferredY - boid.position.y,
-            preferredZ - boid.position.z
-          );
-          toPrefCruise.multiplyScalar(0.0005);
-          boid.velocity.add(toPrefCruise);
-
-          // Smooth curves using sine waves
-          const cruiseTime = time * 0.5 + randoms.phaseOffset * 5;
-          boid.velocity.x += Math.sin(cruiseTime * 0.7) * 0.003 * randoms.wanderIntensity;
-          boid.velocity.y += Math.sin(cruiseTime * 0.4) * 0.001;
-          boid.velocity.z += Math.cos(cruiseTime * 0.5) * 0.002 * randoms.wanderIntensity;
+            if (dist > 5) {
+              // Catch up
+              toTarget.normalize();
+              desiredVelocity.copy(toTarget).multiplyScalar(maxSpeed * 1.1);
+            } else if (dist > 2) {
+              // Maintain distance, swim alongside
+              const perpendicular = new THREE.Vector3(-toTarget.z, 0, toTarget.x).normalize();
+              desiredVelocity.copy(perpendicular).multiplyScalar(maxSpeed * 0.5);
+              desiredVelocity.add(toTarget.normalize().multiplyScalar(maxSpeed * 0.3));
+            } else {
+              // Too close, drift away slightly
+              toTarget.normalize();
+              desiredVelocity.copy(toTarget).multiplyScalar(-maxSpeed * 0.3);
+            }
+          } else {
+            state.mode = 'swimming';
+          }
           break;
 
-        case 'ACTIVE':
-          // Energetic exploration
-          targetSpeed = 0.3 * randoms.speedMultiplier;
-          steerStrength = 0.005;
+        case 'resting':
+          // Minimal movement, gentle hovering
+          maxSpeed = 0.03;
+          desiredVelocity.x = Math.sin(fishTime * 1.5) * 0.01;
+          desiredVelocity.y = Math.sin(fishTime * 1.2) * 0.008;
+          desiredVelocity.z = Math.cos(fishTime * 1.3) * 0.005;
 
-          // Pick exploration targets based on curiosity
-          if (!boid.exploreTarget || boid.position.distanceTo(boid.exploreTarget) < 3) {
-            // Curious fish explore further, others stay closer to preferred zone
-            const exploreRange = randoms.curiosity * 0.8 + 0.2;
-            boid.exploreTarget = new THREE.Vector3(
-              preferredX + (Math.random() - 0.5) * BOUNDS.x * exploreRange,
-              preferredY + (Math.random() - 0.5) * 6,
-              preferredZ + (Math.random() - 0.5) * BOUNDS.z * exploreRange
-            );
-            // Clamp to safe bounds
-            boid.exploreTarget.x = Math.max(-BOUNDS.x + 3, Math.min(BOUNDS.x - 3, boid.exploreTarget.x));
-            boid.exploreTarget.y = Math.max(BOUNDS.yMin + 2, Math.min(BOUNDS.yMax - 2, boid.exploreTarget.y));
-            boid.exploreTarget.z = Math.max(-BOUNDS.z + 2, Math.min(BOUNDS.z - 2, boid.exploreTarget.z));
-          }
-
-          // Steer toward exploration target
-          const toExplore = new THREE.Vector3().subVectors(boid.exploreTarget, boid.position);
-          toExplore.normalize().multiplyScalar(steerStrength);
-          boid.velocity.add(toExplore);
-
-          // Quick, darting movements
-          if (Math.random() < 0.01) {
-            boid.velocity.x += (Math.random() - 0.5) * 0.08;
-            boid.velocity.y += (Math.random() - 0.5) * 0.03;
-          }
+          // Slowly regain energy while resting
+          state.energy += 0.0005;
           break;
       }
 
+      // SMOOTH STEERING - gradually adjust velocity toward desired
+      const steerForce = state.mode === 'resting' ? 0.02 : 0.04;
+      boid.velocity.lerp(desiredVelocity, steerForce);
+
       // COLLISION AVOIDANCE with other fish
-      boids.forEach(other => {
-        if (boid === other) return;
-        const dist = boid.position.distanceTo(other.position);
-        if (dist < 4.0 && dist > 0) {
-          const away = new THREE.Vector3().subVectors(boid.position, other.position);
-          away.normalize();
-          const avoidStrength = (4.0 - dist) * 0.003;
-          boid.velocity.add(away.multiplyScalar(avoidStrength));
+      boids.forEach((other, otherIndex) => {
+        if (index === otherIndex) return;
+        const diff = new THREE.Vector3().subVectors(boid.position, other.position);
+        const dist = diff.length();
+
+        if (dist < 3.5 && dist > 0) {
+          diff.normalize();
+          const avoidForce = (3.5 - dist) / 3.5 * 0.008;
+          boid.velocity.add(diff.multiplyScalar(avoidForce));
         }
       });
 
-      // Apply damping based on state
-      const dampingFactor = boid.behaviorState === 'RESTING' ? 0.98 : 0.995;
-      boid.velocity.multiplyScalar(dampingFactor);
+      // INTELLIGENT BOUNDARY AVOIDANCE
+      // Fish sense walls early and smoothly turn away
+      const senseDistance = 8.0;
+      const avoidStrength = 0.012;
 
-      // STRONG BOUNDARY AVOIDANCE - fish naturally avoid walls
-      const wallMargin = 6.0; // Start turning earlier
-      const wallForce = 0.015; // Stronger turn
-
-      // X boundaries
-      if (boid.position.x > BOUNDS.x - wallMargin) {
-        const proximity = (boid.position.x - (BOUNDS.x - wallMargin)) / wallMargin;
-        boid.velocity.x -= wallForce * proximity * (1 + proximity);
-        if (boid.velocity.x > 0) boid.velocity.x *= (1 - proximity * 0.5);
-      } else if (boid.position.x < -BOUNDS.x + wallMargin) {
-        const proximity = ((-BOUNDS.x + wallMargin) - boid.position.x) / wallMargin;
-        boid.velocity.x += wallForce * proximity * (1 + proximity);
-        if (boid.velocity.x < 0) boid.velocity.x *= (1 - proximity * 0.5);
+      // X walls
+      if (boid.position.x > BOUNDS.x - senseDistance) {
+        const t = (boid.position.x - (BOUNDS.x - senseDistance)) / senseDistance;
+        boid.velocity.x -= avoidStrength * t * t * 2;
+        // Also turn the swim direction away from wall
+        if (state.mode === 'swimming' && Math.cos(state.swimDirection) > 0) {
+          state.swimDirection += 0.05 * t;
+        }
+      } else if (boid.position.x < -BOUNDS.x + senseDistance) {
+        const t = ((-BOUNDS.x + senseDistance) - boid.position.x) / senseDistance;
+        boid.velocity.x += avoidStrength * t * t * 2;
+        if (state.mode === 'swimming' && Math.cos(state.swimDirection) < 0) {
+          state.swimDirection -= 0.05 * t;
+        }
       }
 
-      // Y boundaries
-      if (boid.position.y > BOUNDS.yMax - wallMargin) {
-        const proximity = (boid.position.y - (BOUNDS.yMax - wallMargin)) / wallMargin;
-        boid.velocity.y -= wallForce * proximity * (1 + proximity);
-      } else if (boid.position.y < BOUNDS.yMin + wallMargin) {
-        const proximity = ((BOUNDS.yMin + wallMargin) - boid.position.y) / wallMargin;
-        boid.velocity.y += wallForce * 1.5 * proximity * (1 + proximity);
+      // Y boundaries (floor and surface)
+      if (boid.position.y > BOUNDS.yMax - senseDistance * 0.7) {
+        const t = (boid.position.y - (BOUNDS.yMax - senseDistance * 0.7)) / (senseDistance * 0.7);
+        boid.velocity.y -= avoidStrength * t * t * 2;
+        state.verticalPreference = Math.min(state.verticalPreference, BOUNDS.yMax - 4);
+      } else if (boid.position.y < BOUNDS.yMin + senseDistance) {
+        const t = ((BOUNDS.yMin + senseDistance) - boid.position.y) / senseDistance;
+        boid.velocity.y += avoidStrength * t * t * 3; // Stronger floor avoidance
+        state.verticalPreference = Math.max(state.verticalPreference, BOUNDS.yMin + 4);
       }
 
-      // Z boundaries
-      if (boid.position.z > BOUNDS.z - wallMargin) {
-        const proximity = (boid.position.z - (BOUNDS.z - wallMargin)) / wallMargin;
-        boid.velocity.z -= wallForce * proximity * (1 + proximity);
-      } else if (boid.position.z < -BOUNDS.z + wallMargin) {
-        const proximity = ((-BOUNDS.z + wallMargin) - boid.position.z) / wallMargin;
-        boid.velocity.z += wallForce * proximity * (1 + proximity);
+      // Z walls
+      if (boid.position.z > BOUNDS.z - senseDistance) {
+        const t = (boid.position.z - (BOUNDS.z - senseDistance)) / senseDistance;
+        boid.velocity.z -= avoidStrength * t * t * 1.5;
+      } else if (boid.position.z < -BOUNDS.z + senseDistance) {
+        const t = ((-BOUNDS.z + senseDistance) - boid.position.z) / senseDistance;
+        boid.velocity.z += avoidStrength * t * t * 1.5;
       }
 
-      // CENTER PULL - subtle force keeping fish away from walls
-      const centerPull = 0.0003;
-      if (Math.abs(boid.position.x) > BOUNDS.x * 0.5) {
-        boid.velocity.x -= Math.sign(boid.position.x) * centerPull;
-      }
-      if (Math.abs(boid.position.z) > BOUNDS.z * 0.5) {
-        boid.velocity.z -= Math.sign(boid.position.z) * centerPull;
-      }
+      // Apply gentle damping
+      boid.velocity.multiplyScalar(0.98);
 
-      // Speed limits based on state
+      // Clamp speed
       const speed = boid.velocity.length();
-      const maxSpeed = boid.behaviorState === 'ACTIVE' ? 0.4 :
-                       boid.behaviorState === 'CRUISING' ? 0.25 : 0.08;
-      const minSpeed = boid.behaviorState === 'RESTING' ? 0.01 : 0.05;
+      const actualMaxSpeed = state.mode === 'resting' ? 0.05 : maxSpeed * 1.2;
+      if (speed > actualMaxSpeed) {
+        boid.velocity.multiplyScalar(actualMaxSpeed / speed);
+      }
 
-      if (speed > maxSpeed) {
-        boid.velocity.multiplyScalar(maxSpeed / speed);
-      } else if (speed < minSpeed && boid.behaviorState !== 'RESTING') {
-        boid.velocity.normalize().multiplyScalar(minSpeed);
+      // Minimum speed (except resting)
+      if (state.mode !== 'resting' && speed < 0.03) {
+        if (speed > 0.001) {
+          boid.velocity.normalize().multiplyScalar(0.03);
+        } else {
+          boid.velocity.set(0.03, 0, 0);
+        }
       }
 
       // Update position
       boid.position.add(boid.velocity.clone().multiplyScalar(delta * 60));
 
-      // Hard boundary clamp
+      // Hard clamp
       boid.position.x = Math.max(-BOUNDS.x + 0.5, Math.min(BOUNDS.x - 0.5, boid.position.x));
       boid.position.y = Math.max(BOUNDS.yMin + 0.5, Math.min(BOUNDS.yMax - 0.5, boid.position.y));
       boid.position.z = Math.max(-BOUNDS.z + 0.5, Math.min(BOUNDS.z - 0.5, boid.position.z));
 
       boid.ref.position.copy(boid.position);
 
-      // SMOOTH ROTATION
-      if (boid.velocity.length() > 0.01) {
+      // SMOOTH ROTATION toward movement direction
+      if (speed > 0.01) {
         const targetQuat = new THREE.Quaternion();
         const lookDir = boid.velocity.clone().normalize();
         const lookMatrix = new THREE.Matrix4().lookAt(
@@ -458,11 +498,10 @@ const useRealtimeAquarium = (fishData) => {
         );
         targetQuat.setFromRotationMatrix(lookMatrix);
 
-        // Rotation speed based on state
-        const rotSpeed = boid.behaviorState === 'RESTING' ? 0.02 : 0.06;
-        boid.ref.quaternion.slerp(targetQuat, rotSpeed * randoms.turnRate);
+        const rotSpeed = state.mode === 'resting' ? 0.03 : 0.07;
+        boid.ref.quaternion.slerp(targetQuat, rotSpeed);
 
-        boid.bankAngle = -boid.velocity.x * 0.15;
+        boid.bankAngle = -boid.velocity.x * 0.12;
       }
     });
 
