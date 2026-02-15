@@ -343,8 +343,8 @@ export const getDefaultFish = () => [
   }),
   
   createFish({
-    id: 'bubbles',
-    name: 'Bubbles',
+    id: 'pete',
+    name: 'Pete',
     species: 'Blue Tang', // Use string directly
     position: [0, -3, -3], // VISIBLE position - center, lower area
     age: 10,
@@ -357,8 +357,8 @@ export const getDefaultFish = () => [
       shyness: 85,
     },
     display: {
-      nickname: 'Bubs',
-      bio: "The gentle soul of the tank. Bubbles prefers quiet moments and cozy corners, but has the biggest heart of all.",
+      nickname: 'Petey',
+      bio: "The gentle soul of the tank. Pete prefers quiet moments and cozy corners, but has the biggest heart of all.",
       achievements: ['Gentle Soul', 'Quiet Observer', 'Hidden Depths'],
     },
     hunger: 65,
