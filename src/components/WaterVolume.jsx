@@ -14,9 +14,9 @@ const WaterVolume = () => {
   const volumeMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
       uniforms: {
-        // Matching water surface color (#00BFFF)
-        waterColor: { value: new THREE.Color("#00BFFF") },
-        opacity: { value: 0.15 },
+        // Crystal clear water - barely visible tint
+        waterColor: { value: new THREE.Color("#e8f4f8") },
+        opacity: { value: 0.03 },
       },
       vertexShader: `
         void main() {

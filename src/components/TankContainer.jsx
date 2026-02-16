@@ -92,18 +92,18 @@ const TankContainer = () => {
         <planeGeometry args={[tankWidth, tankHeight]} />
         <MeshReflectorMaterial
           blur={[0, 0]}
-          resolution={1024} // High res (balanced for performance)
+          resolution={512}
           mixBlur={0}
-          mixStrength={100}
-          roughness={0}
+          mixStrength={40}
+          roughness={0.1}
           depthScale={1.2}
           minDepthThreshold={0}
           maxDepthThreshold={50}
           color="#ffffff"
           metalness={0}
-          mirror={1}
+          mirror={0.6}
           transparent={true}
-          opacity={0.3}
+          opacity={0.15}
           depthWrite={false}
         />
       </mesh>
@@ -124,18 +124,18 @@ const TankContainer = () => {
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
           blur={[0, 0]}
-          resolution={1024}
+          resolution={512}
           mixBlur={0}
-          mixStrength={100}
-          roughness={0}
+          mixStrength={40}
+          roughness={0.1}
           depthScale={1.2}
           minDepthThreshold={0}
           maxDepthThreshold={50}
           color="#ffffff"
           metalness={0}
-          mirror={1}
+          mirror={0.6}
           transparent={true}
-          opacity={0.3}
+          opacity={0.15}
           depthWrite={false}
         />
       </mesh>
@@ -156,18 +156,18 @@ const TankContainer = () => {
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
           blur={[0, 0]}
-          resolution={1024}
+          resolution={512}
           mixBlur={0}
-          mixStrength={100}
-          roughness={0}
+          mixStrength={40}
+          roughness={0.1}
           depthScale={1.2}
           minDepthThreshold={0}
           maxDepthThreshold={50}
           color="#ffffff"
           metalness={0}
-          mirror={1}
+          mirror={0.6}
           transparent={true}
-          opacity={0.3}
+          opacity={0.15}
           depthWrite={false}
         />
       </mesh>
