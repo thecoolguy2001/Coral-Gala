@@ -14,42 +14,21 @@ const WaterVolume = () => {
   const volumeMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
       uniforms: {
-        // Blue Aquarium Water
-        colorShallow: { value: new THREE.Color("#4fc3f7") }, // Light blue at top
-        colorDeep: { value: new THREE.Color("#0288d1") },    // Deeper blue at bottom
-        opacityShallow: { value: 0.12 }, // Visible at top
-        opacityDeep: { value: 0.3 },     // More saturated at bottom
+        // Matching water surface color (#00BFFF)
+        waterColor: { value: new THREE.Color("#00BFFF") },
+        opacity: { value: 0.15 },
       },
       vertexShader: `
-        varying vec3 vPosition;
-        varying vec3 vWorldPosition;
-
         void main() {
-          vPosition = position;
-          vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
       `,
       fragmentShader: `
-        uniform vec3 colorShallow;
-        uniform vec3 colorDeep;
-        uniform float opacityShallow;
-        uniform float opacityDeep;
-        
-        varying vec3 vPosition;
+        uniform vec3 waterColor;
+        uniform float opacity;
 
         void main() {
-          // Map Y position to 0.0 (bottom) - 1.0 (top)
-          // Adjust smoothstep range to match tank dimensions
-          float heightPct = smoothstep(-15.0, 10.0, vPosition.y);
-          
-          // Color Gradient: Dark Blue (Bottom) -> Light Blue (Top)
-          vec3 waterColor = mix(colorDeep, colorShallow, heightPct);
-          
-          // Opacity Gradient: Denser (Bottom) -> Clearer (Top)
-          float alpha = mix(opacityDeep, opacityShallow, heightPct);
-
-          gl_FragColor = vec4(waterColor, alpha);
+          gl_FragColor = vec4(waterColor, opacity);
         }
       `,
       transparent: true,
