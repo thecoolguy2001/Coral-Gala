@@ -14,7 +14,7 @@ const RealisticCaustics = () => {
     return new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        intensity: { value: 0.5 }, // Stronger caustics for visibility
+        intensity: { value: 0.25 }, // Balanced intensity for volume
       },
       vertexShader: `
         varying vec2 vUv;

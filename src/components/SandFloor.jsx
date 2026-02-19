@@ -24,11 +24,10 @@ const SandFloor = () => {
     canvas.height = 1024;
     const ctx = canvas.getContext('2d');
 
-    // 1. Base Sand Gradient - Natural aquarium sand (tan/beige)
+    // 1. Base Sand Gradient (Subtle variation across the whole area)
     const gradient = ctx.createLinearGradient(0, 0, 1024, 1024);
-    gradient.addColorStop(0, '#e8d4b8'); // Warm tan
-    gradient.addColorStop(0.5, '#d9c4a5'); // Natural beige
-    gradient.addColorStop(1, '#c9b896'); // Deeper sand tone
+    gradient.addColorStop(0, '#fdfcf0'); // Pale
+    gradient.addColorStop(1, '#f5e6cc'); // Tan
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 1024, 1024);
 
@@ -132,11 +131,11 @@ const SandFloor = () => {
     return new THREE.MeshStandardMaterial({
       map: sandTexture,
       bumpMap: sandTexture,
-      bumpScale: 0.2,          // Stronger bump for texture depth
+      bumpScale: 0.15,         // Stronger bump for texture depth
       vertexColors: true,
-      roughness: 0.85,         // Matte sand look
-      metalness: 0.05,         // Minimal reflection
-      color: "#f0e6d3"         // Warm base tint
+      roughness: 0.8,          // Slightly less rough to allow some "sparkle"
+      metalness: 0.1,          // Tiny bit of reflection for wet sand look
+      color: "#ffffff"
     });
   }, [sandTexture]);
 

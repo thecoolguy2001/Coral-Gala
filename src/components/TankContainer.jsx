@@ -92,18 +92,18 @@ const TankContainer = () => {
         <planeGeometry args={[tankWidth, tankHeight]} />
         <MeshReflectorMaterial
           blur={[0, 0]}
-          resolution={512}
+          resolution={1024}
           mixBlur={0}
-          mixStrength={40}
-          roughness={0.1}
+          mixStrength={100}
+          roughness={0}
           depthScale={1.2}
           minDepthThreshold={0}
           maxDepthThreshold={50}
           color="#ffffff"
           metalness={0}
-          mirror={0.6}
+          mirror={1}
           transparent={true}
-          opacity={0.15}
+          opacity={0.3}
           depthWrite={false}
         />
       </mesh>
@@ -124,18 +124,18 @@ const TankContainer = () => {
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
           blur={[0, 0]}
-          resolution={512}
+          resolution={1024}
           mixBlur={0}
-          mixStrength={40}
-          roughness={0.1}
+          mixStrength={100}
+          roughness={0}
           depthScale={1.2}
           minDepthThreshold={0}
           maxDepthThreshold={50}
           color="#ffffff"
           metalness={0}
-          mirror={0.6}
+          mirror={1}
           transparent={true}
-          opacity={0.15}
+          opacity={0.3}
           depthWrite={false}
         />
       </mesh>
@@ -156,18 +156,18 @@ const TankContainer = () => {
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
           blur={[0, 0]}
-          resolution={512}
+          resolution={1024}
           mixBlur={0}
-          mixStrength={40}
-          roughness={0.1}
+          mixStrength={100}
+          roughness={0}
           depthScale={1.2}
           minDepthThreshold={0}
           maxDepthThreshold={50}
           color="#ffffff"
           metalness={0}
-          mirror={0.6}
+          mirror={1}
           transparent={true}
-          opacity={0.15}
+          opacity={0.3}
           depthWrite={false}
         />
       </mesh>
