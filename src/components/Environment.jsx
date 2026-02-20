@@ -1,12 +1,17 @@
 import React from 'react';
 import * as THREE from 'three';
+import { useGLTF } from '@react-three/drei';
 import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, FRAME_THICKNESS } from '../constants/tankDimensions';
+
+// Preload rock wall model
+useGLTF.preload('/rock_wall_002.glb');
 
 /**
  * Environment - Creates a realistic room environment for the aquarium
- * Includes table surface and wall background
+ * Includes table surface and rock wall background
  */
 const Environment = () => {
+  const { scene: rockWall } = useGLTF('/rock_wall_002.glb');
   // Table dimensions
   const tableWidth = 200; // Much wider
   const tableDepth = 150; // Much deeper
@@ -32,15 +37,13 @@ const Environment = () => {
 
   return (
     <group>
-      {/* WALL - Behind the tank */}
-      <mesh position={[0, wallYPosition, wallZPosition]} receiveShadow>
-        <planeGeometry args={[wallWidth, wallHeight]} />
-        <meshStandardMaterial
-          color={wallColor}
-          roughness={0.9}
-          metalness={0.0}
-        />
-      </mesh>
+      {/* ROCK WALL - Behind the tank */}
+      <primitive
+        object={rockWall.clone()}
+        position={[0, wallYPosition, wallZPosition]}
+        scale={[50, 50, 50]}
+        rotation={[0, 0, 0]}
+      />
 
       {/* TABLE SURFACE - Under the tank (Always Wood) */}
       <mesh position={[0, tableYPosition, 0]} receiveShadow>
