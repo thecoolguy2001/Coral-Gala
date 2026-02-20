@@ -201,48 +201,48 @@ const TankContainer = () => {
       {/* RED CORAL - Left side */}
       <primitive
         object={redCoral.clone()}
-        position={[-10, -tankHeight / 2 + 1, -3]}
-        scale={[3, 3, 3]}
+        position={[-10, -tankHeight / 2 + 0.5, -3]}
+        scale={[0.5, 0.5, 0.5]}
         rotation={[0, 0.5, 0]}
       />
 
       {/* BLUE CORAL - Right side */}
       <primitive
         object={blueCoral.clone()}
-        position={[10, -tankHeight / 2 + 1, -2]}
-        scale={[3, 3, 3]}
+        position={[10, -tankHeight / 2 + 0.5, -2]}
+        scale={[0.5, 0.5, 0.5]}
         rotation={[0, -0.3, 0]}
       />
 
       {/* CORAL - Center back */}
       <primitive
         object={coral.clone()}
-        position={[0, -tankHeight / 2 + 1, -6]}
-        scale={[3, 3, 3]}
+        position={[0, -tankHeight / 2 + 0.5, -6]}
+        scale={[0.5, 0.5, 0.5]}
         rotation={[0, 0, 0]}
       />
 
       {/* SHELL - Front right */}
       <primitive
         object={shell.clone()}
-        position={[8, -tankHeight / 2 + 0.8, 4]}
-        scale={[2, 2, 2]}
+        position={[8, -tankHeight / 2 + 0.5, 4]}
+        scale={[0.3, 0.3, 0.3]}
         rotation={[0, 1.2, 0]}
       />
 
       {/* Additional coral placement - Left back */}
       <primitive
         object={coral.clone()}
-        position={[-8, -tankHeight / 2 + 1, -5]}
-        scale={[2.5, 2.5, 2.5]}
+        position={[-8, -tankHeight / 2 + 0.5, -5]}
+        scale={[0.4, 0.4, 0.4]}
         rotation={[0, 1.5, 0]}
       />
 
       {/* Additional shell - Left front */}
       <primitive
         object={shell.clone()}
-        position={[-6, -tankHeight / 2 + 0.8, 3]}
-        scale={[1.5, 1.5, 1.5]}
+        position={[-6, -tankHeight / 2 + 0.5, 3]}
+        scale={[0.25, 0.25, 0.25]}
         rotation={[0, -0.8, 0]}
       />
     </group>
