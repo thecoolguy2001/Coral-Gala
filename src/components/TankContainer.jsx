@@ -211,72 +211,72 @@ const TankContainer = () => {
       {/* 1. RED CORAL - Left back */}
       <primitive
         object={redCoral.clone()}
-        position={[-12, -tankHeight / 2 + 1, -5]}
-        scale={[2, 2, 2]}
+        position={[-12, -tankHeight / 2 + 0.5, -5]}
+        scale={[0.5, 0.5, 0.5]}
         rotation={[0, 0.5, 0]}
       />
 
       {/* 2. BLUE CORAL - Right back */}
       <primitive
         object={blueCoral.clone()}
-        position={[12, -tankHeight / 2 + 1, -4]}
-        scale={[2, 2, 2]}
+        position={[12, -tankHeight / 2 + 0.5, -4]}
+        scale={[0.5, 0.5, 0.5]}
         rotation={[0, -0.3, 0]}
       />
 
       {/* 3. LOWPOLY CORAL - Center back */}
       <primitive
         object={lowpolyCoral.clone()}
-        position={[0, -tankHeight / 2 + 1, -7]}
-        scale={[2, 2, 2]}
+        position={[0, -tankHeight / 2 + 0.5, -7]}
+        scale={[0.5, 0.5, 0.5]}
         rotation={[0, 0, 0]}
       />
 
       {/* 4. LOWPOLY CORAL 2 - Left center */}
       <primitive
         object={lowpolyCoral2.clone()}
-        position={[-8, -tankHeight / 2 + 1, -2]}
-        scale={[2, 2, 2]}
+        position={[-8, -tankHeight / 2 + 0.5, -2]}
+        scale={[0.5, 0.5, 0.5]}
         rotation={[0, 1.0, 0]}
       />
 
       {/* 5. SHELL - Front center */}
       <primitive
         object={shell.clone()}
-        position={[0, -tankHeight / 2 + 1, 3]}
-        scale={[1.5, 1.5, 1.5]}
+        position={[0, -tankHeight / 2 + 0.5, 3]}
+        scale={[0.4, 0.4, 0.4]}
         rotation={[0, 0.5, 0]}
       />
 
       {/* 6. CHROMAFLARE REEF CORAL - Right center */}
       <primitive
         object={chromaCoral.clone()}
-        position={[8, -tankHeight / 2 + 1, -1]}
-        scale={[2, 2, 2]}
+        position={[8, -tankHeight / 2 + 0.5, -1]}
+        scale={[0.5, 0.5, 0.5]}
         rotation={[0, -0.8, 0]}
       />
 
       {/* 7. CORAL - Left front */}
       <primitive
         object={coral.clone()}
-        position={[-10, -tankHeight / 2 + 1, 2]}
-        scale={[2, 2, 2]}
+        position={[-10, -tankHeight / 2 + 0.5, 2]}
+        scale={[0.5, 0.5, 0.5]}
         rotation={[0, 0.3, 0]}
       />
 
       {/* 8. CORAL 2 - Right front */}
       <primitive
         object={coral2.clone()}
-        position={[10, -tankHeight / 2 + 1, 2]}
-        scale={[2, 2, 2]}
+        position={[10, -tankHeight / 2 + 0.5, 2]}
+        scale={[0.5, 0.5, 0.5]}
         rotation={[0, -0.5, 0]}
       />
 
       {/* 9. SIDERASTREA CORAL - Center */}
       <primitive
         object={siderastreaCoral.clone()}
-        position={[4, -tankHeight / 2 + 1, -3]}
-        scale={[2, 2, 2]}
+        position={[4, -tankHeight / 2 + 0.5, -3]}
+        scale={[0.5, 0.5, 0.5]}
         rotation={[0, 1.2, 0]}
       />
     </group>
