@@ -9,11 +9,11 @@ import SandFloor from './SandFloor';
 useGLTF.preload('/coral/low_poly_red_coral.glb');
 useGLTF.preload('/coral/blue_lowpoly_coral.glb');
 useGLTF.preload('/coral/lowpoly_coral.glb');
-useGLTF.preload('/coral/lowpoly_coral (1).glb');
+useGLTF.preload('/coral/lowpoly_coral2.glb');
 useGLTF.preload('/coral/lambis_shell.glb');
 useGLTF.preload('/coral/chromaflare_reef_-_coral.glb');
 useGLTF.preload('/coral/coral.glb');
-useGLTF.preload('/coral/coral (1).glb');
+useGLTF.preload('/coral/coral2.glb');
 useGLTF.preload('/coral/coral_siderastrea_pliocenica_remade.glb');
 
 /**
@@ -26,11 +26,11 @@ const TankContainer = () => {
   const { scene: redCoral } = useGLTF('/coral/low_poly_red_coral.glb');
   const { scene: blueCoral } = useGLTF('/coral/blue_lowpoly_coral.glb');
   const { scene: lowpolyCoral } = useGLTF('/coral/lowpoly_coral.glb');
-  const { scene: lowpolyCoral2 } = useGLTF('/coral/lowpoly_coral (1).glb');
+  const { scene: lowpolyCoral2 } = useGLTF('/coral/lowpoly_coral2.glb');
   const { scene: shell } = useGLTF('/coral/lambis_shell.glb');
   const { scene: chromaCoral } = useGLTF('/coral/chromaflare_reef_-_coral.glb');
   const { scene: coral } = useGLTF('/coral/coral.glb');
-  const { scene: coral2 } = useGLTF('/coral/coral (1).glb');
+  const { scene: coral2 } = useGLTF('/coral/coral2.glb');
   const { scene: siderastreaCoral } = useGLTF('/coral/coral_siderastrea_pliocenica_remade.glb');
 
   // Use shared tank dimensions
