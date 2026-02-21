@@ -11,7 +11,7 @@ const Environment = () => {
   const tableWidth = 200; // Much wider
   const tableDepth = 150; // Much deeper
   const tableHeight = 2;
-  const tableYPosition = -TANK_HEIGHT / 2 - FRAME_THICKNESS - tableHeight / 2 - 0.5;
+  const tableYPosition = -TANK_HEIGHT / 2 - FRAME_THICKNESS - tableHeight / 2;
 
   // Wall dimensions
   const wallWidth = 500; 

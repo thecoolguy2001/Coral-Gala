@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { MeshReflectorMaterial, useGLTF } from '@react-three/drei';
+import { MeshReflectorMaterial, useGLTF, Clone } from '@react-three/drei';
 import * as THREE from 'three';
 import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, GLASS_THICKNESS, FRAME_THICKNESS } from '../constants/tankDimensions';
 import SandDust from './SandDust';
@@ -39,6 +39,9 @@ const TankContainer = () => {
   const tankDepth = TANK_DEPTH - 0.4;
   const glassThickness = GLASS_THICKNESS;
   const frameThickness = FRAME_THICKNESS;
+
+  // Floor Y position for decorations (lifted to be on top of sand)
+  const floorY = -tankHeight / 2 + 2.5;
 
   return (
     <group ref={tankRef}>
@@ -208,79 +211,101 @@ const TankContainer = () => {
       {/* Sand Dust Particles */}
       <SandDust />
 
-      {/* 1. RED CORAL - Left back */}
-      <primitive
-        object={redCoral.clone()}
-        position={[-12, -tankHeight / 2 + 0.5, -5]}
-        scale={[0.5, 0.5, 0.5]}
-        rotation={[0, 0.5, 0]}
-      />
+      {/* CORAL DECORATIONS - Repositioned and Scaled for better visibility */}
+      <group>
+        {/* 1. RED CORAL - Left back */}
+        <Clone
+          object={redCoral}
+          position={[-10, floorY, -4]}
+          scale={1.2}
+          rotation={[0, 0.5, 0]}
+          castShadow
+          receiveShadow
+        />
 
-      {/* 2. BLUE CORAL - Right back */}
-      <primitive
-        object={blueCoral.clone()}
-        position={[12, -tankHeight / 2 + 0.5, -4]}
-        scale={[0.5, 0.5, 0.5]}
-        rotation={[0, -0.3, 0]}
-      />
+        {/* 2. BLUE CORAL - Right back */}
+        <Clone
+          object={blueCoral}
+          position={[10, floorY, -3]}
+          scale={1.2}
+          rotation={[0, -0.3, 0]}
+          castShadow
+          receiveShadow
+        />
 
-      {/* 3. LOWPOLY CORAL - Center back */}
-      <primitive
-        object={lowpolyCoral.clone()}
-        position={[0, -tankHeight / 2 + 0.5, -7]}
-        scale={[0.5, 0.5, 0.5]}
-        rotation={[0, 0, 0]}
-      />
+        {/* 3. LOWPOLY CORAL - Center back */}
+        <Clone
+          object={lowpolyCoral}
+          position={[0, floorY, -6]}
+          scale={1.8}
+          rotation={[0, 0, 0]}
+          castShadow
+          receiveShadow
+        />
 
-      {/* 4. LOWPOLY CORAL 2 - Left center */}
-      <primitive
-        object={lowpolyCoral2.clone()}
-        position={[-8, -tankHeight / 2 + 0.5, -2]}
-        scale={[0.5, 0.5, 0.5]}
-        rotation={[0, 1.0, 0]}
-      />
+        {/* 4. LOWPOLY CORAL 2 - Left center */}
+        <Clone
+          object={lowpolyCoral2}
+          position={[-8, floorY, -2]}
+          scale={1.5}
+          rotation={[0, 1.0, 0]}
+          castShadow
+          receiveShadow
+        />
 
-      {/* 5. SHELL - Front center */}
-      <primitive
-        object={shell.clone()}
-        position={[0, -tankHeight / 2 + 0.5, 3]}
-        scale={[0.4, 0.4, 0.4]}
-        rotation={[0, 0.5, 0]}
-      />
+        {/* 5. SHELL - Front center */}
+        <Clone
+          object={shell}
+          position={[-2, floorY, 4]}
+          scale={2.5}
+          rotation={[0.2, 0.5, 0.1]}
+          castShadow
+          receiveShadow
+        />
 
-      {/* 6. CHROMAFLARE REEF CORAL - Right center */}
-      <primitive
-        object={chromaCoral.clone()}
-        position={[8, -tankHeight / 2 + 0.5, -1]}
-        scale={[0.5, 0.5, 0.5]}
-        rotation={[0, -0.8, 0]}
-      />
+        {/* 6. CHROMAFLARE REEF CORAL - Right center */}
+        <Clone
+          object={chromaCoral}
+          position={[8, floorY, -1]}
+          scale={1.2}
+          rotation={[0, -0.8, 0]}
+          castShadow
+          receiveShadow
+        />
 
-      {/* 7. CORAL - Left front */}
-      <primitive
-        object={coral.clone()}
-        position={[-10, -tankHeight / 2 + 0.5, 2]}
-        scale={[0.5, 0.5, 0.5]}
-        rotation={[0, 0.3, 0]}
-      />
+        {/* 7. CORAL - Left front */}
+        <Clone
+          object={coral}
+          position={[-10, floorY, 2]}
+          scale={0.5}
+          rotation={[0, 0.3, 0]}
+          castShadow
+          receiveShadow
+        />
 
-      {/* 8. CORAL 2 - Right front */}
-      <primitive
-        object={coral2.clone()}
-        position={[10, -tankHeight / 2 + 0.5, 2]}
-        scale={[0.5, 0.5, 0.5]}
-        rotation={[0, -0.5, 0]}
-      />
+        {/* 8. CORAL 2 - Right front */}
+        <Clone
+          object={coral2}
+          position={[10, floorY, 2]}
+          scale={0.5}
+          rotation={[0, -0.5, 0]}
+          castShadow
+          receiveShadow
+        />
 
-      {/* 9. SIDERASTREA CORAL - Center */}
-      <primitive
-        object={siderastreaCoral.clone()}
-        position={[4, -tankHeight / 2 + 0.5, -3]}
-        scale={[0.5, 0.5, 0.5]}
-        rotation={[0, 1.2, 0]}
-      />
+        {/* 9. SIDERASTREA CORAL - Center */}
+        <Clone
+          object={siderastreaCoral}
+          position={[4, floorY, -3]}
+          scale={0.8}
+          rotation={[0, 1.2, 0]}
+          castShadow
+          receiveShadow
+        />
+      </group>
     </group>
   );
 };
 
 export default TankContainer;
+
