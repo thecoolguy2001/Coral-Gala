@@ -37,12 +37,12 @@ const WaterVolume = () => {
     });
   }, []);
 
-  // Interior water volume dimensions
-  const volumeWidth = INTERIOR_WIDTH + 0.1;
-  const topY = WATER_LEVEL + 0.1; 
+  // Water volume fills the full tank interior edge to edge
+  const volumeWidth = INTERIOR_WIDTH + 2.0;
+  const topY = WATER_LEVEL + 0.1;
   const bottomY = -TANK_HEIGHT / 2;
-  const waterHeight = topY - bottomY; 
-  const volumeDepth = INTERIOR_DEPTH + 0.1;
+  const waterHeight = topY - bottomY;
+  const volumeDepth = INTERIOR_DEPTH + 2.0;
   const waterYPosition = (topY + bottomY) / 2;
 
   return (

@@ -40,9 +40,9 @@ const TankContainer = () => {
   const glassThickness = GLASS_THICKNESS;
   const frameThickness = FRAME_THICKNESS;
 
-  // Sand bed is 1.5 units thick + dune displacement on top
+  // Sand bed is 0.8 units thick + dune displacement on top
   // Decorations sit on top of the sand surface
-  const sandThickness = 1.5;
+  const sandThickness = 0.8;
   const floorY = -tankHeight / 2 + sandThickness + 0.5;
 
   return (

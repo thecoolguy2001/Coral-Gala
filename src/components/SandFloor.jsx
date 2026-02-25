@@ -12,7 +12,7 @@ const SandFloor = () => {
 
   const width = TANK_WIDTH - 0.6;
   const depth = TANK_DEPTH - 0.6;
-  const sandThickness = 1.5;
+  const sandThickness = 0.8;
   const segX = 128;
   const segZ = 128;
 
