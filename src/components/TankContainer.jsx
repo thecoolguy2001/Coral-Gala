@@ -211,13 +211,13 @@ const TankContainer = () => {
       {/* Sand Dust Particles */}
       <SandDust />
 
-      {/* CORAL DECORATIONS - All 9 models distinctly positioned and scaled */}
+      {/* CORAL DECORATIONS - All 9 models scaled to fit inside tank */}
       <group>
         {/* 1. RED CORAL - Far Left Back */}
         <Clone
           object={redCoral}
-          position={[-15, floorY, -7]}
-          scale={1.5}
+          position={[-13, floorY, -5]}
+          scale={0.7}
           rotation={[0, 0.5, 0]}
           castShadow
           receiveShadow
@@ -226,8 +226,8 @@ const TankContainer = () => {
         {/* 2. BLUE CORAL - Far Right Back */}
         <Clone
           object={blueCoral}
-          position={[15, floorY, -7]}
-          scale={1.5}
+          position={[13, floorY, -5]}
+          scale={0.7}
           rotation={[0, -0.3, 0]}
           castShadow
           receiveShadow
@@ -236,8 +236,8 @@ const TankContainer = () => {
         {/* 3. LOWPOLY CORAL - Far Back Center */}
         <Clone
           object={lowpolyCoral}
-          position={[0, floorY, -8]}
-          scale={2.0}
+          position={[0, floorY, -6]}
+          scale={0.9}
           rotation={[0, 0, 0]}
           castShadow
           receiveShadow
@@ -246,8 +246,8 @@ const TankContainer = () => {
         {/* 4. LOWPOLY CORAL 2 - Mid Left */}
         <Clone
           object={lowpolyCoral2}
-          position={[-12, floorY, -2]}
-          scale={1.8}
+          position={[-10, floorY, -1]}
+          scale={0.8}
           rotation={[0, 1.2, 0]}
           castShadow
           receiveShadow
@@ -256,8 +256,8 @@ const TankContainer = () => {
         {/* 5. SHELL - Front Left Center */}
         <Clone
           object={shell}
-          position={[-6, floorY, 5]}
-          scale={2.5}
+          position={[-5, floorY, 4]}
+          scale={1.2}
           rotation={[0.2, 0.8, 0.1]}
           castShadow
           receiveShadow
@@ -266,8 +266,8 @@ const TankContainer = () => {
         {/* 6. CHROMAFLARE REEF CORAL - Mid Right */}
         <Clone
           object={chromaCoral}
-          position={[12, floorY, -2]}
-          scale={1.5}
+          position={[10, floorY, -1]}
+          scale={0.7}
           rotation={[0, -0.8, 0]}
           castShadow
           receiveShadow
@@ -276,8 +276,8 @@ const TankContainer = () => {
         {/* 7. CORAL - Front Left */}
         <Clone
           object={coral}
-          position={[-14, floorY, 6]}
-          scale={1.2}
+          position={[-12, floorY, 4]}
+          scale={0.6}
           rotation={[0, 0.3, 0]}
           castShadow
           receiveShadow
@@ -286,8 +286,8 @@ const TankContainer = () => {
         {/* 8. CORAL 2 - Front Right */}
         <Clone
           object={coral2}
-          position={[14, floorY, 6]}
-          scale={1.2}
+          position={[12, floorY, 4]}
+          scale={0.6}
           rotation={[0, -0.5, 0]}
           castShadow
           receiveShadow
@@ -296,8 +296,8 @@ const TankContainer = () => {
         {/* 9. SIDERASTREA CORAL - Front Right Center */}
         <Clone
           object={siderastreaCoral}
-          position={[6, floorY, 5]}
-          scale={1.5}
+          position={[5, floorY, 4]}
+          scale={0.7}
           rotation={[0, 1.2, 0]}
           castShadow
           receiveShadow
