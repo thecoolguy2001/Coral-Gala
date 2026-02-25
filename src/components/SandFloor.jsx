@@ -13,7 +13,7 @@ const SandFloor = () => {
   // Dimensions - fill the tank floor wall to wall
   const width = TANK_WIDTH - 0.6;
   const depth = TANK_DEPTH - 0.6;
-  const sandThickness = 3.0; // Thick base layer of sand
+  const sandThickness = 1.2; // Solid base layer of sand
   const segments = 128;
 
   // Generate Procedural Sand Texture
@@ -76,8 +76,8 @@ const SandFloor = () => {
       y += Math.sin(x * 0.3 + z * 0.1) * 0.4;
       // Small ripples
       y += Math.sin(x * 2.0) * 0.1;
-      // Always positive - sand surface is always above the base
-      y = Math.max(0.1, y + 0.3);
+      // Start at 0 so surface sits flush on the sand body
+      y = Math.max(0, y + 0.2);
       return y;
     };
 
@@ -122,7 +122,7 @@ const SandFloor = () => {
         ref={meshRef}
         geometry={surfaceGeometry}
         material={sandMaterial}
-        position={[0, sandThickness, 0]}
+        position={[0, sandThickness - 0.1, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
       />
