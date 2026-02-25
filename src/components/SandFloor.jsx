@@ -1,22 +1,22 @@
 import React, { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { TANK_WIDTH, TANK_DEPTH, TANK_HEIGHT } from '../constants/tankDimensions';
+import { TANK_WIDTH, TANK_DEPTH } from '../constants/tankDimensions';
 
 /**
- * SandFloor - Thick sand bed with displaced surface on top
- * The sand fills the bottom of the tank as a solid layer,
- * with dunes and ripples on the surface.
+ * SandFloor - Thick sand bed built as a single extruded mesh.
+ * The top surface has dune displacement, the sides and bottom are flat.
+ * Looks like a real layer of sand poured into the tank.
  */
 const SandFloor = () => {
   const meshRef = useRef();
 
-  // Dimensions - fill the tank floor wall to wall
   const width = TANK_WIDTH - 0.6;
   const depth = TANK_DEPTH - 0.6;
-  const sandThickness = 1.2; // Solid base layer of sand
-  const segments = 128;
+  const sandThickness = 1.5;
+  const segX = 128;
+  const segZ = 128;
 
-  // Generate Procedural Sand Texture
+  // Procedural Sand Texture
   const sandTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 1024;
@@ -37,8 +37,8 @@ const SandFloor = () => {
       const grain = (Math.random() - 0.5) * 40;
 
       let r = data[i] + grain;
-      let g = data[i+1] + grain;
-      let b = data[i+2] + grain;
+      let g = data[i + 1] + grain;
+      let b = data[i + 2] + grain;
 
       if (randomVal > 0.95) {
         r *= 0.6; g *= 0.6; b *= 0.6;
@@ -47,8 +47,8 @@ const SandFloor = () => {
       }
 
       data[i] = Math.max(0, Math.min(255, r));
-      data[i+1] = Math.max(0, Math.min(255, g));
-      data[i+2] = Math.max(0, Math.min(255, b));
+      data[i + 1] = Math.max(0, Math.min(255, g));
+      data[i + 2] = Math.max(0, Math.min(255, b));
     }
 
     ctx.putImageData(imageData, 0, 0);
@@ -61,35 +61,37 @@ const SandFloor = () => {
     return texture;
   }, []);
 
-  // Sand surface geometry with dune displacement
-  const surfaceGeometry = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(width, depth, segments, segments);
-
+  // Build a single solid sand geometry: flat bottom/sides, displaced top
+  const sandGeometry = useMemo(() => {
+    const geo = new THREE.BoxGeometry(width, sandThickness, depth, segX, 1, segZ);
     const posAttribute = geo.attributes.position;
     const vertex = new THREE.Vector3();
 
     const noise = (x, z) => {
       let y = 0;
       // Large dunes
-      y += Math.abs(Math.sin(x * 0.12) * Math.cos(z * 0.08)) * 1.2;
-      // Secondary asymmetrical drift (wind blown look)
-      y += Math.sin(x * 0.3 + z * 0.1) * 0.4;
+      y += Math.abs(Math.sin(x * 0.12) * Math.cos(z * 0.08)) * 1.0;
+      // Secondary asymmetrical drift
+      y += Math.sin(x * 0.3 + z * 0.1) * 0.3;
       // Small ripples
-      y += Math.sin(x * 2.0) * 0.1;
-      // Start at 0 so surface sits flush on the sand body
-      y = Math.max(0, y + 0.2);
+      y += Math.sin(x * 2.0) * 0.08;
+      y = Math.max(0, y + 0.15);
       return y;
     };
 
+    // Only displace vertices on the top face (y > 0)
     for (let i = 0; i < posAttribute.count; i++) {
       vertex.fromBufferAttribute(posAttribute, i);
-      const height = noise(vertex.x, vertex.y);
-      posAttribute.setZ(i, height);
+      if (vertex.y > 0) {
+        // This vertex is on the top face - apply dune displacement
+        const duneHeight = noise(vertex.x, vertex.z);
+        posAttribute.setY(i, vertex.y + duneHeight);
+      }
     }
 
     geo.computeVertexNormals();
     return geo;
-  }, [width, depth]);
+  }, [width, depth, sandThickness]);
 
   const sandMaterial = useMemo(() => {
     return new THREE.MeshStandardMaterial({
@@ -98,35 +100,18 @@ const SandFloor = () => {
       bumpScale: 0.15,
       roughness: 0.8,
       metalness: 0.1,
-      color: "#ffffff"
+      color: '#ffffff',
     });
   }, [sandTexture]);
 
   return (
-    <group>
-      {/* Solid sand body - thick box filling the bottom of the tank */}
-      <mesh position={[0, sandThickness / 2, 0]} receiveShadow>
-        <boxGeometry args={[width, sandThickness, depth]} />
-        <meshStandardMaterial
-          map={sandTexture}
-          bumpMap={sandTexture}
-          bumpScale={0.1}
-          roughness={0.85}
-          metalness={0.05}
-          color="#f0e0c8"
-        />
-      </mesh>
-
-      {/* Sand surface with dunes on top of the solid body */}
-      <mesh
-        ref={meshRef}
-        geometry={surfaceGeometry}
-        material={sandMaterial}
-        position={[0, sandThickness - 0.1, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-      />
-    </group>
+    <mesh
+      ref={meshRef}
+      geometry={sandGeometry}
+      material={sandMaterial}
+      position={[0, sandThickness / 2, 0]}
+      receiveShadow
+    />
   );
 };
 

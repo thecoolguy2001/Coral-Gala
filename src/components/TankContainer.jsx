@@ -40,9 +40,9 @@ const TankContainer = () => {
   const glassThickness = GLASS_THICKNESS;
   const frameThickness = FRAME_THICKNESS;
 
-  // Sand bed is 1.2 units thick + dune displacement on top
+  // Sand bed is 1.5 units thick + dune displacement on top
   // Decorations sit on top of the sand surface
-  const sandThickness = 1.2;
+  const sandThickness = 1.5;
   const floorY = -tankHeight / 2 + sandThickness + 0.5;
 
   return (
@@ -99,7 +99,7 @@ const TankContainer = () => {
 
       {/* Left Glass - REFLECTIVE */}
       <mesh position={[-tankWidth / 2, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow={false} receiveShadow={false}>
-        <boxGeometry args={[tankDepth, tankHeight, glassThickness]} />
+        <boxGeometry args={[tankDepth + frameThickness * 2, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
@@ -131,7 +131,7 @@ const TankContainer = () => {
 
       {/* Right Glass - REFLECTIVE */}
       <mesh position={[tankWidth / 2, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow={false} receiveShadow={false}>
-        <boxGeometry args={[tankDepth, tankHeight, glassThickness]} />
+        <boxGeometry args={[tankDepth + frameThickness * 2, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
