@@ -253,11 +253,11 @@ const TankContainer = () => {
           receiveShadow
         />
 
-        {/* 5. SHELL - Front Left Center */}
+        {/* 5. SHELL - Back Right Corner */}
         <Clone
           object={shell}
-          position={[-5, floorY, 4]}
-          scale={1.2}
+          position={[14, floorY, -6]}
+          scale={0.5}
           rotation={[0.2, 0.8, 0.1]}
           castShadow
           receiveShadow
