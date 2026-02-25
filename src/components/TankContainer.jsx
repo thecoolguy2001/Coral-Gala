@@ -33,15 +33,15 @@ const TankContainer = () => {
   const { scene: coral2 } = useGLTF('/coral/coral2.glb');
   const { scene: siderastreaCoral } = useGLTF('/coral/coral_siderastrea_pliocenica_remade.glb');
 
-  // Use shared tank dimensions
-  const tankWidth = TANK_WIDTH - 0.4;
+  // Use shared tank dimensions - no gap between glass and frame
+  const tankWidth = TANK_WIDTH;
   const tankHeight = TANK_HEIGHT;
-  const tankDepth = TANK_DEPTH - 0.4;
+  const tankDepth = TANK_DEPTH;
   const glassThickness = GLASS_THICKNESS;
   const frameThickness = FRAME_THICKNESS;
 
-  // Floor Y position for decorations (lifted to be on top of sand)
-  const floorY = -tankHeight / 2 + 2.5;
+  // Floor Y position for decorations (sitting on sand surface)
+  const floorY = -tankHeight / 2 + 0.5;
 
   return (
     <group ref={tankRef}>
@@ -204,7 +204,7 @@ const TankContainer = () => {
       ))}
 
       {/* Substrate - REPLACED with Realistic Sand Floor */}
-      <group position={[0, -tankHeight / 2 + 0.4, 0]}>
+      <group position={[0, -tankHeight / 2, 0]}>
         <SandFloor />
       </group>
 
