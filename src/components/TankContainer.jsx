@@ -270,6 +270,16 @@ const TankContainer = () => {
           castShadow
           receiveShadow
         />
+
+        {/* 6. CHROMAFLARE REEF CORAL - Center for now */}
+        <Clone
+          object={chromaCoral}
+          position={[0, floorY, -2]}
+          scale={0.7}
+          rotation={[0, 0, 0]}
+          castShadow
+          receiveShadow
+        />
       </group>
     </group>
   );
