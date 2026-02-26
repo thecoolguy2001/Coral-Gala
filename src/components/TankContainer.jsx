@@ -33,10 +33,10 @@ const TankContainer = () => {
   const { scene: coral2 } = useGLTF('/coral/coral2.glb');
   const { scene: siderastreaCoral } = useGLTF('/coral/coral_siderastrea_pliocenica_remade.glb');
 
-  // Use shared tank dimensions - match frame exactly
-  const tankWidth = TANK_WIDTH;
+  // Use shared tank dimensions
+  const tankWidth = TANK_WIDTH - 0.4;
   const tankHeight = TANK_HEIGHT;
-  const tankDepth = TANK_DEPTH;
+  const tankDepth = TANK_DEPTH - 0.4;
   const glassThickness = GLASS_THICKNESS;
   const frameThickness = FRAME_THICKNESS;
 
@@ -47,9 +47,9 @@ const TankContainer = () => {
 
   return (
     <group ref={tankRef}>
-      {/* Front Glass (Transparent) - extended width to overlap corner posts */}
+      {/* Front Glass (Transparent) */}
       <mesh position={[0, 0, tankDepth / 2]} castShadow={false} receiveShadow={false}>
-        <boxGeometry args={[tankWidth + frameThickness * 2, tankHeight, glassThickness]} />
+        <boxGeometry args={[tankWidth, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
@@ -62,9 +62,9 @@ const TankContainer = () => {
         />
       </mesh>
 
-      {/* Back Glass - REFLECTIVE MIRROR - extended width to overlap corner posts */}
+      {/* Back Glass - REFLECTIVE MIRROR */}
       <mesh position={[0, 0, -tankDepth / 2]} castShadow={false} receiveShadow={false}>
-        <boxGeometry args={[tankWidth + frameThickness * 2, tankHeight, glassThickness]} />
+        <boxGeometry args={[tankWidth, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
@@ -78,7 +78,7 @@ const TankContainer = () => {
       </mesh>
       {/* Internal Reflection Plane - Back */}
       <mesh position={[0, 0, -tankDepth / 2 + 0.2]} rotation={[0, 0, 0]} castShadow={false} receiveShadow={false} side={THREE.DoubleSide}>
-        <planeGeometry args={[tankWidth + frameThickness * 2, tankHeight]} />
+        <planeGeometry args={[tankWidth, tankHeight]} />
         <MeshReflectorMaterial
           blur={[0, 0]}
           resolution={1024}
@@ -99,7 +99,7 @@ const TankContainer = () => {
 
       {/* Left Glass - REFLECTIVE */}
       <mesh position={[-tankWidth / 2, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow={false} receiveShadow={false}>
-        <boxGeometry args={[tankDepth + frameThickness * 2, tankHeight, glassThickness]} />
+        <boxGeometry args={[tankDepth, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
@@ -131,7 +131,7 @@ const TankContainer = () => {
 
       {/* Right Glass - REFLECTIVE */}
       <mesh position={[tankWidth / 2, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow={false} receiveShadow={false}>
-        <boxGeometry args={[tankDepth + frameThickness * 2, tankHeight, glassThickness]} />
+        <boxGeometry args={[tankDepth, tankHeight, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
@@ -163,7 +163,7 @@ const TankContainer = () => {
 
       {/* Bottom Glass */}
       <mesh position={[0, -tankHeight / 2, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow={false} receiveShadow={false}>
-        <boxGeometry args={[tankWidth + frameThickness * 2, tankDepth + frameThickness * 2, glassThickness]} />
+        <boxGeometry args={[tankWidth, tankDepth, glassThickness]} />
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
