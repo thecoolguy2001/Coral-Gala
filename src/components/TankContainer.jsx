@@ -261,16 +261,6 @@ const TankContainer = () => {
           receiveShadow
         />
 
-        {/* 5. SHELL - Center Front for visibility */}
-        <Clone
-          object={shell}
-          position={[-5, floorY, 5]}
-          scale={5.0}
-          rotation={[0, 0, 0]}
-          castShadow
-          receiveShadow
-        />
-
         {/* 6. CHROMAFLARE REEF CORAL - Far Back Left */}
         <Clone
           object={chromaCoral}
@@ -301,15 +291,6 @@ const TankContainer = () => {
           receiveShadow
         />
 
-        {/* 9. SIDERASTREA CORAL - Center for now */}
-        <Clone
-          object={siderastreaCoral}
-          position={[5, floorY, 5]}
-          scale={20.0}
-          rotation={[0, 0, 0]}
-          castShadow
-          receiveShadow
-        />
       </group>
     </group>
   );
