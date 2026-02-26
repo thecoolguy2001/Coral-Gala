@@ -236,24 +236,34 @@ const TankContainer = () => {
         <Clone
           object={blueCoral}
           position={[9, floorY, 0]}
-          scale={3.0}
+          scale={2.2}
           rotation={[0, 0, 0]}
           castShadow
           receiveShadow
         />
-        {/* 3. LOWPOLY CORAL - Front Left */}
+        {/* 3. LOWPOLY CORAL - Front Left Corner */}
         <Clone
           object={lowpolyCoral}
-          position={[-12, floorY, 5]}
-          scale={1.5}
+          position={[-15, floorY, 6]}
+          scale={0.9}
           rotation={[0, 0, 0]}
           castShadow
           receiveShadow
         />
 
-        {/* 4. LOWPOLY CORAL 2 - Center for now */}
+        {/* 4. LOWPOLY CORAL 2 - Front Right */}
         <Clone
           object={lowpolyCoral2}
+          position={[5, floorY, 3]}
+          scale={0.7}
+          rotation={[0, 0, 0]}
+          castShadow
+          receiveShadow
+        />
+
+        {/* 5. SHELL - Center for now */}
+        <Clone
+          object={shell}
           position={[0, floorY, 0]}
           scale={0.7}
           rotation={[0, 0, 0]}
