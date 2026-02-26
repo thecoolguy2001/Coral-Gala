@@ -174,22 +174,22 @@ const TankContainer = () => {
 
       {/* Tank Frame - slightly offset outward from glass */}
       {/* Top front bar */}
-      <mesh position={[0, tankHeight / 2 + frameThickness / 2, tankDepth / 2 + frameThickness / 4]} castShadow={false}>
+      <mesh position={[0, tankHeight / 2 + frameThickness / 2, tankDepth / 2 + frameThickness / 3]} castShadow={false}>
         <boxGeometry args={[tankWidth + frameThickness * 1.5, frameThickness, frameThickness]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
       </mesh>
       {/* Top back bar */}
-      <mesh position={[0, tankHeight / 2 + frameThickness / 2, -tankDepth / 2 - frameThickness / 4]} castShadow={false}>
+      <mesh position={[0, tankHeight / 2 + frameThickness / 2, -tankDepth / 2 - frameThickness / 3]} castShadow={false}>
         <boxGeometry args={[tankWidth + frameThickness * 1.5, frameThickness, frameThickness]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
       </mesh>
       {/* Top left bar */}
-      <mesh position={[-tankWidth / 2 - frameThickness / 4, tankHeight / 2 + frameThickness / 2, 0]} castShadow={false}>
+      <mesh position={[-tankWidth / 2 - frameThickness / 3, tankHeight / 2 + frameThickness / 2, 0]} castShadow={false}>
         <boxGeometry args={[frameThickness, frameThickness, tankDepth]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
       </mesh>
       {/* Top right bar */}
-      <mesh position={[tankWidth / 2 + frameThickness / 4, tankHeight / 2 + frameThickness / 2, 0]} castShadow={false}>
+      <mesh position={[tankWidth / 2 + frameThickness / 3, tankHeight / 2 + frameThickness / 2, 0]} castShadow={false}>
         <boxGeometry args={[frameThickness, frameThickness, tankDepth]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.4} metalness={0.2} />
       </mesh>
@@ -200,10 +200,10 @@ const TankContainer = () => {
       </mesh>
       {/* Corner posts */}
       {[
-        [-tankWidth / 2 - frameThickness / 4, 0, tankDepth / 2 + frameThickness / 4],
-        [tankWidth / 2 + frameThickness / 4, 0, tankDepth / 2 + frameThickness / 4],
-        [-tankWidth / 2 - frameThickness / 4, 0, -tankDepth / 2 - frameThickness / 4],
-        [tankWidth / 2 + frameThickness / 4, 0, -tankDepth / 2 - frameThickness / 4],
+        [-tankWidth / 2 - frameThickness / 3, 0, tankDepth / 2 + frameThickness / 3],
+        [tankWidth / 2 + frameThickness / 3, 0, tankDepth / 2 + frameThickness / 3],
+        [-tankWidth / 2 - frameThickness / 3, 0, -tankDepth / 2 - frameThickness / 3],
+        [tankWidth / 2 + frameThickness / 3, 0, -tankDepth / 2 - frameThickness / 3],
       ].map((pos, i) => (
         <mesh key={`corner-${i}`} position={pos} castShadow={false}>
           <boxGeometry args={[frameThickness, tankHeight + frameThickness * 2, frameThickness]} />
