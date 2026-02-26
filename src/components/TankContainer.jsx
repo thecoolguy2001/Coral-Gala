@@ -281,9 +281,19 @@ const TankContainer = () => {
           receiveShadow
         />
 
-        {/* 7. CORAL - Center for now */}
+        {/* 7. CORAL - Back Left Corner */}
         <Clone
           object={coral}
+          position={[-15, floorY, -7]}
+          scale={0.2}
+          rotation={[0, 0, 0]}
+          castShadow
+          receiveShadow
+        />
+
+        {/* 8. CORAL 2 - Center for now */}
+        <Clone
+          object={coral2}
           position={[0, floorY, 0]}
           scale={0.7}
           rotation={[0, 0, 0]}
