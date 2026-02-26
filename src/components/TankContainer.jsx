@@ -222,72 +222,70 @@ const TankContainer = () => {
 
       {/* CORAL DECORATIONS - Adding one by one */}
       <group>
-        {/* 1. RED CORAL - Front Right */}
+        {/* BACK LEFT CLUSTER */}
+        {/* Chromaflare - tall backdrop piece */}
+        <Clone
+          object={chromaCoral}
+          position={[-13, floorY, -7]}
+          scale={2.5}
+          rotation={[0, 0.3, 0]}
+          castShadow
+          receiveShadow
+        />
+        {/* Red coral - tucked next to chromaflare */}
         <Clone
           object={redCoral}
-          position={[14, floorY, 4]}
-          scale={0.8}
-          rotation={[0, -0.4, 0]}
+          position={[-10, floorY, -6]}
+          scale={0.6}
+          rotation={[0, -0.2, 0]}
+          castShadow
+          receiveShadow
+        />
+        {/* Lowpoly coral 2 - base filler at feet of cluster */}
+        <Clone
+          object={lowpolyCoral2}
+          position={[-11, floorY, -4]}
+          scale={0.5}
+          rotation={[0, 0.8, 0]}
           castShadow
           receiveShadow
         />
 
-        {/* 2. BLUE CORAL - Back Right */}
+        {/* BACK RIGHT CLUSTER */}
+        {/* Blue coral - tall centerpiece */}
         <Clone
           object={blueCoral}
-          position={[13, floorY, -5]}
+          position={[12, floorY, -7]}
           scale={2.2}
+          rotation={[0, -0.4, 0]}
+          castShadow
+          receiveShadow
+        />
+        {/* Coral 2 - base piece next to blue coral */}
+        <Clone
+          object={coral2}
+          position={[10, floorY, -5]}
+          scale={0.5}
           rotation={[0, 0.6, 0]}
           castShadow
           receiveShadow
         />
 
-        {/* 3. LOWPOLY CORAL - Back Center */}
+        {/* BACK CENTER - fills gap between clusters */}
         <Clone
           object={lowpolyCoral}
-          position={[-2, floorY, -6]}
-          scale={0.9}
-          rotation={[0, 0.3, 0]}
-          castShadow
-          receiveShadow
-        />
-
-        {/* 4. LOWPOLY CORAL 2 - Front Left */}
-        <Clone
-          object={lowpolyCoral2}
-          position={[-10, floorY, 4]}
+          position={[0, floorY, -7]}
           scale={0.7}
-          rotation={[0, 1.0, 0]}
+          rotation={[0, 0, 0]}
           castShadow
           receiveShadow
         />
-
-        {/* 6. CHROMAFLARE REEF CORAL - Back Left */}
-        <Clone
-          object={chromaCoral}
-          position={[-14, floorY, -5]}
-          scale={2.5}
-          rotation={[0, -0.5, 0]}
-          castShadow
-          receiveShadow
-        />
-
-        {/* 7. CORAL - Far Right */}
+        {/* Small accent piece */}
         <Clone
           object={coral}
-          position={[15, floorY, -1]}
-          scale={0.2}
-          rotation={[0, 1.2, 0]}
-          castShadow
-          receiveShadow
-        />
-
-        {/* 8. CORAL 2 - Front Center-Left */}
-        <Clone
-          object={coral2}
-          position={[-5, floorY, 5]}
-          scale={0.7}
-          rotation={[0, -0.8, 0]}
+          position={[5, floorY, -6]}
+          scale={0.15}
+          rotation={[0, 1.5, 0]}
           castShadow
           receiveShadow
         />
