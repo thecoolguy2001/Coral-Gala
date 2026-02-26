@@ -10,7 +10,7 @@ export const TANK_DEPTH = 20;
 
 // Tank structure dimensions
 export const GLASS_THICKNESS = 0.3;
-export const FRAME_THICKNESS = 0.8;
+export const FRAME_THICKNESS = 0.5;
 
 // Interior boundaries (where fish can swim)
 // Account for glass thickness on bottom and sides (no glass on top - open tank)
