@@ -304,8 +304,8 @@ const TankContainer = () => {
         {/* 9. SIDERASTREA CORAL - Center for now */}
         <Clone
           object={siderastreaCoral}
-          position={[0, floorY, 0]}
-          scale={0.7}
+          position={[0, floorY, 3]}
+          scale={3.0}
           rotation={[0, 0, 0]}
           castShadow
           receiveShadow
