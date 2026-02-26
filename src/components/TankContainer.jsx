@@ -222,11 +222,21 @@ const TankContainer = () => {
 
       {/* CORAL DECORATIONS - Adding one by one */}
       <group>
-        {/* 1. RED CORAL */}
+        {/* 1. RED CORAL - Front Right */}
         <Clone
           object={redCoral}
+          position={[12, floorY, 5]}
+          scale={0.7}
+          rotation={[0, 0, 0]}
+          castShadow
+          receiveShadow
+        />
+
+        {/* 2. BLUE CORAL - Center for now */}
+        <Clone
+          object={blueCoral}
           position={[0, floorY, 0]}
-          scale={0.5}
+          scale={0.7}
           rotation={[0, 0, 0]}
           castShadow
           receiveShadow
