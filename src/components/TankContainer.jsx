@@ -1,20 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, Suspense } from 'react';
 import { MeshReflectorMaterial, useGLTF, Clone } from '@react-three/drei';
 import * as THREE from 'three';
 import { TANK_WIDTH, TANK_HEIGHT, TANK_DEPTH, GLASS_THICKNESS, FRAME_THICKNESS } from '../constants/tankDimensions';
 import SandDust from './SandDust';
 import SandFloor from './SandFloor';
-
-// Preload tank decoration models
-useGLTF.preload('/coral/low_poly_red_coral.glb');
-useGLTF.preload('/coral/blue_lowpoly_coral.glb');
-useGLTF.preload('/coral/lowpoly_coral.glb');
-useGLTF.preload('/coral/lowpoly_coral2.glb');
-useGLTF.preload('/coral/lambis_shell.glb');
-useGLTF.preload('/coral/chromaflare_reef_-_coral.glb');
-useGLTF.preload('/coral/coral.glb');
-useGLTF.preload('/coral/coral2.glb');
-useGLTF.preload('/coral/coral_siderastrea_pliocenica_remade.glb');
 
 /**
  * TankContainer - Renders the physical aquarium tank structure
@@ -27,11 +16,11 @@ const TankContainer = () => {
   const { scene: blueCoral } = useGLTF('/coral/blue_lowpoly_coral.glb');
   const { scene: lowpolyCoral } = useGLTF('/coral/lowpoly_coral.glb');
   const { scene: lowpolyCoral2 } = useGLTF('/coral/lowpoly_coral2.glb');
-  const { scene: shell } = useGLTF('/coral/lambis_shell.glb');
+  // shell removed - model not rendering
   const { scene: chromaCoral } = useGLTF('/coral/chromaflare_reef_-_coral.glb');
   const { scene: coral } = useGLTF('/coral/coral.glb');
   const { scene: coral2 } = useGLTF('/coral/coral2.glb');
-  const { scene: siderastreaCoral } = useGLTF('/coral/coral_siderastrea_pliocenica_remade.glb');
+  // siderastrea removed - model not rendering
 
   // Use shared tank dimensions
   const tankWidth = TANK_WIDTH - 0.4;
@@ -220,7 +209,8 @@ const TankContainer = () => {
       {/* Sand Dust Particles */}
       <SandDust />
 
-      {/* CORAL DECORATIONS - Adding one by one */}
+      {/* CORAL DECORATIONS - Lazy loaded for performance */}
+      <Suspense fallback={null}>
       <group>
         {/* RED CORAL - Hero centerpiece, back middle */}
         <Clone
@@ -293,6 +283,7 @@ const TankContainer = () => {
         />
 
       </group>
+      </Suspense>
     </group>
   );
 };
