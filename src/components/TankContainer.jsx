@@ -215,7 +215,7 @@ const TankContainer = () => {
         {/* RED CORAL - Hero centerpiece, back middle */}
         <Clone
           object={redCoral}
-          position={[0, floorY - 1.0, -3]}
+          position={[0, floorY - 2.0, -3]}
           scale={1.8}
           rotation={[0, 0.2, 0]}
           castShadow
