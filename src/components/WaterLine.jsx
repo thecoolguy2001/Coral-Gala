@@ -58,9 +58,9 @@ const WaterLine = () => {
       <mesh position={[0, waterlineHeight * 1.5, (TANK_DEPTH - 0.5) / 2]}>
         <boxGeometry args={[TANK_WIDTH - 0.5, waterlineHeight * 0.5, waterlineThickness * 0.3]} />
         <meshBasicMaterial
-          color="#80c8e0"
+          color="#ffffff"
           transparent
-          opacity={0.3}
+          opacity={0.6}
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -69,9 +69,9 @@ const WaterLine = () => {
       <mesh position={[0, waterlineHeight * 1.5, -(TANK_DEPTH - 0.5) / 2]}>
         <boxGeometry args={[TANK_WIDTH - 0.5, waterlineHeight * 0.5, waterlineThickness * 0.3]} />
         <meshBasicMaterial
-          color="#80c8e0"
+          color="#ffffff"
           transparent
-          opacity={0.3}
+          opacity={0.6}
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -80,9 +80,9 @@ const WaterLine = () => {
       <mesh position={[-(TANK_WIDTH - 0.5) / 2, waterlineHeight * 1.5, 0]}>
         <boxGeometry args={[waterlineThickness * 0.3, waterlineHeight * 0.5, TANK_DEPTH - 0.5]} />
         <meshBasicMaterial
-          color="#80c8e0"
+          color="#ffffff"
           transparent
-          opacity={0.3}
+          opacity={0.6}
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -91,9 +91,9 @@ const WaterLine = () => {
       <mesh position={[(TANK_WIDTH - 0.5) / 2, waterlineHeight * 1.5, 0]}>
         <boxGeometry args={[waterlineThickness * 0.3, waterlineHeight * 0.5, TANK_DEPTH - 0.5]} />
         <meshBasicMaterial
-          color="#80c8e0"
+          color="#ffffff"
           transparent
-          opacity={0.3}
+          opacity={0.6}
           side={THREE.DoubleSide}
         />
       </mesh>
