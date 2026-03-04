@@ -165,12 +165,13 @@ const WaterSurface = ({ roomLightsOn = false }) => {
           float depthVar = noise(vUv * 10.0 + time * 0.2) * 0.1;
           finalColor *= 1.0 + depthVar;
 
-          // When lights are off, darken the surface significantly
+          // When lights are off, remove the bright white but keep the water surface visible
           float lightMix = lightsOn;
-          finalColor = mix(waterColor * 0.15, finalColor, lightMix);
+          float whiteness = (finalColor.r + finalColor.g + finalColor.b) / 3.0;
+          vec3 darkModeColor = mix(waterColor * 0.6, finalColor, 0.3);
+          finalColor = mix(darkModeColor, finalColor, lightMix);
 
           float alpha = mix(0.3, 0.6, edgeFoam + fresnel * 0.5);
-          alpha = mix(alpha * 0.3, alpha, lightMix);
 
           gl_FragColor = vec4(finalColor, alpha);
         }
