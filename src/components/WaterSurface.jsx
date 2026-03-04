@@ -7,7 +7,7 @@ import { TANK_WIDTH, TANK_DEPTH, WATER_LEVEL, INTERIOR_WIDTH, INTERIOR_DEPTH } f
  * WaterSurface - PROFESSIONAL REALISTIC water surface at the top of the tank
  * Features: Dynamic ripples, edge foam, meniscus, refraction, and reflections
  */
-const WaterSurface = () => {
+const WaterSurface = ({ roomLightsOn = false }) => {
   console.log('✅ WaterSurface component loaded');
   const waterRef = useRef();
 
@@ -15,9 +15,10 @@ const WaterSurface = () => {
     return new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        waterColor: { value: new THREE.Color("#00BFFF") }, // Bright sky blue (sunlit water)
+        waterColor: { value: new THREE.Color("#00BFFF") },
         tankWidth: { value: TANK_WIDTH - 0.5 },
         tankDepth: { value: TANK_DEPTH - 0.5 },
+        lightsOn: { value: roomLightsOn ? 1.0 : 0.0 },
       },
       vertexShader: `
         uniform float time;
@@ -86,6 +87,7 @@ const WaterSurface = () => {
         uniform float time;
         uniform float tankWidth;
         uniform float tankDepth;
+        uniform float lightsOn;
         varying vec2 vUv;
         varying vec3 vNormal;
         varying vec3 vPosition;
@@ -163,7 +165,12 @@ const WaterSurface = () => {
           float depthVar = noise(vUv * 10.0 + time * 0.2) * 0.1;
           finalColor *= 1.0 + depthVar;
 
+          // When lights are off, darken the surface significantly
+          float lightMix = lightsOn;
+          finalColor = mix(waterColor * 0.15, finalColor, lightMix);
+
           float alpha = mix(0.3, 0.6, edgeFoam + fresnel * 0.5);
+          alpha = mix(alpha * 0.3, alpha, lightMix);
 
           gl_FragColor = vec4(finalColor, alpha);
         }
@@ -178,6 +185,7 @@ const WaterSurface = () => {
   useFrame(({ clock }) => {
     if (waterRef.current) {
       waterMaterial.uniforms.time.value = clock.elapsedTime;
+      waterMaterial.uniforms.lightsOn.value = roomLightsOn ? 1.0 : 0.0;
     }
   });
 

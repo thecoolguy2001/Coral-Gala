@@ -273,7 +273,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       <WaterVolume />
 
       {/* 7. Water surface */}
-      <WaterSurface />
+      <WaterSurface roomLightsOn={roomLightsOn} />
     </>
   );
 };
