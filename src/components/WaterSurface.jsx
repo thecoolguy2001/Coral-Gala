@@ -157,13 +157,13 @@ const WaterSurface = () => {
           vec3 foamColor = vec3(0.8, 0.9, 1.0); 
           finalColor = mix(finalColor, foamColor, edgeFoam * 0.8);
 
-          vec3 refractionColor = vec3(0.8, 0.9, 1.0);
-          finalColor += refractionColor * surfaceCaustics * (0.5 + fresnel * 0.5);
+          vec3 refractionColor = vec3(0.3, 0.5, 0.6);
+          finalColor += refractionColor * surfaceCaustics * (0.2 + fresnel * 0.3);
 
           float depthVar = noise(vUv * 10.0 + time * 0.2) * 0.1;
           finalColor *= 1.0 + depthVar;
 
-          float alpha = mix(0.3, 0.6, edgeFoam + fresnel * 0.5);
+          float alpha = mix(0.2, 0.4, edgeFoam + fresnel * 0.5);
 
           gl_FragColor = vec4(finalColor, alpha);
         }
