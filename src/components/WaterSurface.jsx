@@ -168,7 +168,7 @@ const WaterSurface = ({ roomLightsOn = false }) => {
           // When lights are off, remove the bright white but keep the water surface visible
           float lightMix = lightsOn;
           float whiteness = (finalColor.r + finalColor.g + finalColor.b) / 3.0;
-          vec3 darkModeColor = mix(waterColor * 0.6, finalColor, 0.3);
+          vec3 darkModeColor = mix(waterColor * 0.2, finalColor, 0.15);
           finalColor = mix(darkModeColor, finalColor, lightMix);
 
           float alpha = mix(0.3, 0.6, edgeFoam + fresnel * 0.5);
