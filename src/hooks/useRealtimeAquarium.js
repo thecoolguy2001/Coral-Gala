@@ -61,8 +61,8 @@ const useRealtimeAquarium = (fishData) => {
           // PERSONALITY: How much does this fish like to explore? (0 = stays put, 1 = explorer)
           curiosity: Math.random(),
           // Preferred zone in tank (0 = left, 0.5 = center, 1 = right)
-          preferredZoneX: 0.3 + Math.random() * 0.4, // Bias toward center
-          preferredZoneZ: 0.3 + Math.random() * 0.4, // Bias toward center
+          preferredZoneX: Math.random(), // Full range across tank
+          preferredZoneZ: Math.random(), // Full range front to back
         };
       }
 
@@ -92,15 +92,15 @@ const useRealtimeAquarium = (fishData) => {
         const yRange = BOUNDS.yMax - BOUNDS.yMin;
         const yMid = (BOUNDS.yMax + BOUNDS.yMin) / 2;
 
-        // Spread fish across tank using their unique phase
-        const xSpread = Math.cos(phase * 2.7) * BOUNDS.x * 0.6;
-        const zSpread = Math.sin(phase * 1.9) * BOUNDS.z * 0.5;
-        const yOffset = Math.sin(phase * 3.1) * yRange * 0.25;
+        // Spread fish across FULL tank volume using their unique phase
+        const xSpread = Math.cos(phase * 2.7) * BOUNDS.x * 0.85;
+        const zSpread = Math.sin(phase * 1.9) * BOUNDS.z * 0.85;
+        const yOffset = Math.sin(phase * 3.1) * yRange * 0.45;
 
         positionArray = [
-          xSpread + (Math.random() - 0.5) * 3,
-          yMid + yOffset + (fishRandoms?.verticalBias || 0) * 2,
-          zSpread + (Math.random() - 0.5) * 2
+          xSpread + (Math.random() - 0.5) * 4,
+          yMid + yOffset + (fishRandoms?.verticalBias || 0) * 4,
+          zSpread + (Math.random() - 0.5) * 4
         ];
 
         // Clamp to safe bounds
@@ -125,8 +125,8 @@ const useRealtimeAquarium = (fishData) => {
         const speed = 0.06 + Math.random() * 0.04;
         velocityArray = [
           Math.cos(angle) * speed,
-          (Math.random() - 0.5) * 0.02,
-          Math.sin(angle) * speed * 0.3,
+          (Math.random() - 0.5) * 0.03,
+          Math.sin(angle) * speed * 0.8,
         ];
       }
 
@@ -256,14 +256,18 @@ const useRealtimeAquarium = (fishData) => {
       lastUpdateTime.current = now;
     }
 
-    // POINTS OF INTEREST in the tank - fish are aware of their environment
+    // POINTS OF INTEREST spread across full tank volume
     const pointsOfInterest = [
-      { pos: new THREE.Vector3(-8, -8, -2), type: 'driftwood' },   // Driftwood
-      { pos: new THREE.Vector3(0, -8, -7), type: 'rocks' },        // Rock formation
-      { pos: new THREE.Vector3(10, -8, 3), type: 'coral' },        // Pink coral
-      { pos: new THREE.Vector3(-12, -8, -4), type: 'coral' },      // Blue coral
-      { pos: new THREE.Vector3(14, 5, -8), type: 'filter' },       // HOB filter area
-      { pos: new THREE.Vector3(0, 0, 0), type: 'center' },         // Tank center
+      { pos: new THREE.Vector3(-12, -9, -5), type: 'coral' },      // Back left bottom coral
+      { pos: new THREE.Vector3(12, -9, -5), type: 'coral' },       // Back right bottom coral
+      { pos: new THREE.Vector3(0, -9, 5), type: 'coral' },         // Front center bottom
+      { pos: new THREE.Vector3(-14, -5, 4), type: 'driftwood' },   // Front left mid
+      { pos: new THREE.Vector3(14, -5, -4), type: 'rocks' },       // Back right mid
+      { pos: new THREE.Vector3(14, 5, -6), type: 'filter' },       // HOB filter area (high back)
+      { pos: new THREE.Vector3(0, 7, 0), type: 'surface' },        // Near water surface center
+      { pos: new THREE.Vector3(-10, 3, 5), type: 'surface' },      // Front left high
+      { pos: new THREE.Vector3(10, -8, 6), type: 'coral' },        // Front right bottom
+      { pos: new THREE.Vector3(0, -3, -6), type: 'center' },       // Back center mid
     ];
 
     // INTELLIGENT FISH MOVEMENT
@@ -289,7 +293,7 @@ const useRealtimeAquarium = (fishData) => {
           modeDuration: 8 + Math.random() * 12,
           currentInterest: null,
           swimDirection: Math.random() * Math.PI * 2,
-          verticalPreference: (BOUNDS.yMax + BOUNDS.yMin) / 2 + randoms.verticalBias * 5,
+          verticalPreference: (BOUNDS.yMax + BOUNDS.yMin) / 2 + randoms.verticalBias * 9,
           energy: 0.5 + Math.random() * 0.5,
           hunger: 30 + Math.random() * 40, // 0 = starving, 100 = full
           postFeedMode: null,
@@ -387,19 +391,17 @@ const useRealtimeAquarium = (fishData) => {
           state.swimDirection += Math.sin(fishTime * turnRate) * 0.02;
           state.swimDirection += Math.cos(fishTime * turnRate * 0.7) * 0.015;
 
-          // Horizontal movement
+          // Horizontal movement — full speed on both X and Z axes
           desiredVelocity.x = Math.cos(state.swimDirection) * maxSpeed;
-          desiredVelocity.z = Math.sin(state.swimDirection) * maxSpeed * 0.5;
+          desiredVelocity.z = Math.sin(state.swimDirection) * maxSpeed * 0.9;
 
           // Vertical: gently move toward preferred depth
           const yDiff = state.verticalPreference - boid.position.y;
-          desiredVelocity.y = yDiff * 0.02;
+          desiredVelocity.y = yDiff * 0.03;
 
-          // Occasionally change vertical preference
-          if (Math.random() < 0.002) {
-            state.verticalPreference = (BOUNDS.yMax + BOUNDS.yMin) / 2 +
-              randoms.verticalBias * 5 + (Math.random() - 0.5) * 6;
-            state.verticalPreference = Math.max(BOUNDS.yMin + 3, Math.min(BOUNDS.yMax - 2, state.verticalPreference));
+          // Regularly change vertical preference — explore full depth
+          if (Math.random() < 0.005) {
+            state.verticalPreference = BOUNDS.yMin + 2 + Math.random() * (BOUNDS.yMax - BOUNDS.yMin - 4);
           }
           break;
 
@@ -417,8 +419,8 @@ const useRealtimeAquarium = (fishData) => {
               // Circle around the point of interest
               const circleAngle = fishTime * 0.5;
               desiredVelocity.x = Math.cos(circleAngle) * maxSpeed * 0.4;
-              desiredVelocity.z = Math.sin(circleAngle) * maxSpeed * 0.3;
-              desiredVelocity.y = Math.sin(fishTime * 0.8) * maxSpeed * 0.2;
+              desiredVelocity.z = Math.sin(circleAngle) * maxSpeed * 0.4;
+              desiredVelocity.y = Math.sin(fishTime * 0.8) * maxSpeed * 0.3;
             }
           }
           break;
