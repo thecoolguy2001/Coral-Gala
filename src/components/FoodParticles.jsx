@@ -26,7 +26,7 @@ const FoodParticles = ({ feedEvent }) => {
         pos: new THREE.Vector3(0, -200, 0),
         vel: new THREE.Vector3(),
         alpha: 0,
-        size: 0.12 + Math.random() * 0.18,
+        size: 0.5 + Math.random() * 0.5,
         color: foodColors[Math.floor(Math.random() * foodColors.length)],
         wobblePhase: Math.random() * Math.PI * 2,
         wobbleSpeed: 1 + Math.random() * 2,
@@ -47,6 +47,7 @@ const FoodParticles = ({ feedEvent }) => {
       spawnTimeRef.current = time;
       activeRef.current = true;
       positionRef.current = feedEvent.position || [0, WATER_LEVEL, 0];
+      console.log('🍽️ FOOD EVENT:', feedEvent.position, 'spawning', PARTICLE_COUNT, 'flakes at Y=', dropStartY);
 
       // Reset all particles
       for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -64,7 +65,7 @@ const FoodParticles = ({ feedEvent }) => {
 
     const elapsed = time - spawnTimeRef.current;
     const [sx, , sz] = positionRef.current;
-    const dropStartY = WATER_LEVEL + 15; // start above the tank, visible on camera
+    const dropStartY = WATER_LEVEL + 8; // visible on camera (camera sees up to ~Y=20)
     let allDone = true;
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -168,11 +169,11 @@ const FoodParticles = ({ feedEvent }) => {
             ref={el => meshRefs.current[i] = el}
             visible={false}
           >
-            <planeGeometry args={[p?.size || 0.15, p?.size || 0.15]} />
+            <planeGeometry args={[p?.size || 0.5, p?.size || 0.5]} />
             <meshBasicMaterial
               color={p?.color || '#DAA520'}
               transparent
-              opacity={0}
+              opacity={1}
               side={THREE.DoubleSide}
               depthTest={false}
             />

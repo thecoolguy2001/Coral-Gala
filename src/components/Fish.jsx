@@ -143,14 +143,35 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
   // Track entrance animation — random tumble values so each drop looks different
   const isEntering = useRef(!!boid.spawnTime);
   const entranceStartTime = useRef(0);
-  const tumbleRandom = useRef({
-    xSpeed: 2 + Math.random() * 6,       // rotation speed X: 2-8
-    zSpeed: 1 + Math.random() * 4,       // rotation speed Z: 1-5
-    xDir: Math.random() > 0.5 ? 1 : -1,  // spin direction
-    zDir: Math.random() > 0.5 ? 1 : -1,
-    wobbleFreq: 6 + Math.random() * 8,    // impact wobble frequency
-    wobbleAmp: 0.4 + Math.random() * 0.8, // impact wobble size
-    plungeDepth: 8 + Math.random() * 8,   // how deep it plunges (8-16 units)
+  const tumbleRandom = useRef(() => {
+    // Some fish spin a lot, some barely tumble, some don't spin at all
+    const spinChance = Math.random();
+    let xSpeed, zSpeed;
+    if (spinChance < 0.3) {
+      // No spin — fish falls straight down, maybe slight tilt
+      xSpeed = 0;
+      zSpeed = Math.random() * 0.5;
+    } else if (spinChance < 0.6) {
+      // Gentle tumble
+      xSpeed = 0.5 + Math.random() * 2;
+      zSpeed = 0.3 + Math.random() * 1.5;
+    } else {
+      // Wild spin
+      xSpeed = 3 + Math.random() * 5;
+      zSpeed = 1 + Math.random() * 4;
+    }
+    return {
+      xSpeed,
+      zSpeed,
+      xDir: Math.random() > 0.5 ? 1 : -1,
+      zDir: Math.random() > 0.5 ? 1 : -1,
+      wobbleFreq: 4 + Math.random() * 10,
+      wobbleAmp: 0.3 + Math.random() * 0.9,
+      plungeDepth: 8 + Math.random() * 8,
+      // Starting angle offset so orientation varies
+      startAngleX: Math.random() * Math.PI * 2,
+      startAngleZ: Math.random() * Math.PI * 2,
+    };
   });
 
   useFrame((state, delta) => {
@@ -175,6 +196,10 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
 
       if (elapsed < 6.0) {
 
+        // Lazily generate tumble values on first use
+        if (typeof tumbleRandom.current === 'function') {
+          tumbleRandom.current = tumbleRandom.current();
+        }
         const tr = tumbleRandom.current;
 
         if (elapsed < 2.0) {
@@ -184,9 +209,9 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
           groupRef.current.position.y = Math.max(fallY, WATER_LEVEL + 0.1);
           groupRef.current.position.z = boid.position.z;
 
-          // Fish tumbles uniquely each time
-          groupRef.current.rotation.x = elapsed * tr.xSpeed * tr.xDir;
-          groupRef.current.rotation.z = Math.sin(elapsed * tr.zSpeed) * 0.6 * tr.zDir;
+          // Fish tumbles uniquely — or falls straight if no spin
+          groupRef.current.rotation.x = tr.startAngleX + elapsed * tr.xSpeed * tr.xDir;
+          groupRef.current.rotation.z = tr.startAngleZ + Math.sin(elapsed * tr.zSpeed) * 0.6 * tr.zDir;
 
           groupRef.current.scale.setScalar(baseScale);
 
