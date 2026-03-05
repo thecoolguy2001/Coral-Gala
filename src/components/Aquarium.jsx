@@ -11,6 +11,7 @@ import Environment from './Environment';
 import RealisticCaustics from './RealisticCaustics';
 import FoodParticles from './FoodParticles';
 import PetEffect from './PetEffect';
+import SplashEffect from './SplashEffect';
 import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
 import { useAquariumEvents } from '../hooks/useAquariumEvents.jsx';
 import { getDefaultFish } from '../models/fishModel';
@@ -274,6 +275,9 @@ const Scene = ({ fishData, onFishClick, roomLightsOn, feedEvent, petEvent }) => 
 
       {/* 3c. Pet sparkle effect */}
       <PetEffect petEvent={petEvent} boids={boids} />
+
+      {/* 3d. Splash effect when new fish enters water */}
+      <SplashEffect boids={boids} />
 
       {/* 4. HOB Filter */}
       <HOBFilter />

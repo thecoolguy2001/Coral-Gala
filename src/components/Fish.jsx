@@ -149,53 +149,95 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
 
     const time = state.clock.elapsedTime;
 
-    // ENTRANCE ANIMATION - new fish drops from above
+    // ENTRANCE ANIMATION - fish visibly falls from above water into the tank
     if (isEntering.current) {
       if (entranceStartTime.current === 0) {
         entranceStartTime.current = time;
-        // Start position above the frame
         groupRef.current.position.set(
-          boid.position.x,
-          WATER_LEVEL + 20,
+          boid.position.x + (Math.random() - 0.5) * 4,
+          WATER_LEVEL + 25,
           boid.position.z
         );
       }
 
       const elapsed = time - entranceStartTime.current;
+      const baseScale = boid.size || 1.0;
+      const dropHeight = WATER_LEVEL + 25;
 
-      if (elapsed < 3.0) {
-        const startY = WATER_LEVEL + 20;
+      if (elapsed < 5.5) {
 
-        if (elapsed < 1.0) {
-          // Phase 1: Freefall from above
-          const gravity = 9.8;
-          const fallY = startY - 0.5 * gravity * elapsed * elapsed;
-          groupRef.current.position.y = Math.max(fallY, WATER_LEVEL - 2);
-          groupRef.current.position.x = boid.position.x;
+        if (elapsed < 2.0) {
+          // Phase 1: Visible freefall through air — slow enough to watch
+          const gravity = 12.5; // 25 units in 2 seconds
+          const fallY = dropHeight - 0.5 * gravity * elapsed * elapsed;
+          groupRef.current.position.y = Math.max(fallY, WATER_LEVEL + 0.1);
           groupRef.current.position.z = boid.position.z;
-        } else if (elapsed < 2.0) {
-          // Phase 2: Hit water, drag slows descent, wobble
-          const waterPhase = elapsed - 1.0;
-          const belowSurface = 2 + waterPhase * 3 * Math.exp(-waterPhase * 2);
-          groupRef.current.position.y = WATER_LEVEL - belowSurface;
-          groupRef.current.position.x = boid.position.x + Math.sin(elapsed * 8) * 0.3 * (1 - waterPhase);
-          groupRef.current.position.z = boid.position.z + Math.cos(elapsed * 6) * 0.2 * (1 - waterPhase);
-        } else {
-          // Phase 3: Lerp to boid control
-          const lerpFactor = (elapsed - 2.0) / 1.0;
-          groupRef.current.position.lerp(boid.position, lerpFactor * 0.3);
-        }
 
-        // Scale pulse on water entry
-        if (elapsed > 0.9 && elapsed < 1.3) {
-          const splashPulse = 1.0 + Math.sin((elapsed - 0.9) * Math.PI / 0.4) * 0.15;
-          const baseScale = boid.size || 1.0;
-          groupRef.current.scale.setScalar(baseScale * splashPulse);
+          // Fish flips/tumbles gently as it falls
+          groupRef.current.rotation.x = elapsed * 3;
+          groupRef.current.rotation.z = Math.sin(elapsed * 5) * 0.4;
+
+          groupRef.current.scale.setScalar(baseScale);
+
+        } else if (elapsed < 3.5) {
+          // Phase 2: SPLASH — fish hits water, plunges down with drag
+          const waterTime = elapsed - 2.0;
+
+          // Fast initial plunge that decays exponentially (water drag)
+          const impactSpeed = 8;
+          const plungeDepth = impactSpeed * waterTime * Math.exp(-waterTime * 2.5);
+          groupRef.current.position.y = WATER_LEVEL - plungeDepth;
+
+          // Wobble from impact force
+          const wobbleDecay = Math.exp(-waterTime * 1.5);
+          groupRef.current.position.x += Math.sin(waterTime * 10) * 0.6 * wobbleDecay * delta;
+          groupRef.current.position.z += Math.cos(waterTime * 8) * 0.4 * wobbleDecay * delta;
+
+          // Tumble dampens in water
+          const rotDecay = Math.exp(-waterTime * 2);
+          groupRef.current.rotation.x = (2.0 * 3) * rotDecay + Math.sin(waterTime * 5) * 0.4 * rotDecay;
+          groupRef.current.rotation.z = Math.sin(waterTime * 4) * 0.3 * rotDecay;
+
+          // Scale pulse on water entry moment
+          if (waterTime < 0.25) {
+            const pulse = 1.0 + Math.sin(waterTime * Math.PI / 0.25) * 0.2;
+            groupRef.current.scale.setScalar(baseScale * pulse);
+          } else {
+            groupRef.current.scale.setScalar(baseScale);
+          }
+
+        } else if (elapsed < 4.5) {
+          // Phase 3: Fish recovers — orients itself, settles
+          const settleTime = elapsed - 3.5;
+          const t = settleTime; // 0 to 1
+
+          groupRef.current.position.lerp(boid.position, t * 0.12);
+
+          // Rotation eases back to normal
+          groupRef.current.rotation.x *= (1 - t * 0.25);
+          groupRef.current.rotation.z *= (1 - t * 0.25);
+
+          // Gentle sway as fish finds its bearing
+          groupRef.current.position.x += Math.sin(time * 3) * 0.08 * (1 - t);
+          groupRef.current.position.y += Math.sin(time * 2) * 0.05 * (1 - t);
+
+          groupRef.current.scale.setScalar(baseScale);
+
+        } else {
+          // Phase 4: Smooth handoff to boid system
+          const t = (elapsed - 4.5);
+          groupRef.current.position.lerp(boid.position, t * 0.4);
+          groupRef.current.rotation.x *= 0.85;
+          groupRef.current.rotation.z *= 0.85;
+          groupRef.current.quaternion.slerp(boid.ref.quaternion, t * 0.3);
+          groupRef.current.scale.setScalar(baseScale);
         }
 
         return; // Skip normal movement during entrance
       } else {
         isEntering.current = false;
+        groupRef.current.rotation.x = 0;
+        groupRef.current.rotation.z = 0;
       }
     }
 
