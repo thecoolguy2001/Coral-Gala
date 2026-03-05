@@ -140,9 +140,18 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
   const petTimeRef = useRef(0);
   const lastPetEventId = useRef(null);
 
-  // Track entrance animation
+  // Track entrance animation — random tumble values so each drop looks different
   const isEntering = useRef(!!boid.spawnTime);
   const entranceStartTime = useRef(0);
+  const tumbleRandom = useRef({
+    xSpeed: 2 + Math.random() * 6,       // rotation speed X: 2-8
+    zSpeed: 1 + Math.random() * 4,       // rotation speed Z: 1-5
+    xDir: Math.random() > 0.5 ? 1 : -1,  // spin direction
+    zDir: Math.random() > 0.5 ? 1 : -1,
+    wobbleFreq: 6 + Math.random() * 8,    // impact wobble frequency
+    wobbleAmp: 0.4 + Math.random() * 0.8, // impact wobble size
+    plungeDepth: 8 + Math.random() * 8,   // how deep it plunges (8-16 units)
+  });
 
   useFrame((state, delta) => {
     if (!groupRef.current || !boid || !boid.position || !boid.ref) return;
@@ -166,16 +175,18 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
 
       if (elapsed < 6.0) {
 
+        const tr = tumbleRandom.current;
+
         if (elapsed < 2.0) {
-          // Phase 1: Visible freefall through air — slow enough to watch
-          const gravity = 12.5; // 25 units in 2 seconds
+          // Phase 1: Visible freefall through air
+          const gravity = 12.5;
           const fallY = dropHeight - 0.5 * gravity * elapsed * elapsed;
           groupRef.current.position.y = Math.max(fallY, WATER_LEVEL + 0.1);
           groupRef.current.position.z = boid.position.z;
 
-          // Fish flips/tumbles gently as it falls
-          groupRef.current.rotation.x = elapsed * 3;
-          groupRef.current.rotation.z = Math.sin(elapsed * 5) * 0.4;
+          // Fish tumbles uniquely each time
+          groupRef.current.rotation.x = elapsed * tr.xSpeed * tr.xDir;
+          groupRef.current.rotation.z = Math.sin(elapsed * tr.zSpeed) * 0.6 * tr.zDir;
 
           groupRef.current.scale.setScalar(baseScale);
 
@@ -183,23 +194,20 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
           // Phase 2: SPLASH — fish plunges deep into tank, then slowly rises
           const waterTime = elapsed - 2.0; // 0 to 2.0
 
-          // Plunge deep: fast entry that decelerates with water drag
-          // Max depth ~12 units below surface (halfway down the tank)
-          const maxPlunge = 12;
-          const plungeDepth = maxPlunge * (1 - Math.exp(-waterTime * 2.0));
-          // After peak plunge (~1s), start floating back up slowly
+          // Plunge depth varies per fish
+          const plungeDepth = tr.plungeDepth * (1 - Math.exp(-waterTime * 2.0));
           const riseAmount = waterTime > 0.8 ? (waterTime - 0.8) * 2.0 : 0;
           groupRef.current.position.y = WATER_LEVEL - plungeDepth + riseAmount;
 
-          // Wobble from impact force
+          // Wobble from impact — unique per fish
           const wobbleDecay = Math.exp(-waterTime * 1.2);
-          groupRef.current.position.x += Math.sin(waterTime * 10) * 0.8 * wobbleDecay * delta;
-          groupRef.current.position.z += Math.cos(waterTime * 8) * 0.5 * wobbleDecay * delta;
+          groupRef.current.position.x += Math.sin(waterTime * tr.wobbleFreq) * tr.wobbleAmp * wobbleDecay * delta;
+          groupRef.current.position.z += Math.cos(waterTime * tr.wobbleFreq * 0.8) * tr.wobbleAmp * 0.6 * wobbleDecay * delta;
 
-          // Tumble dampens in water
+          // Tumble dampens in water — uses same random spin rates
           const rotDecay = Math.exp(-waterTime * 1.5);
-          groupRef.current.rotation.x = (2.0 * 3) * rotDecay + Math.sin(waterTime * 5) * 0.4 * rotDecay;
-          groupRef.current.rotation.z = Math.sin(waterTime * 4) * 0.3 * rotDecay;
+          groupRef.current.rotation.x = (2.0 * tr.xSpeed * tr.xDir) * rotDecay + Math.sin(waterTime * tr.zSpeed) * 0.4 * rotDecay;
+          groupRef.current.rotation.z = Math.sin(waterTime * tr.xSpeed * 0.7) * 0.3 * tr.zDir * rotDecay;
 
           // Scale pulse on water entry moment
           if (waterTime < 0.25) {
@@ -243,49 +251,66 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
       }
     }
 
-    // PET WIGGLE - check if this fish is being petted
+    // PET REACTION - check if this fish is being petted
     if (petEvent && petEvent.id !== lastPetEventId.current && petEvent.targetFishId === boid.id) {
       lastPetEventId.current = petEvent.id;
       isPettedRef.current = true;
       petTimeRef.current = time;
     }
 
-    // 1. SMOOTH PHYSICAL MOVEMENT - interpolate for extra smoothness
-    groupRef.current.position.lerp(boid.position, 0.3);
-
-    // Smooth rotation - slerp toward target quaternion
-    groupRef.current.quaternion.slerp(boid.ref.quaternion, 0.15);
-
-    // Apply subtle banking roll from simulation
-    if (boid.bankAngle) {
-      const bankQuat = new THREE.Quaternion().setFromAxisAngle(
-        new THREE.Vector3(0, 0, 1),
-        boid.bankAngle * 0.5
-      );
-      groupRef.current.quaternion.multiply(bankQuat);
-    }
-
-    // Pet wiggle effect
+    // 1. SMOOTH PHYSICAL MOVEMENT
     if (isPettedRef.current) {
       const petElapsed = time - petTimeRef.current;
-      if (petElapsed < 2.5) {
-        // Rapid Z-axis wiggle
-        const wiggle = Math.sin(petElapsed * 15) * 0.3 * (1 - petElapsed / 2.5);
-        const wiggleQuat = new THREE.Quaternion().setFromAxisAngle(
-          new THREE.Vector3(0, 0, 1),
-          wiggle
-        );
+
+      if (petElapsed < 3.0) {
+        // DRAMATIC pet reaction — fish freaks out, darts around, wiggles hard
+        const intensity = 1.0 - petElapsed / 3.0;
+
+        // Erratic darting — fish jolts in random-feeling directions
+        const dartX = Math.sin(petElapsed * 18) * 0.4 * intensity;
+        const dartY = Math.cos(petElapsed * 14) * 0.25 * intensity;
+        const dartZ = Math.sin(petElapsed * 11 + 2) * 0.3 * intensity;
+        const dartOffset = new THREE.Vector3(dartX, dartY, dartZ);
+
+        groupRef.current.position.lerp(boid.position.clone().add(dartOffset), 0.4);
+
+        // Wild body wiggle — rapid rotation on all axes
+        const wiggleZ = Math.sin(petElapsed * 20) * 0.5 * intensity;
+        const wiggleX = Math.cos(petElapsed * 16) * 0.2 * intensity;
+        const wiggleY = Math.sin(petElapsed * 12) * 0.3 * intensity;
+
+        groupRef.current.quaternion.slerp(boid.ref.quaternion, 0.1);
+        const wiggleQuat = new THREE.Quaternion()
+          .setFromEuler(new THREE.Euler(wiggleX, wiggleY, wiggleZ));
         groupRef.current.quaternion.multiply(wiggleQuat);
+
       } else {
         isPettedRef.current = false;
       }
+    } else {
+      // Normal smooth movement
+      groupRef.current.position.lerp(boid.position, 0.3);
+
+      // Smooth rotation
+      groupRef.current.quaternion.slerp(boid.ref.quaternion, 0.15);
+
+      // Banking roll
+      if (boid.bankAngle) {
+        const bankQuat = new THREE.Quaternion().setFromAxisAngle(
+          new THREE.Vector3(0, 0, 1),
+          boid.bankAngle * 0.5
+        );
+        groupRef.current.quaternion.multiply(bankQuat);
+      }
     }
 
-    // 2. INTERACTIVE SCALE (+ pet pulse)
+    // 2. INTERACTIVE SCALE (+ pet reaction)
     let targetScale = isHovered ? 1.2 : 1.0;
     if (isPettedRef.current) {
       const petElapsed = time - petTimeRef.current;
-      targetScale *= 1.0 + Math.sin(petElapsed * 10) * 0.05;
+      const intensity = 1.0 - petElapsed / 3.0;
+      // Fish puffs up and pulses when petted
+      targetScale *= 1.1 + Math.sin(petElapsed * 12) * 0.15 * intensity;
     }
     const baseScale = boid.size || 1.0;
     const currentScale = groupRef.current.scale.x / baseScale;

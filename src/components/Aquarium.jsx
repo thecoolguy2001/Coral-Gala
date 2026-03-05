@@ -10,7 +10,7 @@ import HOBFilter from './HOBFilter';
 import Environment from './Environment';
 import RealisticCaustics from './RealisticCaustics';
 import FoodParticles from './FoodParticles';
-import PetEffect from './PetEffect';
+// PetEffect removed — fish react directly with wiggle + erratic movement
 import SplashEffect from './SplashEffect';
 import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
 import { useAquariumEvents } from '../hooks/useAquariumEvents.jsx';
@@ -182,6 +182,14 @@ const Scene = ({ fishData, onFishClick, roomLightsOn, feedEvent, petEvent }) => 
     }
   }, [feedEvent?.id]);
 
+  // Pick a random fish for pet event
+  useEffect(() => {
+    if (petEvent && boids.length > 0 && !petEvent.targetFishId) {
+      const target = boids[Math.floor(Math.random() * boids.length)];
+      petEvent.targetFishId = target.id;
+    }
+  }, [petEvent?.id, boids]);
+
   return (
     <>
       {/* PROFESSIONAL 3-LIGHT SYSTEM */}
@@ -270,11 +278,7 @@ const Scene = ({ fishData, onFishClick, roomLightsOn, feedEvent, petEvent }) => 
         <Fish key={boid.id} boid={boid} onFishClick={onFishClick} petEvent={petEvent} />
       ))}
 
-      {/* 3b. Food particles */}
-      <FoodParticles feedEvent={feedEvent} />
-
-      {/* 3c. Pet sparkle effect */}
-      <PetEffect petEvent={petEvent} boids={boids} />
+      {/* 3c. Pet — no sparkle, fish react directly */}
 
       {/* 3d. Splash effect when new fish enters water */}
       <SplashEffect boids={boids} />
@@ -293,6 +297,9 @@ const Scene = ({ fishData, onFishClick, roomLightsOn, feedEvent, petEvent }) => 
 
       {/* 7. Water surface */}
       <WaterSurface roomLightsOn={roomLightsOn} />
+
+      {/* 8. Food particles — rendered LAST so they show on top of water */}
+      <FoodParticles feedEvent={feedEvent} />
     </>
   );
 };

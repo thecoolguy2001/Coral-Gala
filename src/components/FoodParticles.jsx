@@ -3,99 +3,42 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { WATER_LEVEL } from '../constants/tankDimensions';
 
-const PARTICLE_COUNT = 60;
+const PARTICLE_COUNT = 80;
 
 const FoodParticles = ({ feedEvent }) => {
-  const pointsRef = useRef();
+  const groupRef = useRef();
   const spawnTimeRef = useRef(0);
   const activeRef = useRef(false);
   const positionRef = useRef([0, WATER_LEVEL, 0]);
   const lastEventId = useRef(null);
+  const particleData = useRef([]);
+  const meshRefs = useRef([]);
 
-  const { geometry, velocitiesArray, alphasArray, material } = useMemo(() => {
-    const positions = new Float32Array(PARTICLE_COUNT * 3);
-    const velocities = new Float32Array(PARTICLE_COUNT * 3);
-    const alphas = new Float32Array(PARTICLE_COUNT);
-    const sizes = new Float32Array(PARTICLE_COUNT);
-    const colors = new Float32Array(PARTICLE_COUNT * 3);
+  const foodColors = useMemo(() => [
+    '#B8860B', '#8B6914', '#6B8E23', '#D2691E',
+    '#DAA520', '#CD853F', '#A0522D', '#DEB887',
+  ], []);
 
-    const foodColors = [
-      new THREE.Color('#B8860B'), // dark goldenrod
-      new THREE.Color('#8B6914'), // golden brown
-      new THREE.Color('#6B8E23'), // olive green
-      new THREE.Color('#D2691E'), // chocolate
-      new THREE.Color('#DAA520'), // goldenrod
-      new THREE.Color('#CD853F'), // peru
-      new THREE.Color('#A0522D'), // sienna
-    ];
-
+  // Initialize particle data
+  useMemo(() => {
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      positions[i * 3] = 0;
-      positions[i * 3 + 1] = -200;
-      positions[i * 3 + 2] = 0;
-
-      alphas[i] = 0;
-      // Much bigger flakes so they're visible from camera distance
-      sizes[i] = 0.4 + Math.random() * 0.5;
-
-      const color = foodColors[Math.floor(Math.random() * foodColors.length)];
-      colors[i * 3] = color.r;
-      colors[i * 3 + 1] = color.g;
-      colors[i * 3 + 2] = color.b;
+      particleData.current[i] = {
+        pos: new THREE.Vector3(0, -200, 0),
+        vel: new THREE.Vector3(),
+        alpha: 0,
+        size: 0.12 + Math.random() * 0.18,
+        color: foodColors[Math.floor(Math.random() * foodColors.length)],
+        wobblePhase: Math.random() * Math.PI * 2,
+        wobbleSpeed: 1 + Math.random() * 2,
+        spawnDelay: Math.random() * 1.2, // staggered sprinkle over ~1.2 seconds
+        spawned: false,
+        hitWater: false,
+      };
     }
-
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute('aAlpha', new THREE.BufferAttribute(alphas, 1));
-    geo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
-    geo.setAttribute('aColor', new THREE.BufferAttribute(colors, 3));
-
-    const mat = new THREE.ShaderMaterial({
-      uniforms: {
-        time: { value: 0 },
-      },
-      vertexShader: `
-        attribute float aAlpha;
-        attribute float aSize;
-        attribute vec3 aColor;
-        varying float vAlpha;
-        varying vec3 vColor;
-
-        void main() {
-          vAlpha = aAlpha;
-          vColor = aColor;
-          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = aSize * (600.0 / -mvPosition.z);
-          gl_Position = projectionMatrix * mvPosition;
-        }
-      `,
-      fragmentShader: `
-        varying float vAlpha;
-        varying vec3 vColor;
-
-        void main() {
-          float dist = length(gl_PointCoord - vec2(0.5));
-          if (dist > 0.5) discard;
-          // Irregular flake shape
-          float edge = 1.0 - smoothstep(0.25, 0.5, dist);
-          // Add some texture to the flake
-          float grain = fract(sin(dot(gl_PointCoord * 10.0, vec2(12.9898, 78.233))) * 43758.5453) * 0.3 + 0.7;
-          gl_FragColor = vec4(vColor * grain, vAlpha * edge);
-        }
-      `,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.NormalBlending,
-    });
-
-    return { geometry: geo, velocitiesArray: velocities, alphasArray: alphas, material: mat };
   }, []);
 
   useFrame(({ clock }) => {
-    if (!pointsRef.current) return;
-
-    const positions = geometry.attributes.position.array;
-    const alphas = geometry.attributes.aAlpha.array;
+    if (!groupRef.current) return;
     const time = clock.elapsedTime;
 
     // Check for new feed event
@@ -105,66 +48,138 @@ const FoodParticles = ({ feedEvent }) => {
       activeRef.current = true;
       positionRef.current = feedEvent.position || [0, WATER_LEVEL, 0];
 
-      const [sx, sy, sz] = positionRef.current;
+      // Reset all particles
       for (let i = 0; i < PARTICLE_COUNT; i++) {
-        // Spread across a wider area at the surface
-        positions[i * 3] = sx + (Math.random() - 0.5) * 6;
-        positions[i * 3 + 1] = sy - 0.2 - Math.random() * 0.5;
-        positions[i * 3 + 2] = sz + (Math.random() - 0.5) * 6;
-
-        // Store velocity in the velocities array
-        velocitiesArray[i * 3] = (Math.random() - 0.5) * 0.03;
-        velocitiesArray[i * 3 + 1] = -(0.015 + Math.random() * 0.03);
-        velocitiesArray[i * 3 + 2] = (Math.random() - 0.5) * 0.03;
-
-        alphas[i] = 0.9 + Math.random() * 0.1;
+        const p = particleData.current[i];
+        p.spawned = false;
+        p.hitWater = false;
+        p.alpha = 0;
+        p.pos.set(0, -200, 0);
+        p.spawnDelay = Math.random() * 1.2;
+        if (meshRefs.current[i]) meshRefs.current[i].visible = false;
       }
-      geometry.attributes.position.needsUpdate = true;
-      geometry.attributes.aAlpha.needsUpdate = true;
     }
 
     if (!activeRef.current) return;
 
     const elapsed = time - spawnTimeRef.current;
+    const [sx, , sz] = positionRef.current;
+    const dropStartY = WATER_LEVEL + 15; // start above the tank, visible on camera
+    let allDone = true;
 
-    let allDead = true;
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      if (alphas[i] <= 0.01) continue;
-      allDead = false;
+      const p = particleData.current[i];
+      const mesh = meshRefs.current[i];
+      if (!mesh) continue;
+
+      // Staggered spawn — sprinkle effect, not all at once
+      if (!p.spawned) {
+        if (elapsed >= p.spawnDelay) {
+          p.spawned = true;
+          // Spawn above the tank spread out like being sprinkled from a hand
+          p.pos.set(
+            sx + (Math.random() - 0.5) * 10,
+            dropStartY + (Math.random() - 0.5) * 3,
+            sz + (Math.random() - 0.5) * 6
+          );
+          // Slight outward + downward velocity like being tossed
+          p.vel.set(
+            (Math.random() - 0.5) * 0.06,
+            -(0.02 + Math.random() * 0.03),
+            (Math.random() - 0.5) * 0.04
+          );
+          p.alpha = 1.0;
+          p.hitWater = false;
+        } else {
+          continue;
+        }
+      }
+
+      if (p.alpha <= 0.01) {
+        mesh.visible = false;
+        continue;
+      }
+      allDone = false;
+      mesh.visible = true;
+
+      // PHASE 1: Falling through air — gravity pulls them down fast
+      if (!p.hitWater && p.pos.y > WATER_LEVEL) {
+        p.vel.y -= 0.006; // gravity
+        // Light air drift
+        p.pos.x += Math.sin(time * 3 + p.wobblePhase) * 0.003;
+        p.pos.z += Math.cos(time * 2.5 + p.wobblePhase) * 0.003;
+      }
+
+      // PHASE 2: Hit water — slow way down, start sinking gently
+      if (!p.hitWater && p.pos.y <= WATER_LEVEL) {
+        p.hitWater = true;
+        // Kill most downward velocity — water drag impact
+        p.vel.y *= 0.15;
+        // Slight splash outward
+        p.vel.x += (Math.random() - 0.5) * 0.01;
+        p.vel.z += (Math.random() - 0.5) * 0.01;
+      }
+
+      if (p.hitWater) {
+        // Gentle sinking through water
+        p.vel.y *= 0.995;
+        p.vel.x *= 0.99;
+        p.vel.z *= 0.99;
+        // Minimum sink
+        if (p.vel.y > -0.005) p.vel.y = -0.005;
+        // Wobble like a real flake in water
+        p.pos.x += Math.sin(time * p.wobbleSpeed + p.wobblePhase) * 0.008;
+        p.pos.z += Math.cos(time * p.wobbleSpeed * 0.7 + p.wobblePhase) * 0.008;
+      }
 
       // Apply velocity
-      positions[i * 3] += velocitiesArray[i * 3];
-      positions[i * 3 + 1] += velocitiesArray[i * 3 + 1];
-      positions[i * 3 + 2] += velocitiesArray[i * 3 + 2];
+      p.pos.add(p.vel);
 
-      // Gentle wobble as they sink (like real food flakes tumbling)
-      positions[i * 3] += Math.sin(time * 1.5 + i * 1.3) * 0.008;
-      positions[i * 3 + 2] += Math.cos(time * 1.2 + i * 0.9) * 0.008;
+      // Fade based on depth below water and time
+      const particleAge = elapsed - p.spawnDelay;
+      if (p.hitWater) {
+        const depth = WATER_LEVEL - p.pos.y;
+        const depthFade = Math.max(0, 1 - depth / 18);
+        const timeFade = Math.max(0, 1 - particleAge / 10);
+        p.alpha = Math.min(depthFade, timeFade);
+      } else {
+        p.alpha = 1.0; // fully visible while falling through air
+      }
 
-      // Water resistance slows the sink
-      velocitiesArray[i * 3 + 1] *= 0.997;
-      // Horizontal drift slows too
-      velocitiesArray[i * 3] *= 0.995;
-      velocitiesArray[i * 3 + 2] *= 0.995;
-
-      // Fade based on depth sunk and time
-      const depth = positionRef.current[1] - positions[i * 3 + 1];
-      const depthFade = Math.max(0, 1 - depth / 18);
-      const timeFade = Math.max(0, 1 - elapsed / 8);
-      alphas[i] = Math.min(depthFade, timeFade) * 0.95;
+      // Update mesh
+      mesh.position.copy(p.pos);
+      mesh.rotation.x = time * p.wobbleSpeed * 0.5 + p.wobblePhase;
+      mesh.rotation.z = time * p.wobbleSpeed * 0.3 + p.wobblePhase * 0.5;
+      mesh.material.opacity = p.alpha;
     }
 
-    if (allDead || elapsed > 9) {
+    if (allDone || elapsed > 12) {
       activeRef.current = false;
     }
-
-    geometry.attributes.position.needsUpdate = true;
-    geometry.attributes.aAlpha.needsUpdate = true;
-    material.uniforms.time.value = time;
   });
 
   return (
-    <points ref={pointsRef} geometry={geometry} material={material} />
+    <group ref={groupRef} renderOrder={999}>
+      {Array.from({ length: PARTICLE_COUNT }, (_, i) => {
+        const p = particleData.current[i];
+        return (
+          <mesh
+            key={i}
+            ref={el => meshRefs.current[i] = el}
+            visible={false}
+          >
+            <planeGeometry args={[p?.size || 0.15, p?.size || 0.15]} />
+            <meshBasicMaterial
+              color={p?.color || '#DAA520'}
+              transparent
+              opacity={0}
+              side={THREE.DoubleSide}
+              depthTest={false}
+            />
+          </mesh>
+        );
+      })}
+    </group>
   );
 };
 
