@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAquariumEvents } from '../hooks/useAquariumEvents';
+import { useAquariumEvents } from '../hooks/useAquariumEvents.jsx';
 import { FISH_SPECIES, createFish } from '../models/fishModel.js';
 import { WATER_LEVEL, BOUNDS } from '../constants/tankDimensions';
 

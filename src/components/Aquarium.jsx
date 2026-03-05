@@ -12,7 +12,7 @@ import RealisticCaustics from './RealisticCaustics';
 import FoodParticles from './FoodParticles';
 import PetEffect from './PetEffect';
 import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
-import { useAquariumEvents } from '../hooks/useAquariumEvents';
+import { useAquariumEvents } from '../hooks/useAquariumEvents.jsx';
 import { getDefaultFish } from '../models/fishModel';
 import { TANK_DEPTH, WATER_LEVEL } from '../constants/tankDimensions';
 import * as THREE from 'three';

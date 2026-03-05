@@ -4,7 +4,7 @@ import InteractionUI from './components/InteractionUI';
 import FallbackBanner from './components/FallbackBanner';
 import useCollection from './hooks/useCollection';
 import { initializeFishCollection } from './firestore/fishInitializer';
-import { AquariumEventProvider } from './hooks/useAquariumEvents';
+import { AquariumEventProvider } from './hooks/useAquariumEvents.jsx';
 import { useEffect, useState } from 'react';
 
 function App() {
