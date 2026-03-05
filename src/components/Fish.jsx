@@ -3,8 +3,9 @@ import { useFrame } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { FISH_SPECIES } from '../models/fishModel.js';
+import { WATER_LEVEL } from '../constants/tankDimensions';
 
-const Fish = ({ boid, onFishClick }) => {
+const Fish = ({ boid, onFishClick, petEvent }) => {
   const groupRef = useRef();
   const [isHovered, setIsHovered] = useState(false);
 
@@ -134,8 +135,76 @@ const Fish = ({ boid, onFishClick }) => {
     }
   }, [fishModel, boid.color, phaseOffset, wiggleAmount]);
 
+  // Track pet wiggle state
+  const isPettedRef = useRef(false);
+  const petTimeRef = useRef(0);
+  const lastPetEventId = useRef(null);
+
+  // Track entrance animation
+  const isEntering = useRef(!!boid.spawnTime);
+  const entranceStartTime = useRef(0);
+
   useFrame((state, delta) => {
     if (!groupRef.current || !boid || !boid.position || !boid.ref) return;
+
+    const time = state.clock.elapsedTime;
+
+    // ENTRANCE ANIMATION - new fish drops from above
+    if (isEntering.current) {
+      if (entranceStartTime.current === 0) {
+        entranceStartTime.current = time;
+        // Start position above the frame
+        groupRef.current.position.set(
+          boid.position.x,
+          WATER_LEVEL + 20,
+          boid.position.z
+        );
+      }
+
+      const elapsed = time - entranceStartTime.current;
+
+      if (elapsed < 3.0) {
+        const startY = WATER_LEVEL + 20;
+
+        if (elapsed < 1.0) {
+          // Phase 1: Freefall from above
+          const gravity = 9.8;
+          const fallY = startY - 0.5 * gravity * elapsed * elapsed;
+          groupRef.current.position.y = Math.max(fallY, WATER_LEVEL - 2);
+          groupRef.current.position.x = boid.position.x;
+          groupRef.current.position.z = boid.position.z;
+        } else if (elapsed < 2.0) {
+          // Phase 2: Hit water, drag slows descent, wobble
+          const waterPhase = elapsed - 1.0;
+          const belowSurface = 2 + waterPhase * 3 * Math.exp(-waterPhase * 2);
+          groupRef.current.position.y = WATER_LEVEL - belowSurface;
+          groupRef.current.position.x = boid.position.x + Math.sin(elapsed * 8) * 0.3 * (1 - waterPhase);
+          groupRef.current.position.z = boid.position.z + Math.cos(elapsed * 6) * 0.2 * (1 - waterPhase);
+        } else {
+          // Phase 3: Lerp to boid control
+          const lerpFactor = (elapsed - 2.0) / 1.0;
+          groupRef.current.position.lerp(boid.position, lerpFactor * 0.3);
+        }
+
+        // Scale pulse on water entry
+        if (elapsed > 0.9 && elapsed < 1.3) {
+          const splashPulse = 1.0 + Math.sin((elapsed - 0.9) * Math.PI / 0.4) * 0.15;
+          const baseScale = boid.size || 1.0;
+          groupRef.current.scale.setScalar(baseScale * splashPulse);
+        }
+
+        return; // Skip normal movement during entrance
+      } else {
+        isEntering.current = false;
+      }
+    }
+
+    // PET WIGGLE - check if this fish is being petted
+    if (petEvent && petEvent.id !== lastPetEventId.current && petEvent.targetFishId === boid.id) {
+      lastPetEventId.current = petEvent.id;
+      isPettedRef.current = true;
+      petTimeRef.current = time;
+    }
 
     // 1. SMOOTH PHYSICAL MOVEMENT - interpolate for extra smoothness
     groupRef.current.position.lerp(boid.position, 0.3);
@@ -152,8 +221,28 @@ const Fish = ({ boid, onFishClick }) => {
       groupRef.current.quaternion.multiply(bankQuat);
     }
 
-    // 2. INTERACTIVE SCALE
-    const targetScale = isHovered ? 1.2 : 1.0;
+    // Pet wiggle effect
+    if (isPettedRef.current) {
+      const petElapsed = time - petTimeRef.current;
+      if (petElapsed < 2.5) {
+        // Rapid Z-axis wiggle
+        const wiggle = Math.sin(petElapsed * 15) * 0.3 * (1 - petElapsed / 2.5);
+        const wiggleQuat = new THREE.Quaternion().setFromAxisAngle(
+          new THREE.Vector3(0, 0, 1),
+          wiggle
+        );
+        groupRef.current.quaternion.multiply(wiggleQuat);
+      } else {
+        isPettedRef.current = false;
+      }
+    }
+
+    // 2. INTERACTIVE SCALE (+ pet pulse)
+    let targetScale = isHovered ? 1.2 : 1.0;
+    if (isPettedRef.current) {
+      const petElapsed = time - petTimeRef.current;
+      targetScale *= 1.0 + Math.sin(petElapsed * 10) * 0.05;
+    }
     const baseScale = boid.size || 1.0;
     const currentScale = groupRef.current.scale.x / baseScale;
     const newScale = baseScale * THREE.MathUtils.lerp(currentScale, targetScale, 0.15);

@@ -4,6 +4,7 @@ import InteractionUI from './components/InteractionUI';
 import FallbackBanner from './components/FallbackBanner';
 import useCollection from './hooks/useCollection';
 import { initializeFishCollection } from './firestore/fishInitializer';
+import { AquariumEventProvider } from './hooks/useAquariumEvents';
 import { useEffect, useState } from 'react';
 
 function App() {
@@ -67,21 +68,23 @@ function App() {
   }
 
   return (
-    <div className="App">
-      <FallbackBanner message={error ? `Firebase Error: ${error}` : null} />
-      <InteractionUI 
-        disabled={!!error} 
-        events={events} 
-        roomLightsOn={roomLightsOn} 
-        toggleRoomLights={() => setRoomLightsOn(prev => !prev)} 
-      />
-      <Aquarium 
-        fishData={fishData} 
-        loading={fishLoading} 
-        roomLightsOn={roomLightsOn}
-      />
-      <div className="cinematic-overlay"></div>
-    </div>
+    <AquariumEventProvider>
+      <div className="App">
+        <FallbackBanner message={error ? `Firebase Error: ${error}` : null} />
+        <InteractionUI
+          disabled={!!error}
+          events={events}
+          roomLightsOn={roomLightsOn}
+          toggleRoomLights={() => setRoomLightsOn(prev => !prev)}
+        />
+        <Aquarium
+          fishData={fishData}
+          loading={fishLoading}
+          roomLightsOn={roomLightsOn}
+        />
+        <div className="cinematic-overlay"></div>
+      </div>
+    </AquariumEventProvider>
   );
 }
 

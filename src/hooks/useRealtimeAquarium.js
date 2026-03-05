@@ -17,6 +17,19 @@ const useRealtimeAquarium = (fishData) => {
   const lastUpdateTime = useRef(Date.now());
   const heartbeatInterval = useRef(null);
 
+  // Feed target position (ref to avoid re-renders)
+  const feedTargetRef = useRef(null);
+  const feedStartTimeRef = useRef(0);
+
+  const setFeedTarget = (position) => {
+    if (position) {
+      feedTargetRef.current = new THREE.Vector3(...position);
+      feedStartTimeRef.current = Date.now() * 0.001;
+    } else {
+      feedTargetRef.current = null;
+    }
+  };
+
   // Store persistent random values for each fish (for natural variation)
   const fishRandomsRef = useRef({});
 
@@ -271,13 +284,17 @@ const useRealtimeAquarium = (fishData) => {
       // Initialize fish state
       if (!boid.state) {
         boid.state = {
-          mode: 'swimming', // swimming, investigating, resting, following
+          mode: 'swimming', // swimming, investigating, resting, following, feeding
           modeStartTime: time,
           modeDuration: 8 + Math.random() * 12,
           currentInterest: null,
           swimDirection: Math.random() * Math.PI * 2,
           verticalPreference: (BOUNDS.yMax + BOUNDS.yMin) / 2 + randoms.verticalBias * 5,
-          energy: 0.5 + Math.random() * 0.5, // Energy level affects behavior
+          energy: 0.5 + Math.random() * 0.5,
+          hunger: 30 + Math.random() * 40, // 0 = starving, 100 = full
+          postFeedMode: null,
+          postFeedEnd: 0,
+          isEating: false,
         };
       }
 
@@ -313,6 +330,49 @@ const useRealtimeAquarium = (fishData) => {
           state.modeDuration = 10 + Math.random() * 15;
         }
         state.modeStartTime = time;
+      }
+
+      // FEEDING BEHAVIOR - override mode when food is present
+      if (feedTargetRef.current && !state.postFeedMode) {
+        const hunger = state.hunger !== undefined ? state.hunger : 50;
+        const isGreedy = (randoms.curiosity > 0.7 || randoms.laziness < 0.2);
+
+        // Decide if this fish wants to eat
+        const wantsToEat = hunger < 80 || isGreedy;
+
+        if (wantsToEat) {
+          state.mode = 'feeding';
+          state.modeStartTime = time;
+        }
+      }
+
+      // When feed target removed, trigger post-feeding behavior
+      if (!feedTargetRef.current && state.mode === 'feeding') {
+        state.mode = 'swimming';
+
+        // Post-feeding personality reaction
+        if (randoms.speedMultiplier > 1.1 || randoms.wanderIntensity > 0.7) {
+          // Energetic/playful: food zoomies
+          state.postFeedMode = 'zoomies';
+          state.postFeedEnd = time + 5 + Math.random() * 5;
+        } else if (randoms.laziness > 0.7) {
+          // Lazy/calm: settle down
+          state.postFeedMode = 'settle';
+          state.postFeedEnd = time + 5 + Math.random() * 5;
+        } else if (randoms.curiosity > 0.6) {
+          // Curious: investigate where food was
+          state.postFeedMode = 'investigate';
+          state.postFeedEnd = time + 4 + Math.random() * 4;
+          state.postFeedPos = feedTargetRef.current ? feedTargetRef.current.clone() : boid.position.clone();
+        } else {
+          // Default: resume normal
+          state.postFeedMode = null;
+        }
+      }
+
+      // Clear post-feed mode when timer expires
+      if (state.postFeedMode && time > state.postFeedEnd) {
+        state.postFeedMode = null;
       }
 
       // Calculate desired velocity based on mode
@@ -388,6 +448,44 @@ const useRealtimeAquarium = (fishData) => {
           }
           break;
 
+        case 'feeding':
+          // Swim toward food based on hunger
+          if (feedTargetRef.current) {
+            const toFood = new THREE.Vector3().subVectors(feedTargetRef.current, boid.position);
+            const foodDist = toFood.length();
+            const hunger = state.hunger !== undefined ? state.hunger : 50;
+
+            // Speed based on hunger
+            let feedSpeed;
+            if (hunger < 40) {
+              feedSpeed = maxSpeed * 1.5; // Hungry - rush
+            } else {
+              feedSpeed = maxSpeed * 1.2; // Normal approach
+            }
+
+            if (foodDist > 3) {
+              // Steer toward food
+              toFood.normalize();
+              desiredVelocity.copy(toFood).multiplyScalar(feedSpeed);
+            } else {
+              // Circle/nibble around food
+              const nibbleAngle = fishTime * 2 + randoms.phaseOffset;
+              desiredVelocity.x = Math.cos(nibbleAngle) * feedSpeed * 0.3;
+              desiredVelocity.z = Math.sin(nibbleAngle) * feedSpeed * 0.3;
+              desiredVelocity.y = Math.sin(fishTime * 3) * 0.02;
+
+              // "Eat" - increment hunger
+              if (!state.lastAteTime || time - state.lastAteTime > 1.5) {
+                state.hunger = Math.min(100, (state.hunger || 50) + 15 + Math.random() * 10);
+                state.lastAteTime = time;
+                state.isEating = true;
+                setTimeout(() => { state.isEating = false; }, 500);
+              }
+            }
+            maxSpeed = feedSpeed;
+          }
+          break;
+
         case 'resting':
           // Minimal movement, gentle hovering
           maxSpeed = 0.03;
@@ -398,6 +496,24 @@ const useRealtimeAquarium = (fishData) => {
           // Slowly regain energy while resting
           state.energy += 0.0005;
           break;
+      }
+
+      // Post-feeding behavior modifiers
+      if (state.postFeedMode === 'zoomies') {
+        maxSpeed *= 1.5;
+        desiredVelocity.x += Math.sin(fishTime * 5) * maxSpeed * 0.5;
+        desiredVelocity.z += Math.cos(fishTime * 4.3) * maxSpeed * 0.4;
+      } else if (state.postFeedMode === 'settle') {
+        maxSpeed *= 0.3;
+        desiredVelocity.y -= 0.01; // drift downward
+      } else if (state.postFeedMode === 'investigate' && state.postFeedPos) {
+        const toOldFood = new THREE.Vector3().subVectors(state.postFeedPos, boid.position);
+        if (toOldFood.length() > 2) {
+          desiredVelocity.copy(toOldFood.normalize().multiplyScalar(maxSpeed * 0.5));
+        } else {
+          desiredVelocity.x = Math.cos(fishTime * 0.8) * maxSpeed * 0.3;
+          desiredVelocity.z = Math.sin(fishTime * 0.8) * maxSpeed * 0.3;
+        }
       }
 
       // SMOOTH STEERING - gradually adjust velocity toward desired
@@ -518,9 +634,9 @@ const useRealtimeAquarium = (fishData) => {
 
   // Return appropriate data based on role
   if (isMaster) {
-    return { boids, isMaster: true };
+    return { boids, isMaster: true, setFeedTarget };
   } else {
-    return { boids, isMaster: false };
+    return { boids, isMaster: false, setFeedTarget };
   }
 };
 

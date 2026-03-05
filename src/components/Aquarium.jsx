@@ -1,4 +1,4 @@
-import React, { Suspense, useMemo, lazy, useRef, useEffect } from 'react';
+import React, { Suspense, useMemo, useState, useEffect, useCallback, lazy, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import Fish from './Fish';
 import TankContainer from './TankContainer';
@@ -8,8 +8,11 @@ import BubbleJet from './BubbleJet';
 import AmbientBubbles from './AmbientBubbles';
 import HOBFilter from './HOBFilter';
 import Environment from './Environment';
-import RealisticCaustics from './RealisticCaustics'; // Restored
+import RealisticCaustics from './RealisticCaustics';
+import FoodParticles from './FoodParticles';
+import PetEffect from './PetEffect';
 import useRealtimeAquarium from '../hooks/useRealtimeAquarium';
+import { useAquariumEvents } from '../hooks/useAquariumEvents';
 import { getDefaultFish } from '../models/fishModel';
 import { TANK_DEPTH, WATER_LEVEL } from '../constants/tankDimensions';
 import * as THREE from 'three';
@@ -161,16 +164,22 @@ const CausticProjector = () => {
 };
 
 // Scene component - realistic aquarium view
-const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
+const Scene = ({ fishData, onFishClick, roomLightsOn, feedEvent, petEvent }) => {
   const initialFish = useMemo(() => {
-    // Pass complete fish data, only add initialPosition if position exists
     return fishData.map(f => ({
-      ...f, 
+      ...f,
       ...(f.position && { initialPosition: f.position })
     }));
   }, [fishData]);
 
-  const { boids } = useRealtimeAquarium(initialFish);
+  const { boids, setFeedTarget } = useRealtimeAquarium(initialFish);
+
+  // Pass feed target to boid system when feed event fires
+  useEffect(() => {
+    if (feedEvent) {
+      setFeedTarget(feedEvent.position);
+    }
+  }, [feedEvent?.id]);
 
   return (
     <>
@@ -257,8 +266,14 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
       
       {/* 3. Fish swimming in the tank */}
       {boids.map(boid => (
-        <Fish key={boid.id} boid={boid} onFishClick={onFishClick} />
+        <Fish key={boid.id} boid={boid} onFishClick={onFishClick} petEvent={petEvent} />
       ))}
+
+      {/* 3b. Food particles */}
+      <FoodParticles feedEvent={feedEvent} />
+
+      {/* 3c. Pet sparkle effect */}
+      <PetEffect petEvent={petEvent} boids={boids} />
 
       {/* 4. HOB Filter */}
       <HOBFilter />
@@ -280,28 +295,39 @@ const Scene = ({ fishData, onFishClick, roomLightsOn }) => {
 
 const Aquarium = ({ fishData = [], events = [], loading = false, roomLightsOn }) => {
   const [selectedFish, setSelectedFish] = React.useState(null);
-  
+  const [localAddedFish, setLocalAddedFish] = useState([]);
+
+  // Read event context OUTSIDE Canvas (context doesn't bridge into R3F)
+  const { events: aquariumEvents } = useAquariumEvents();
+  const { feedEvent, petEvent, addFishEvent } = aquariumEvents;
+
+  // Handle addFish event — append to local fish list
+  const lastAddFishId = useRef(null);
+  useEffect(() => {
+    if (addFishEvent && addFishEvent.id !== lastAddFishId.current) {
+      lastAddFishId.current = addFishEvent.id;
+      setLocalAddedFish(prev => [...prev, addFishEvent.fishData]);
+    }
+  }, [addFishEvent?.id]);
+
   // Use comprehensive fish data with full stats and personalities
   const defaultFish = useMemo(() => getDefaultFish(), []);
-  
+
   // Filter out invalid fish data from Firebase and ensure minimum size
   const validFishData = useMemo(() => {
-    // If we have fishData from Firebase, use it (even if empty to avoid duplicates)
     if (fishData && fishData.length > 0) {
       const filtered = fishData.filter(fish => {
-        // Must have valid name, size, and color
-        return fish && 
-               fish.name && 
-               fish.size && 
-               fish.size >= 0.5 && // Minimum size requirement
-               fish.color && 
+        return fish &&
+               fish.name &&
+               fish.size &&
+               fish.size >= 0.5 &&
+               fish.color &&
                fish.id;
       }).map(fish => ({
-        ...defaultFish[0], // Start with default fish structure
-        ...fish, // Override with Firebase data
-        size: Math.max(0.6, fish.size || 0.6), // Ensure minimum size
-        color: fish.color || '#FF6B35', // Ensure color exists
-        // Ensure required nested objects exist
+        ...defaultFish[0],
+        ...fish,
+        size: Math.max(0.6, fish.size || 0.6),
+        color: fish.color || '#FF6B35',
         personality: fish.personality || defaultFish[0].personality,
         preferences: fish.preferences || defaultFish[0].preferences,
         history: fish.history || defaultFish[0].history,
@@ -311,16 +337,17 @@ const Aquarium = ({ fishData = [], events = [], loading = false, roomLightsOn })
       return filtered;
     }
 
-    // If loading, return empty array to prevent default fish from showing
     if (loading) {
       return [];
     }
 
-    // Only use default fish if no Firebase data exists at all and not loading
     return defaultFish;
   }, [fishData, defaultFish, loading]);
-  
-  const activeFishData = validFishData;
+
+  // Merge Firebase fish with locally added fish
+  const activeFishData = useMemo(() => {
+    return [...validFishData, ...localAddedFish];
+  }, [validFishData, localAddedFish]);
   
 
   const handleFishClick = (fish) => {
@@ -356,7 +383,7 @@ const Aquarium = ({ fishData = [], events = [], loading = false, roomLightsOn })
             camera.lookAt(...cameraLookAt);
           }}
         >
-          <Scene fishData={activeFishData} onFishClick={handleFishClick} roomLightsOn={roomLightsOn} />
+          <Scene fishData={activeFishData} onFishClick={handleFishClick} roomLightsOn={roomLightsOn} feedEvent={feedEvent} petEvent={petEvent} />
         </Canvas>
       </ThreeErrorBoundary>
 

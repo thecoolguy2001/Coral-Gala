@@ -1,9 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { writeEvent } from '../firestore/events';
-import { useStripe } from '@stripe/react-stripe-js';
+import { useAquariumEvents } from '../hooks/useAquariumEvents';
+import { FISH_SPECIES, createFish } from '../models/fishModel.js';
+import { WATER_LEVEL, BOUNDS } from '../constants/tankDimensions';
+
+const createRandomTestFish = () => {
+  const speciesKeys = Object.keys(FISH_SPECIES);
+  const randomKey = speciesKeys[Math.floor(Math.random() * speciesKeys.length)];
+  const species = FISH_SPECIES[randomKey];
+  const names = ['Splash', 'Bubba', 'Finley', 'Coral', 'Shimmer', 'Drift', 'Zippy', 'Sparkle', 'Nori', 'Wave'];
+  const name = names[Math.floor(Math.random() * names.length)] + '_' + Date.now().toString(36).slice(-4);
+
+  return {
+    ...createFish({
+      name,
+      species: species.name,
+      color: species.colors[Math.floor(Math.random() * species.colors.length)],
+      size: Math.max(0.6, species.averageSize * (0.8 + Math.random() * 0.4)),
+      position: [0, WATER_LEVEL + 20, 0],
+      acquiredAt: new Date(),
+      createdAt: new Date(),
+    }),
+    spawnTime: Date.now(),
+  };
+};
 
 const InteractionUI = ({ disabled, roomLightsOn, toggleRoomLights }) => {
-  const stripe = useStripe();
+  const { dispatch } = useAquariumEvents();
   const [isLoading, setIsLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [showHint, setShowHint] = useState(true);
@@ -29,75 +51,25 @@ const InteractionUI = ({ disabled, roomLightsOn, toggleRoomLights }) => {
     setIsVisible(false); // Hide menu immediately when leaving UI area
   };
 
-  const handleFeed = async () => {
+  const handleFeed = () => {
     if (disabled || isLoading) return;
-    
-    setIsLoading(true);
-    try {
-      await writeEvent('feed', { amount: 10 });
-      // Add haptic feedback simulation
-      if (navigator.vibrate) {
-        navigator.vibrate(50);
-      }
-    } catch (error) {
-      console.error('Feed error:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    const randomX = (Math.random() - 0.5) * (BOUNDS.x.max - BOUNDS.x.min) * 0.6;
+    const randomZ = (Math.random() - 0.5) * (BOUNDS.z.max - BOUNDS.z.min) * 0.6;
+    dispatch({ type: 'FEED', payload: { position: [randomX, WATER_LEVEL, randomZ] } });
+    if (navigator.vibrate) navigator.vibrate(50);
   };
 
-  const handlePet = async () => {
+  const handlePet = () => {
     if (disabled || isLoading) return;
-
-    setIsLoading(true);
-    try {
-      // Pet event affects the entire aquarium (shared global experience)
-      await writeEvent('pet', { affection: 5 });
-      // Add haptic feedback simulation
-      if (navigator.vibrate) {
-        navigator.vibrate([50, 30, 50]);
-      }
-    } catch (error) {
-      console.error('Pet error:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    dispatch({ type: 'PET', payload: { fishId: null } });
+    if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
   };
 
-  const handleBuyFish = async () => {
-    if (!stripe || disabled || isLoading) {
-      console.error('Stripe.js has not loaded yet.');
-      return;
-    }
-    
-    setIsLoading(true);
-    try {
-      // Call our backend to create a checkout session
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
-      const { sessionId } = await response.json();
-
-      const { error } = await stripe.redirectToCheckout({
-        sessionId,
-      });
-
-      if (error) {
-        console.error('Stripe checkout error:', error.message);
-      }
-    } catch (error) {
-      console.error('Buy fish error:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleAddFish = () => {
+    if (disabled || isLoading) return;
+    const newFish = createRandomTestFish();
+    dispatch({ type: 'ADD_FISH', payload: { fishData: newFish } });
+    if (navigator.vibrate) navigator.vibrate(100);
   };
 
   const disabledTitle = disabled ? 'Interactions are temporarily disabled due to a connection issue.' : '';
@@ -151,14 +123,14 @@ const InteractionUI = ({ disabled, roomLightsOn, toggleRoomLights }) => {
         </button>
 
         <button
-          className={`apple-button buy-button ${disabled ? 'disabled' : ''} ${isLoading ? 'loading' : ''} ${!stripe ? 'no-stripe' : ''}`}
-          onClick={handleBuyFish}
-          disabled={!stripe || disabled || isLoading}
+          className={`apple-button buy-button ${disabled ? 'disabled' : ''} ${isLoading ? 'loading' : ''}`}
+          onClick={handleAddFish}
+          disabled={disabled || isLoading}
           title={disabledTitle}
         >
           <div className="button-content">
-            <div className="button-icon">🛒</div>
-            <span className="button-text">Buy New Fish</span>
+            <div className="button-icon">🐠</div>
+            <span className="button-text">Add Fish</span>
           </div>
           {isLoading && <div className="loading-spinner"></div>}
         </button>
