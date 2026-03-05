@@ -164,7 +164,7 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
       const baseScale = boid.size || 1.0;
       const dropHeight = WATER_LEVEL + 25;
 
-      if (elapsed < 5.5) {
+      if (elapsed < 6.0) {
 
         if (elapsed < 2.0) {
           // Phase 1: Visible freefall through air — slow enough to watch
@@ -179,22 +179,25 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
 
           groupRef.current.scale.setScalar(baseScale);
 
-        } else if (elapsed < 3.5) {
-          // Phase 2: SPLASH — fish hits water, plunges down with drag
-          const waterTime = elapsed - 2.0;
+        } else if (elapsed < 4.0) {
+          // Phase 2: SPLASH — fish plunges deep into tank, then slowly rises
+          const waterTime = elapsed - 2.0; // 0 to 2.0
 
-          // Fast initial plunge that decays exponentially (water drag)
-          const impactSpeed = 8;
-          const plungeDepth = impactSpeed * waterTime * Math.exp(-waterTime * 2.5);
-          groupRef.current.position.y = WATER_LEVEL - plungeDepth;
+          // Plunge deep: fast entry that decelerates with water drag
+          // Max depth ~12 units below surface (halfway down the tank)
+          const maxPlunge = 12;
+          const plungeDepth = maxPlunge * (1 - Math.exp(-waterTime * 2.0));
+          // After peak plunge (~1s), start floating back up slowly
+          const riseAmount = waterTime > 0.8 ? (waterTime - 0.8) * 2.0 : 0;
+          groupRef.current.position.y = WATER_LEVEL - plungeDepth + riseAmount;
 
           // Wobble from impact force
-          const wobbleDecay = Math.exp(-waterTime * 1.5);
-          groupRef.current.position.x += Math.sin(waterTime * 10) * 0.6 * wobbleDecay * delta;
-          groupRef.current.position.z += Math.cos(waterTime * 8) * 0.4 * wobbleDecay * delta;
+          const wobbleDecay = Math.exp(-waterTime * 1.2);
+          groupRef.current.position.x += Math.sin(waterTime * 10) * 0.8 * wobbleDecay * delta;
+          groupRef.current.position.z += Math.cos(waterTime * 8) * 0.5 * wobbleDecay * delta;
 
           // Tumble dampens in water
-          const rotDecay = Math.exp(-waterTime * 2);
+          const rotDecay = Math.exp(-waterTime * 1.5);
           groupRef.current.rotation.x = (2.0 * 3) * rotDecay + Math.sin(waterTime * 5) * 0.4 * rotDecay;
           groupRef.current.rotation.z = Math.sin(waterTime * 4) * 0.3 * rotDecay;
 
@@ -206,29 +209,28 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
             groupRef.current.scale.setScalar(baseScale);
           }
 
-        } else if (elapsed < 4.5) {
-          // Phase 3: Fish recovers — orients itself, settles
-          const settleTime = elapsed - 3.5;
+        } else if (elapsed < 5.0) {
+          // Phase 3: Fish recovers — orients and swims toward its boid position
+          const settleTime = elapsed - 4.0;
           const t = settleTime; // 0 to 1
 
-          groupRef.current.position.lerp(boid.position, t * 0.12);
+          groupRef.current.position.lerp(boid.position, t * 0.15);
 
           // Rotation eases back to normal
-          groupRef.current.rotation.x *= (1 - t * 0.25);
-          groupRef.current.rotation.z *= (1 - t * 0.25);
+          groupRef.current.rotation.x *= (1 - t * 0.3);
+          groupRef.current.rotation.z *= (1 - t * 0.3);
 
           // Gentle sway as fish finds its bearing
           groupRef.current.position.x += Math.sin(time * 3) * 0.08 * (1 - t);
-          groupRef.current.position.y += Math.sin(time * 2) * 0.05 * (1 - t);
 
           groupRef.current.scale.setScalar(baseScale);
 
         } else {
           // Phase 4: Smooth handoff to boid system
-          const t = (elapsed - 4.5);
-          groupRef.current.position.lerp(boid.position, t * 0.4);
-          groupRef.current.rotation.x *= 0.85;
-          groupRef.current.rotation.z *= 0.85;
+          const t = (elapsed - 5.0);
+          groupRef.current.position.lerp(boid.position, t * 0.5);
+          groupRef.current.rotation.x *= 0.8;
+          groupRef.current.rotation.z *= 0.8;
           groupRef.current.quaternion.slerp(boid.ref.quaternion, t * 0.3);
           groupRef.current.scale.setScalar(baseScale);
         }
