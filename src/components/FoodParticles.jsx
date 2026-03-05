@@ -26,7 +26,7 @@ const FoodParticles = ({ feedEvent }) => {
     [0.87, 0.72, 0.53], // burlywood
   ];
 
-  // Init particle data
+  // Init particle data + hide all instances off-screen
   useEffect(() => {
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       const c = foodColors[Math.floor(Math.random() * foodColors.length)];
@@ -43,8 +43,19 @@ const FoodParticles = ({ feedEvent }) => {
         spawned: false,
         wobblePhase: Math.random() * Math.PI * 2,
         wobbleSpeed: 1 + Math.random() * 2,
-        scale: 0.3 + Math.random() * 0.4,
+        scale: 0.08 + Math.random() * 0.07,
       };
+
+      // Hide all instances off-screen at init
+      if (meshRef.current) {
+        dummyObj.current.position.set(0, -500, 0);
+        dummyObj.current.scale.setScalar(0.001);
+        dummyObj.current.updateMatrix();
+        meshRef.current.setMatrixAt(i, dummyObj.current.matrix);
+      }
+    }
+    if (meshRef.current) {
+      meshRef.current.instanceMatrix.needsUpdate = true;
     }
   }, []);
 
@@ -67,8 +78,24 @@ const FoodParticles = ({ feedEvent }) => {
     }
   }, [feedEvent?.id]);
 
+  const initializedRef = useRef(false);
+
   useFrame(({ clock }) => {
-    if (!meshRef.current || !activeRef.current) return;
+    if (!meshRef.current) return;
+
+    // Hide all instances on first frame (fixes rogue particle at origin)
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        dummyObj.current.position.set(0, -500, 0);
+        dummyObj.current.scale.setScalar(0.001);
+        dummyObj.current.updateMatrix();
+        meshRef.current.setMatrixAt(i, dummyObj.current.matrix);
+      }
+      meshRef.current.instanceMatrix.needsUpdate = true;
+    }
+
+    if (!activeRef.current) return;
 
     const time = clock.elapsedTime;
     const elapsed = time - spawnTimeRef.current;
@@ -122,21 +149,22 @@ const FoodParticles = ({ feedEvent }) => {
         p.vel.z += (Math.random() - 0.5) * 0.01;
       }
 
-      // Underwater
+      // Underwater — sink steadily
       if (p.hitWater) {
-        p.vel.y *= 0.995;
+        p.vel.y *= 0.997;
         p.vel.x *= 0.99;
         p.vel.z *= 0.99;
-        if (p.vel.y > -0.004) p.vel.y = -0.004;
+        // Steady sink speed — fast enough to reach 35% depth in reasonable time
+        if (p.vel.y > -0.02) p.vel.y -= 0.001;
         p.pos.x += Math.sin(time * p.wobbleSpeed + p.wobblePhase) * 0.007;
         p.pos.z += Math.cos(time * p.wobbleSpeed * 0.7 + p.wobblePhase) * 0.007;
       }
 
       p.pos.add(p.vel);
 
-      // Fade / kill
-      const pAge = elapsed - p.spawnDelay;
-      if (pAge > 10 || (p.hitWater && WATER_LEVEL - p.pos.y > 18)) {
+      // Kill only after sinking ~35% into the tank (about 8 units below water)
+      // WATER_LEVEL is ~11, tank bottom is ~-12.5, 35% down = ~8 units below surface
+      if (p.hitWater && WATER_LEVEL - p.pos.y > 8) {
         p.alive = false;
       }
 
@@ -161,7 +189,7 @@ const FoodParticles = ({ feedEvent }) => {
 
   return (
     <instancedMesh ref={meshRef} args={[null, null, PARTICLE_COUNT]} frustumCulled={false}>
-      <sphereGeometry args={[0.5, 6, 4]} />
+      <sphereGeometry args={[1, 6, 4]} />
       <meshStandardMaterial
         color="#DAA520"
         roughness={0.8}
