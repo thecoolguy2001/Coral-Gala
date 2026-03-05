@@ -46,8 +46,8 @@ const useRealtimeAquarium = (fishData) => {
         fishRandomsRef.current[f.id] = {
           // Phase offset for swimming animation (0 to 2*PI)
           phaseOffset: Math.random() * Math.PI * 2,
-          // Speed multiplier (0.7 to 1.3 - some fish swim faster/slower)
-          speedMultiplier: 0.7 + Math.random() * 0.6,
+          // Speed multiplier (0.3 to 1.1 - much wider range, some fish very slow)
+          speedMultiplier: 0.3 + Math.random() * 0.8,
           // Vertical preference (-1 to 1, affects preferred swimming depth)
           verticalBias: (Math.random() - 0.5) * 2,
           // Wandering intensity (how much random movement)
@@ -313,10 +313,10 @@ const useRealtimeAquarium = (fishData) => {
         const energyFactor = state.energy;
         const roll = Math.random();
 
-        if (roll < 0.1 * (1 - energyFactor)) {
-          // Low energy = more likely to rest
+        if (roll < 0.1 * (1 - energyFactor) + randoms.laziness * 0.25) {
+          // Low energy or lazy fish rest more often and longer
           state.mode = 'resting';
-          state.modeDuration = 8 + Math.random() * 20;
+          state.modeDuration = 8 + Math.random() * 20 + randoms.laziness * 15;
         } else if (roll < 0.3 && randoms.curiosity > 0.4) {
           // Curious fish investigate points of interest
           state.mode = 'investigating';
@@ -381,7 +381,9 @@ const useRealtimeAquarium = (fishData) => {
 
       // Calculate desired velocity based on mode
       let desiredVelocity = new THREE.Vector3();
-      let maxSpeed = 0.2 * randoms.speedMultiplier * state.energy;
+      // Base speed reduced, lazy fish are noticeably slower
+      const lazyFactor = 1.0 - randoms.laziness * 0.6; // lazy fish get 40-100% speed
+      let maxSpeed = 0.12 * randoms.speedMultiplier * state.energy * lazyFactor;
 
       switch (state.mode) {
         case 'swimming':
@@ -586,12 +588,13 @@ const useRealtimeAquarium = (fishData) => {
         boid.velocity.multiplyScalar(actualMaxSpeed / speed);
       }
 
-      // Minimum speed (except resting)
-      if (state.mode !== 'resting' && speed < 0.03) {
+      // Minimum speed — lazy fish can drift very slowly
+      const minSpeed = state.mode === 'resting' ? 0.005 : 0.01 + (1 - randoms.laziness) * 0.015;
+      if (speed < minSpeed && state.mode !== 'resting') {
         if (speed > 0.001) {
-          boid.velocity.normalize().multiplyScalar(0.03);
+          boid.velocity.normalize().multiplyScalar(minSpeed);
         } else {
-          boid.velocity.set(0.03, 0, 0);
+          boid.velocity.set(minSpeed, 0, 0);
         }
       }
 

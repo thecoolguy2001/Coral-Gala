@@ -53,8 +53,8 @@ const InteractionUI = ({ disabled, roomLightsOn, toggleRoomLights }) => {
 
   const handleFeed = () => {
     if (disabled || isLoading) return;
-    const randomX = (Math.random() - 0.5) * (BOUNDS.x.max - BOUNDS.x.min) * 0.6;
-    const randomZ = (Math.random() - 0.5) * (BOUNDS.z.max - BOUNDS.z.min) * 0.6;
+    const randomX = (Math.random() - 0.5) * BOUNDS.x * 1.2;
+    const randomZ = (Math.random() - 0.5) * BOUNDS.z * 1.2;
     dispatch({ type: 'FEED', payload: { position: [randomX, WATER_LEVEL, randomZ] } });
     if (navigator.vibrate) navigator.vibrate(50);
   };
