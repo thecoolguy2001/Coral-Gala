@@ -134,28 +134,27 @@ const FoodParticles = ({ feedEvent }) => {
 
       anyAlive = true;
 
-      // Air phase — gravity
+      // Air phase — strong gravity, falls fast
       if (!p.hitWater && p.pos.y > WATER_LEVEL) {
-        p.vel.y -= 0.005;
+        p.vel.y -= 0.015;
         p.pos.x += Math.sin(time * 3 + p.wobblePhase) * 0.003;
         p.pos.z += Math.cos(time * 2 + p.wobblePhase) * 0.003;
       }
 
-      // Hit water
+      // Hit water — sudden drag
       if (!p.hitWater && p.pos.y <= WATER_LEVEL) {
         p.hitWater = true;
-        p.vel.y *= 0.12;
+        p.vel.y *= 0.1;
         p.vel.x += (Math.random() - 0.5) * 0.01;
         p.vel.z += (Math.random() - 0.5) * 0.01;
       }
 
-      // Underwater — sink steadily
+      // Underwater — steady sink, not too slow
       if (p.hitWater) {
-        p.vel.y *= 0.997;
         p.vel.x *= 0.99;
         p.vel.z *= 0.99;
-        // Steady sink speed — fast enough to reach 35% depth in reasonable time
-        if (p.vel.y > -0.02) p.vel.y -= 0.001;
+        // Constant sink rate so food reaches the fish
+        p.vel.y = -0.04 - Math.sin(time * p.wobbleSpeed + p.wobblePhase) * 0.005;
         p.pos.x += Math.sin(time * p.wobbleSpeed + p.wobblePhase) * 0.007;
         p.pos.z += Math.cos(time * p.wobbleSpeed * 0.7 + p.wobblePhase) * 0.007;
       }

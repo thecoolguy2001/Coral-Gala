@@ -336,17 +336,21 @@ const useRealtimeAquarium = (fishData) => {
         state.modeStartTime = time;
       }
 
-      // FEEDING BEHAVIOR - override mode when food is present
-      if (feedTargetRef.current && !state.postFeedMode) {
+      // FEEDING BEHAVIOR - wait for food to sink into water before reacting
+      const feedAge = feedStartTimeRef.current ? time - feedStartTimeRef.current : 999;
+      if (feedTargetRef.current && !state.postFeedMode && feedAge > 3.0) {
         const hunger = state.hunger !== undefined ? state.hunger : 50;
         const isGreedy = (randoms.curiosity > 0.7 || randoms.laziness < 0.2);
 
-        // Decide if this fish wants to eat
         const wantsToEat = hunger < 80 || isGreedy;
 
-        if (wantsToEat) {
-          state.mode = 'feeding';
-          state.modeStartTime = time;
+        if (wantsToEat && state.mode !== 'feeding') {
+          // Stagger reaction — not all fish notice at the same time
+          const noticeDelay = randoms.laziness * 2 + Math.random() * 1;
+          if (feedAge > 3.0 + noticeDelay) {
+            state.mode = 'feeding';
+            state.modeStartTime = time;
+          }
         }
       }
 
@@ -539,7 +543,7 @@ const useRealtimeAquarium = (fishData) => {
 
       // INTELLIGENT BOUNDARY AVOIDANCE
       // Fish sense walls early and smoothly turn away
-      const senseDistance = 8.0;
+      const senseDistance = 4.0;
       const avoidStrength = 0.012;
 
       // X walls
@@ -565,8 +569,8 @@ const useRealtimeAquarium = (fishData) => {
         state.verticalPreference = Math.min(state.verticalPreference, BOUNDS.yMax - 4);
       } else if (boid.position.y < BOUNDS.yMin + senseDistance) {
         const t = ((BOUNDS.yMin + senseDistance) - boid.position.y) / senseDistance;
-        boid.velocity.y += avoidStrength * t * t * 3; // Stronger floor avoidance
-        state.verticalPreference = Math.max(state.verticalPreference, BOUNDS.yMin + 4);
+        boid.velocity.y += avoidStrength * t * t * 1.5; // Gentle floor avoidance — let fish explore the bottom
+        state.verticalPreference = Math.max(state.verticalPreference, BOUNDS.yMin + 2);
       }
 
       // Z walls
