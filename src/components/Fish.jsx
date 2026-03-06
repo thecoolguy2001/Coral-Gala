@@ -144,32 +144,54 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
   const isEntering = useRef(!!boid.spawnTime);
   const entranceStartTime = useRef(0);
   const tumbleRandom = useRef(() => {
-    // Some fish spin a lot, some barely tumble, some don't spin at all
-    const spinChance = Math.random();
-    let xSpeed, zSpeed;
-    if (spinChance < 0.3) {
-      // No spin — fish falls straight down, maybe slight tilt
-      xSpeed = 0;
-      zSpeed = Math.random() * 0.5;
-    } else if (spinChance < 0.6) {
-      // Gentle tumble
-      xSpeed = 0.5 + Math.random() * 2;
-      zSpeed = 0.3 + Math.random() * 1.5;
+    // 6 distinct tumble types — every fish tumbles differently
+    const tumbleType = Math.random();
+    let xSpeed, ySpeed, zSpeed;
+
+    if (tumbleType < 0.20) {
+      // Gentle wobble — slow rotation on all axes
+      xSpeed = 0.3 + Math.random() * 0.7;
+      ySpeed = 0.2 + Math.random() * 0.5;
+      zSpeed = 0.3 + Math.random() * 0.6;
+    } else if (tumbleType < 0.40) {
+      // Forward tumble — classic head-over-tail
+      xSpeed = 2 + Math.random() * 4;
+      ySpeed = Math.random() * 0.5;
+      zSpeed = 0.5 + Math.random() * 1.5;
+    } else if (tumbleType < 0.55) {
+      // Side-over-side — primarily Y-axis rotation
+      xSpeed = Math.random() * 1.0;
+      ySpeed = 2 + Math.random() * 5;
+      zSpeed = Math.random() * 1.0;
+    } else if (tumbleType < 0.70) {
+      // Cartwheel — primarily Z-axis rotation
+      xSpeed = Math.random() * 0.8;
+      ySpeed = Math.random() * 0.8;
+      zSpeed = 2.5 + Math.random() * 4;
+    } else if (tumbleType < 0.85) {
+      // Corkscrew — X + Y combined
+      xSpeed = 1.5 + Math.random() * 3;
+      ySpeed = 1.5 + Math.random() * 3;
+      zSpeed = Math.random() * 1.0;
     } else {
-      // Wild spin
-      xSpeed = 3 + Math.random() * 5;
+      // Chaotic — all 3 axes at high speed
+      xSpeed = 1 + Math.random() * 5;
+      ySpeed = 1 + Math.random() * 4;
       zSpeed = 1 + Math.random() * 4;
     }
+
     return {
       xSpeed,
+      ySpeed,
       zSpeed,
       xDir: Math.random() > 0.5 ? 1 : -1,
+      yDir: Math.random() > 0.5 ? 1 : -1,
       zDir: Math.random() > 0.5 ? 1 : -1,
       wobbleFreq: 4 + Math.random() * 10,
       wobbleAmp: 0.3 + Math.random() * 0.9,
       plungeDepth: 8 + Math.random() * 8,
-      // Starting angle offset so orientation varies
       startAngleX: Math.random() * Math.PI * 2,
+      startAngleY: Math.random() * Math.PI * 2,
       startAngleZ: Math.random() * Math.PI * 2,
     };
   });
@@ -209,9 +231,10 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
           groupRef.current.position.y = Math.max(fallY, WATER_LEVEL + 0.1);
           groupRef.current.position.z = boid.position.z;
 
-          // Fish tumbles uniquely — or falls straight if no spin
+          // Fish tumbles uniquely across all three axes
           groupRef.current.rotation.x = tr.startAngleX + elapsed * tr.xSpeed * tr.xDir;
-          groupRef.current.rotation.z = tr.startAngleZ + Math.sin(elapsed * tr.zSpeed) * 0.6 * tr.zDir;
+          groupRef.current.rotation.y = tr.startAngleY + elapsed * tr.ySpeed * tr.yDir;
+          groupRef.current.rotation.z = tr.startAngleZ + elapsed * tr.zSpeed * tr.zDir;
 
           groupRef.current.scale.setScalar(baseScale);
 
@@ -229,9 +252,10 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
           groupRef.current.position.x += Math.sin(waterTime * tr.wobbleFreq) * tr.wobbleAmp * wobbleDecay * delta;
           groupRef.current.position.z += Math.cos(waterTime * tr.wobbleFreq * 0.8) * tr.wobbleAmp * 0.6 * wobbleDecay * delta;
 
-          // Tumble dampens in water — uses same random spin rates
+          // Tumble dampens in water — all axes decay exponentially
           const rotDecay = Math.exp(-waterTime * 1.5);
           groupRef.current.rotation.x = (2.0 * tr.xSpeed * tr.xDir) * rotDecay + Math.sin(waterTime * tr.zSpeed) * 0.4 * rotDecay;
+          groupRef.current.rotation.y = (2.0 * tr.ySpeed * tr.yDir) * rotDecay;
           groupRef.current.rotation.z = Math.sin(waterTime * tr.xSpeed * 0.7) * 0.3 * tr.zDir * rotDecay;
 
           // Scale pulse on water entry moment
@@ -254,8 +278,9 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
 
           groupRef.current.position.lerp(boid.position, t * 0.15);
 
-          // Rotation eases back to normal
+          // Rotation eases back to normal on all axes
           groupRef.current.rotation.x *= (1 - t * 0.3);
+          groupRef.current.rotation.y *= (1 - t * 0.3);
           groupRef.current.rotation.z *= (1 - t * 0.3);
 
           // Gentle sway as fish finds its bearing
@@ -277,6 +302,7 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
       } else {
         isEntering.current = false;
         groupRef.current.rotation.x = 0;
+        groupRef.current.rotation.y = 0;
         groupRef.current.rotation.z = 0;
       }
     }

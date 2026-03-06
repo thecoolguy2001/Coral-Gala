@@ -10,6 +10,19 @@ import {
   updateMasterHeartbeat
 } from '../firestore/realtimeAquarium';
 
+// Coral obstacle spheres for collision avoidance
+// Positions match TankContainer.jsx coral placements (floorY ≈ -11.2)
+// Y raised to approximate visual center of mass; radii slightly larger than visual
+const CORAL_OBSTACLES = [
+  { position: new THREE.Vector3(0, -10.5, -3), radius: 3.5 },      // Red coral (center)
+  { position: new THREE.Vector3(-14, -9.5, -6), radius: 4.0 },     // Chromaflare (back left)
+  { position: new THREE.Vector3(14, -9.5, -6), radius: 3.5 },      // Blue coral (back right)
+  { position: new THREE.Vector3(-16, -10.0, 0), radius: 2.0 },     // Lowpoly coral (left)
+  { position: new THREE.Vector3(16, -10.0, 0), radius: 1.8 },      // Lowpoly coral 2 (right)
+  { position: new THREE.Vector3(-13, -10.5, 5), radius: 1.0 },     // Coral accent (front left)
+  { position: new THREE.Vector3(13, -10.5, 5), radius: 1.8 },      // Coral 2 accent (front right)
+];
+
 const useRealtimeAquarium = (fishData) => {
   const [isMaster, setIsMaster] = useState(false);
   const [realtimePositions, setRealtimePositions] = useState({});
@@ -24,9 +37,10 @@ const useRealtimeAquarium = (fishData) => {
   const setFeedTarget = (position) => {
     if (position) {
       feedTargetRef.current = new THREE.Vector3(...position);
-      feedStartTimeRef.current = Date.now() * 0.001;
+      feedStartTimeRef.current = -1; // will be set to clock.elapsedTime on first boid update
     } else {
       feedTargetRef.current = null;
+      feedStartTimeRef.current = 0;
     }
   };
 
@@ -35,113 +49,114 @@ const useRealtimeAquarium = (fishData) => {
 
   const [boids, setBoids] = useState([]);
 
+  // Helper function to validate position is within bounds
+  const isValidPosition = (pos) => {
+    if (!Array.isArray(pos) || pos.length !== 3) return false;
+    return Math.abs(pos[0]) <= BOUNDS.x &&
+           pos[1] >= BOUNDS.yMin &&
+           pos[1] <= BOUNDS.yMax &&
+           Math.abs(pos[2]) <= BOUNDS.z;
+  };
+
+  // Create a single new boid from fish data
+  const createBoid = (f) => {
+    // Generate or retrieve persistent random values
+    if (!fishRandomsRef.current[f.id]) {
+      fishRandomsRef.current[f.id] = {
+        phaseOffset: Math.random() * Math.PI * 2,
+        speedMultiplier: 0.3 + Math.random() * 0.8,
+        verticalBias: (Math.random() - 0.5) * 2,
+        wanderIntensity: 0.3 + Math.random() * 0.7,
+        turnRate: 0.8 + Math.random() * 0.4,
+        wiggleAmount: 0.8 + Math.random() * 0.4,
+        laziness: Math.random(),
+        curiosity: Math.random(),
+        preferredZoneX: Math.random(),
+        preferredZoneZ: Math.random(),
+      };
+    }
+
+    // Position
+    let positionArray;
+    if (f.position && isValidPosition(f.position)) {
+      positionArray = f.position;
+    } else {
+      const fishRandoms = fishRandomsRef.current[f.id];
+      const phase = fishRandoms ? fishRandoms.phaseOffset : Math.random() * Math.PI * 2;
+      const yRange = BOUNDS.yMax - BOUNDS.yMin;
+      const yMid = (BOUNDS.yMax + BOUNDS.yMin) / 2;
+
+      const xSpread = Math.cos(phase * 2.7) * BOUNDS.x * 0.85;
+      const zSpread = Math.sin(phase * 1.9) * BOUNDS.z * 0.85;
+      const yOffset = Math.sin(phase * 3.1) * yRange * 0.45;
+
+      positionArray = [
+        xSpread + (Math.random() - 0.5) * 4,
+        yMid + yOffset + (fishRandoms?.verticalBias || 0) * 4,
+        zSpread + (Math.random() - 0.5) * 4
+      ];
+
+      positionArray[0] = Math.max(-BOUNDS.x + 2, Math.min(BOUNDS.x - 2, positionArray[0]));
+      positionArray[1] = Math.max(BOUNDS.yMin + 2, Math.min(BOUNDS.yMax - 2, positionArray[1]));
+      positionArray[2] = Math.max(-BOUNDS.z + 1, Math.min(BOUNDS.z - 1, positionArray[2]));
+    }
+
+    // Velocity
+    let velocityArray;
+    if (f.velocity && Array.isArray(f.velocity) && f.velocity.length === 3) {
+      velocityArray = f.velocity;
+    } else {
+      const fishRandoms = fishRandomsRef.current[f.id];
+      const angle = fishRandoms ? fishRandoms.phaseOffset * 3 : Math.random() * Math.PI * 2;
+      const speed = 0.06 + Math.random() * 0.04;
+      velocityArray = [
+        Math.cos(angle) * speed,
+        (Math.random() - 0.5) * 0.03,
+        Math.sin(angle) * speed * 0.8,
+      ];
+    }
+
+    return {
+      ...f,
+      position: new THREE.Vector3(...positionArray),
+      velocity: new THREE.Vector3(...velocityArray),
+      ref: new THREE.Object3D(),
+      randoms: fishRandomsRef.current[f.id],
+    };
+  };
+
   useEffect(() => {
     if (!fishData || fishData.length === 0) return;
 
-    const newBoids = fishData.map((f, index) => {
-      const realtimePosition = realtimePositions[f.id]?.position;
+    setBoids(prevBoids => {
+      // Build map of existing boids by ID — preserve their simulation state
+      const existingMap = new Map();
+      prevBoids.forEach(b => existingMap.set(b.id, b));
 
-      // Generate or retrieve persistent random values for this fish
-      if (!fishRandomsRef.current[f.id]) {
-        fishRandomsRef.current[f.id] = {
-          // Phase offset for swimming animation (0 to 2*PI)
-          phaseOffset: Math.random() * Math.PI * 2,
-          // Speed multiplier (0.3 to 1.1 - much wider range, some fish very slow)
-          speedMultiplier: 0.3 + Math.random() * 0.8,
-          // Vertical preference (-1 to 1, affects preferred swimming depth)
-          verticalBias: (Math.random() - 0.5) * 2,
-          // Wandering intensity (how much random movement)
-          wanderIntensity: 0.3 + Math.random() * 0.7,
-          // Turn rate (how quickly fish changes direction)
-          turnRate: 0.8 + Math.random() * 0.4,
-          // Individual wiggle amplitude
-          wiggleAmount: 0.8 + Math.random() * 0.4,
-          // PERSONALITY: How lazy is this fish? (0 = always active, 1 = very lazy)
-          laziness: Math.random(),
-          // PERSONALITY: How much does this fish like to explore? (0 = stays put, 1 = explorer)
-          curiosity: Math.random(),
-          // Preferred zone in tank (0 = left, 0.5 = center, 1 = right)
-          preferredZoneX: Math.random(), // Full range across tank
-          preferredZoneZ: Math.random(), // Full range front to back
-        };
-      }
-
-      // Helper function to validate position is within bounds
-      const isValidPosition = (pos) => {
-        if (!Array.isArray(pos) || pos.length !== 3) return false;
-        const valid = Math.abs(pos[0]) <= BOUNDS.x &&
-               pos[1] >= BOUNDS.yMin &&
-               pos[1] <= BOUNDS.yMax &&
-               Math.abs(pos[2]) <= BOUNDS.z;
-        if (!valid) {
-          console.warn('⚠️ Invalid fish position detected:', pos, 'Bounds:', BOUNDS);
+      let changed = false;
+      const newBoids = fishData.map(f => {
+        if (existingMap.has(f.id)) {
+          // Existing fish — keep current boid (preserves position, velocity, state)
+          const existing = existingMap.get(f.id);
+          // Update display properties that may have changed
+          existing.color = f.color;
+          existing.name = f.name;
+          existing.size = f.size;
+          existing.species = f.species;
+          return existing;
         }
-        return valid;
-      };
 
-      // Ensure we have proper position data
-      let positionArray;
-      if (realtimePosition && isValidPosition(realtimePosition)) {
-        positionArray = realtimePosition;
-      } else if (f.position && isValidPosition(f.position)) {
-        positionArray = f.position;
-      } else {
-        // Generate unique spawn position based on fish's random properties
-        const fishRandoms = fishRandomsRef.current[f.id];
-        const phase = fishRandoms ? fishRandoms.phaseOffset : Math.random() * Math.PI * 2;
-        const yRange = BOUNDS.yMax - BOUNDS.yMin;
-        const yMid = (BOUNDS.yMax + BOUNDS.yMin) / 2;
+        // New fish — create fresh boid
+        changed = true;
+        return createBoid(f);
+      });
 
-        // Spread fish across FULL tank volume using their unique phase
-        const xSpread = Math.cos(phase * 2.7) * BOUNDS.x * 0.85;
-        const zSpread = Math.sin(phase * 1.9) * BOUNDS.z * 0.85;
-        const yOffset = Math.sin(phase * 3.1) * yRange * 0.45;
+      // Check if fish were removed
+      if (newBoids.length !== prevBoids.length) changed = true;
 
-        positionArray = [
-          xSpread + (Math.random() - 0.5) * 4,
-          yMid + yOffset + (fishRandoms?.verticalBias || 0) * 4,
-          zSpread + (Math.random() - 0.5) * 4
-        ];
-
-        // Clamp to safe bounds
-        positionArray[0] = Math.max(-BOUNDS.x + 2, Math.min(BOUNDS.x - 2, positionArray[0]));
-        positionArray[1] = Math.max(BOUNDS.yMin + 2, Math.min(BOUNDS.yMax - 2, positionArray[1]));
-        positionArray[2] = Math.max(-BOUNDS.z + 1, Math.min(BOUNDS.z - 1, positionArray[2]));
-
-        console.log(`🐠 Fish ${f.name} spawned at:`, positionArray);
-      }
-
-      // Ensure we have proper velocity data
-      let velocityArray;
-      const realtimeVelocity = realtimePositions[f.id]?.velocity;
-      if (realtimeVelocity && Array.isArray(realtimeVelocity) && realtimeVelocity.length === 3) {
-        velocityArray = realtimeVelocity;
-      } else if (f.velocity && Array.isArray(f.velocity) && f.velocity.length === 3) {
-        velocityArray = f.velocity;
-      } else {
-        // Use the fish's unique phase offset for initial direction
-        const fishRandoms = fishRandomsRef.current[f.id];
-        const angle = fishRandoms ? fishRandoms.phaseOffset * 3 : Math.random() * Math.PI * 2;
-        const speed = 0.06 + Math.random() * 0.04;
-        velocityArray = [
-          Math.cos(angle) * speed,
-          (Math.random() - 0.5) * 0.03,
-          Math.sin(angle) * speed * 0.8,
-        ];
-      }
-
-      return {
-        ...f,
-        position: new THREE.Vector3(...positionArray),
-        velocity: new THREE.Vector3(...velocityArray),
-        ref: new THREE.Object3D(),
-        // Attach individual random properties
-        randoms: fishRandomsRef.current[f.id],
-      };
+      return changed ? newBoids : prevBoids;
     });
-
-    setBoids(newBoids);
-  }, [fishData, realtimePositions]);
+  }, [fishData]);
 
   useEffect(() => {
     if (boids.length === 0) return;
@@ -337,7 +352,11 @@ const useRealtimeAquarium = (fishData) => {
       }
 
       // FEEDING BEHAVIOR - wait for food to sink into water before reacting
-      const feedAge = feedStartTimeRef.current ? time - feedStartTimeRef.current : 999;
+      // Sync feed start time to clock.elapsedTime on first frame after feed event
+      if (feedTargetRef.current && feedStartTimeRef.current === -1) {
+        feedStartTimeRef.current = time;
+      }
+      const feedAge = feedStartTimeRef.current > 0 ? time - feedStartTimeRef.current : 999;
       if (feedTargetRef.current && !state.postFeedMode && feedAge > 3.0) {
         const hunger = state.hunger !== undefined ? state.hunger : 50;
         const isGreedy = (randoms.curiosity > 0.7 || randoms.laziness < 0.2);
@@ -354,26 +373,32 @@ const useRealtimeAquarium = (fishData) => {
         }
       }
 
-      // When feed target removed, trigger post-feeding behavior
+      // When feed target removed, disperse fish AWAY from food and resume swimming
       if (!feedTargetRef.current && state.mode === 'feeding') {
         state.mode = 'swimming';
+        state.modeStartTime = time;
 
-        // Post-feeding personality reaction
-        if (randoms.speedMultiplier > 1.1 || randoms.wanderIntensity > 0.7) {
-          // Energetic/playful: food zoomies
-          state.postFeedMode = 'zoomies';
-          state.postFeedEnd = time + 5 + Math.random() * 5;
-        } else if (randoms.laziness > 0.7) {
-          // Lazy/calm: settle down
-          state.postFeedMode = 'settle';
-          state.postFeedEnd = time + 5 + Math.random() * 5;
-        } else if (randoms.curiosity > 0.6) {
-          // Curious: investigate where food was
-          state.postFeedMode = 'investigate';
-          state.postFeedEnd = time + 4 + Math.random() * 4;
-          state.postFeedPos = feedTargetRef.current ? feedTargetRef.current.clone() : boid.position.clone();
+        // Compute swim direction pointing AWAY from where food was
+        if (state._lastFoodPos) {
+          const awayAngle = Math.atan2(
+            boid.position.z - state._lastFoodPos.z,
+            boid.position.x - state._lastFoodPos.x
+          );
+          // Add random spread so fish don't all swim in a line
+          state.swimDirection = awayAngle + (Math.random() - 0.5) * (Math.PI / 1.5);
+          state._lastFoodPos = null;
         } else {
-          // Default: resume normal
+          state.swimDirection = Math.random() * Math.PI * 2;
+        }
+
+        // Randomize vertical preference to spread them out
+        state.verticalPreference = BOUNDS.yMin + 2 + Math.random() * (BOUNDS.yMax - BOUNDS.yMin - 4);
+
+        // Brief zoomies for energetic fish, everyone else resumes normal immediately
+        if (randoms.speedMultiplier > 1.1 || randoms.wanderIntensity > 0.7) {
+          state.postFeedMode = 'zoomies';
+          state.postFeedEnd = time + 1 + Math.random() * 1;
+        } else {
           state.postFeedMode = null;
         }
       }
@@ -459,6 +484,8 @@ const useRealtimeAquarium = (fishData) => {
         case 'feeding':
           // Swim toward food based on hunger
           if (feedTargetRef.current) {
+            // Track food position so we can swim AWAY when food clears
+            state._lastFoodPos = { x: feedTargetRef.current.x, z: feedTargetRef.current.z };
             const toFood = new THREE.Vector3().subVectors(feedTargetRef.current, boid.position);
             const foodDist = toFood.length();
             const hunger = state.hunger !== undefined ? state.hunger : 50;
@@ -511,17 +538,6 @@ const useRealtimeAquarium = (fishData) => {
         maxSpeed *= 1.5;
         desiredVelocity.x += Math.sin(fishTime * 5) * maxSpeed * 0.5;
         desiredVelocity.z += Math.cos(fishTime * 4.3) * maxSpeed * 0.4;
-      } else if (state.postFeedMode === 'settle') {
-        maxSpeed *= 0.3;
-        desiredVelocity.y -= 0.01; // drift downward
-      } else if (state.postFeedMode === 'investigate' && state.postFeedPos) {
-        const toOldFood = new THREE.Vector3().subVectors(state.postFeedPos, boid.position);
-        if (toOldFood.length() > 2) {
-          desiredVelocity.copy(toOldFood.normalize().multiplyScalar(maxSpeed * 0.5));
-        } else {
-          desiredVelocity.x = Math.cos(fishTime * 0.8) * maxSpeed * 0.3;
-          desiredVelocity.z = Math.sin(fishTime * 0.8) * maxSpeed * 0.3;
-        }
       }
 
       // SMOOTH STEERING - gradually adjust velocity toward desired
@@ -540,6 +556,28 @@ const useRealtimeAquarium = (fishData) => {
           boid.velocity.add(diff.multiplyScalar(avoidForce));
         }
       });
+
+      // CORAL OBSTACLE AVOIDANCE
+      for (let ci = 0; ci < CORAL_OBSTACLES.length; ci++) {
+        const obstacle = CORAL_OBSTACLES[ci];
+        const diff = new THREE.Vector3().subVectors(boid.position, obstacle.position);
+        const dist = diff.length();
+        const avoidRadius = obstacle.radius + 1.5;
+
+        if (dist < avoidRadius && dist > 0) {
+          diff.normalize();
+          const penetration = (avoidRadius - dist) / avoidRadius;
+          const coralAvoidForce = penetration * penetration * 0.015;
+          boid.velocity.add(diff.multiplyScalar(coralAvoidForce));
+
+          // Nudge swim direction away from coral
+          if (state.mode === 'swimming') {
+            const awayAngle = Math.atan2(diff.z, diff.x);
+            const angleDiff = awayAngle - state.swimDirection;
+            state.swimDirection += Math.sign(angleDiff) * 0.03 * penetration;
+          }
+        }
+      }
 
       // INTELLIGENT BOUNDARY AVOIDANCE
       // Fish sense walls early and smoothly turn away
