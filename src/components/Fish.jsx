@@ -242,6 +242,11 @@ const Fish = ({ boid, onFishClick, petEvent }) => {
             groupRef.current.scale.setScalar(baseScale);
           }
 
+          // Write visual position back so SplashEffect can track us for bubble trail
+          if (boid.position) {
+            boid.position.copy(groupRef.current.position);
+          }
+
         } else if (elapsed < 5.0) {
           // Phase 3: Fish recovers — orients and swims toward its boid position
           const settleTime = elapsed - 4.0;

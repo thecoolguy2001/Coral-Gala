@@ -175,10 +175,12 @@ const Scene = ({ fishData, onFishClick, roomLightsOn, feedEvent, petEvent }) => 
 
   const { boids, setFeedTarget } = useRealtimeAquarium(initialFish);
 
-  // Pass feed target to boid system when feed event fires
+  // Pass feed target to boid system when feed event fires, auto-clear after food sinks
   useEffect(() => {
     if (feedEvent) {
       setFeedTarget(feedEvent.position);
+      const timer = setTimeout(() => setFeedTarget(null), 8000);
+      return () => clearTimeout(timer);
     }
   }, [feedEvent?.id]);
 
