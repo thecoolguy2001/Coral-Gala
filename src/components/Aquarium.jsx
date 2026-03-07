@@ -164,6 +164,19 @@ const CausticProjector = () => {
   );
 };
 
+// Smoothly transitions a light's intensity instead of snapping
+const SmoothLight = ({ type, targetIntensity, speed = 2.0, ...props }) => {
+  const lightRef = useRef();
+  useFrame((_, delta) => {
+    if (lightRef.current) {
+      const current = lightRef.current.intensity;
+      lightRef.current.intensity += (targetIntensity - current) * Math.min(delta * speed, 1.0);
+    }
+  });
+  const Component = type;
+  return <Component ref={lightRef} intensity={0} {...props} />;
+};
+
 // Scene component - realistic aquarium view
 const Scene = ({ fishData, onFishClick, roomLightsOn, feedEvent, petEvent }) => {
   const initialFish = useMemo(() => {
@@ -199,29 +212,32 @@ const Scene = ({ fishData, onFishClick, roomLightsOn, feedEvent, petEvent }) => 
       {/* 0. Ambient Fill - Reduced to fix "too bright" complaint */}
       <ambientLight intensity={0.4} color="#ffffff" />
 
-      {/* --- LIGHT 3: ROOM FILL (Controlled by Switch) --- */}
-      <hemisphereLight
-        skyColor="#d6e6ff" 
-        groundColor="#5c4033" 
-        intensity={roomLightsOn ? 0.5 : 0.0}
+      {/* --- LIGHT 3: ROOM FILL (Controlled by Switch, smooth transition) --- */}
+      <SmoothLight
+        type="hemisphereLight"
+        targetIntensity={roomLightsOn ? 0.5 : 0.0}
+        skyColor="#d6e6ff"
+        groundColor="#5c4033"
       />
-      
+
       {/* 2. "Window" Sunlight */}
-      <directionalLight
-        position={[-50, 30, 20]} 
-        intensity={roomLightsOn ? 3.0 : 0.0} 
-        color="#fff0dd" 
+      <SmoothLight
+        type="directionalLight"
+        targetIntensity={roomLightsOn ? 3.0 : 0.0}
+        position={[-50, 30, 20]}
+        color="#fff0dd"
         castShadow
-        shadow-mapSize-width={1024} 
-        shadow-mapSize-height={1024} 
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
         shadow-bias={-0.0001}
       />
 
       {/* 3. Soft Ceiling Fill */}
-      <pointLight 
-        position={[0, 80, 0]} 
-        intensity={roomLightsOn ? 0.8 : 0.0} 
-        color="#ffffff" 
+      <SmoothLight
+        type="pointLight"
+        targetIntensity={roomLightsOn ? 0.8 : 0.0}
+        position={[0, 80, 0]}
+        color="#ffffff"
         decay={2}
         distance={200}
       />
