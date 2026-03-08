@@ -183,13 +183,10 @@ const WaterSurface = ({ roomLightsOn = false }) => {
     });
   }, []);
 
-  useFrame(({ clock }, delta) => {
+  useFrame(({ clock }) => {
     if (waterRef.current) {
       waterMaterial.uniforms.time.value = clock.elapsedTime;
-      // Smooth transition instead of instant switch
-      const target = roomLightsOn ? 1.0 : 0.0;
-      const current = waterMaterial.uniforms.lightsOn.value;
-      waterMaterial.uniforms.lightsOn.value += (target - current) * Math.min(delta * 2.0, 1.0);
+      waterMaterial.uniforms.lightsOn.value = roomLightsOn ? 1.0 : 0.0;
     }
   });
 

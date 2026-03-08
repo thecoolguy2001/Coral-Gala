@@ -69,17 +69,17 @@ const TankContainer = () => {
       <mesh position={[0, 0, -tankDepth / 2 + 0.2]} rotation={[0, 0, 0]} castShadow={false} receiveShadow={false} side={THREE.DoubleSide}>
         <planeGeometry args={[tankWidth, tankHeight]} />
         <MeshReflectorMaterial
-          blur={[200, 200]}
-          resolution={512}
-          mixBlur={0.8}
-          mixStrength={40}
-          roughness={0.15}
+          blur={[0, 0]}
+          resolution={1024}
+          mixBlur={0}
+          mixStrength={100}
+          roughness={0}
           depthScale={1.2}
           minDepthThreshold={0}
           maxDepthThreshold={50}
           color="#ffffff"
           metalness={0}
-          mirror={0.7}
+          mirror={1}
           transparent={true}
           opacity={0.3}
           depthWrite={false}
@@ -101,17 +101,17 @@ const TankContainer = () => {
       <mesh position={[-tankWidth / 2 + 0.2, 0, 0]} rotation={[0, Math.PI / 2, 0]} castShadow={false} receiveShadow={false} side={THREE.DoubleSide}>
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
-          blur={[200, 200]}
-          resolution={512}
-          mixBlur={0.8}
-          mixStrength={40}
-          roughness={0.15}
+          blur={[0, 0]}
+          resolution={1024}
+          mixBlur={0}
+          mixStrength={100}
+          roughness={0}
           depthScale={1.2}
           minDepthThreshold={0}
           maxDepthThreshold={50}
           color="#ffffff"
           metalness={0}
-          mirror={0.7}
+          mirror={1}
           transparent={true}
           opacity={0.3}
           depthWrite={false}
@@ -133,17 +133,17 @@ const TankContainer = () => {
       <mesh position={[tankWidth / 2 - 0.2, 0, 0]} rotation={[0, -Math.PI / 2, 0]} castShadow={false} receiveShadow={false} side={THREE.DoubleSide}>
         <planeGeometry args={[tankDepth, tankHeight]} />
         <MeshReflectorMaterial
-          blur={[200, 200]}
-          resolution={512}
-          mixBlur={0.8}
-          mixStrength={40}
-          roughness={0.15}
+          blur={[0, 0]}
+          resolution={1024}
+          mixBlur={0}
+          mixStrength={100}
+          roughness={0}
           depthScale={1.2}
           minDepthThreshold={0}
           maxDepthThreshold={50}
           color="#ffffff"
           metalness={0}
-          mirror={0.7}
+          mirror={1}
           transparent={true}
           opacity={0.3}
           depthWrite={false}

@@ -5,7 +5,7 @@ import { WATER_LEVEL } from '../constants/tankDimensions';
 
 const DROPLET_COUNT = 50;
 const BUBBLE_COUNT = 40;
-const TRAIL_BUBBLE_COUNT = 60; // bubbles that trail behind the plunging fish
+const TRAIL_BUBBLE_COUNT = 60;
 const TOTAL = DROPLET_COUNT + BUBBLE_COUNT + TRAIL_BUBBLE_COUNT;
 const MAX_SPLASHES = 5;
 
@@ -15,7 +15,8 @@ const MAX_SPLASHES = 5;
  */
 const SplashEffect = ({ boids }) => {
   const pointsRef = useRef();
-  const activeSplashesRef = useRef(new Map()); // key → { spawnTime, fishId, trailSpawned }
+  const activeSplashesRef = useRef(new Map());
+  const usedSlotsRef = useRef(new Set());
 
   const { geometry, velocities, material } = useMemo(() => {
     const total = TOTAL * MAX_SPLASHES;
@@ -35,19 +36,16 @@ const SplashEffect = ({ boids }) => {
         alphas[idx] = 0;
 
         if (i < DROPLET_COUNT) {
-          // Water droplets - white/light blue, bigger
           sizes[idx] = 0.3 + Math.random() * 0.5;
           colors[idx * 3] = 0.8 + Math.random() * 0.2;
           colors[idx * 3 + 1] = 0.9 + Math.random() * 0.1;
           colors[idx * 3 + 2] = 1.0;
         } else if (i < DROPLET_COUNT + BUBBLE_COUNT) {
-          // Impact bubbles - white, medium
           sizes[idx] = 0.15 + Math.random() * 0.25;
           colors[idx * 3] = 0.9;
           colors[idx * 3 + 1] = 0.95;
           colors[idx * 3 + 2] = 1.0;
         } else {
-          // Trail bubbles - smaller, varied sizes
           sizes[idx] = 0.08 + Math.random() * 0.2;
           colors[idx * 3] = 0.85 + Math.random() * 0.15;
           colors[idx * 3 + 1] = 0.9 + Math.random() * 0.1;
@@ -99,6 +97,14 @@ const SplashEffect = ({ boids }) => {
     return { geometry: geo, velocities: vels, material: mat };
   }, []);
 
+  // Find next available slot
+  const getNextSlot = () => {
+    for (let s = 0; s < MAX_SPLASHES; s++) {
+      if (!usedSlotsRef.current.has(s)) return s;
+    }
+    return -1;
+  };
+
   useFrame(({ clock }) => {
     if (!pointsRef.current || !boids || boids.length === 0) return;
 
@@ -107,33 +113,32 @@ const SplashEffect = ({ boids }) => {
     const time = clock.elapsedTime;
     const nowMs = Date.now();
 
-    let slotIndex = 0;
     boids.forEach(boid => {
       if (!boid.spawnTime) return;
       const ageMs = nowMs - boid.spawnTime;
 
-      // Only care about fish spawned in the last 8 seconds
       if (ageMs > 8000) return;
 
       const splashKey = boid.id + '_' + boid.spawnTime;
 
-      // --- SURFACE SPLASH at ~2s (when fish hits water) ---
       if (ageMs >= 1900 && ageMs <= 7000) {
         let splash = activeSplashesRef.current.get(splashKey);
         if (!splash) {
-          if (slotIndex >= MAX_SPLASHES) return;
+          const slot = getNextSlot();
+          if (slot === -1) return;
 
-          splash = { slot: slotIndex, trailCount: 0, splashed: false };
+          splash = { slot, trailCount: 0, splashed: false };
           activeSplashesRef.current.set(splashKey, splash);
-          slotIndex++;
+          usedSlotsRef.current.add(slot);
         }
 
         const base = splash.slot * TOTAL;
 
-        // Spawn the surface splash (droplets + impact bubbles) once
+        // Spawn surface splash once
         if (!splash.splashed) {
           splash.splashed = true;
 
+          // Use boid's current position for X/Z (the boid system places them in the tank)
           const sx = boid.position ? boid.position.x : 0;
           const sz = boid.position ? boid.position.z : 0;
 
@@ -170,11 +175,9 @@ const SplashEffect = ({ boids }) => {
           }
         }
 
-        // --- TRAIL BUBBLES — spawn continuously as fish plunges deeper ---
-        // Only during the plunge phase (ageMs 2000-4000)
+        // Trail bubbles — spawn near fish during plunge phase
         if (ageMs >= 2000 && ageMs <= 4500 && boid.position) {
           const trailBase = base + DROPLET_COUNT + BUBBLE_COUNT;
-          // Spawn a few trail bubbles each frame near the fish's current position
           const bubblesPerFrame = 3;
           for (let b = 0; b < bubblesPerFrame; b++) {
             const ti = splash.trailCount % TRAIL_BUBBLE_COUNT;
@@ -184,7 +187,6 @@ const SplashEffect = ({ boids }) => {
             positions[idx * 3 + 1] = boid.position.y + (Math.random() - 0.5) * 1.0 + 0.5;
             positions[idx * 3 + 2] = boid.position.z + (Math.random() - 0.5) * 1.5;
 
-            // Bubbles drift upward and outward
             const angle = Math.random() * Math.PI * 2;
             const outSpeed = 0.01 + Math.random() * 0.03;
             velocities[idx * 3] = Math.cos(angle) * outSpeed;
@@ -205,49 +207,37 @@ const SplashEffect = ({ boids }) => {
         const idx = s * TOTAL + i;
         if (alphas[idx] <= 0.01) continue;
 
-        // Apply velocity
         positions[idx * 3] += velocities[idx * 3];
         positions[idx * 3 + 1] += velocities[idx * 3 + 1];
         positions[idx * 3 + 2] += velocities[idx * 3 + 2];
 
         if (i < DROPLET_COUNT) {
-          // Water droplets: gravity pulls back down
           velocities[idx * 3 + 1] -= 0.008;
-
-          // Kill when they fall back below water
           if (velocities[idx * 3 + 1] < 0 && positions[idx * 3 + 1] < WATER_LEVEL) {
             alphas[idx] = 0;
             continue;
           }
           alphas[idx] *= 0.985;
-
         } else {
-          // All bubbles (impact + trail): buoyancy, wobble, fade
           velocities[idx * 3 + 1] += 0.003;
-
-          // Wobble
           positions[idx * 3] += Math.sin(time * 8 + idx) * 0.004;
           positions[idx * 3 + 2] += Math.cos(time * 6 + idx * 0.7) * 0.004;
-
-          // Fade
           alphas[idx] *= 0.97;
-
-          // Kill at water surface
           if (positions[idx * 3 + 1] > WATER_LEVEL) {
             alphas[idx] = 0;
           }
         }
 
-        // Horizontal drag
         velocities[idx * 3] *= 0.97;
         velocities[idx * 3 + 2] *= 0.97;
       }
     }
 
-    // Clean up old splashes
+    // Clean up old splashes and free their slots
     activeSplashesRef.current.forEach((val, key) => {
       const spawnTime = parseInt(key.split('_')[1]);
       if (nowMs - spawnTime > 8000) {
+        usedSlotsRef.current.delete(val.slot);
         activeSplashesRef.current.delete(key);
       }
     });

@@ -164,58 +164,6 @@ const CausticProjector = () => {
   );
 };
 
-// Smoothly lerps room light intensities each frame to prevent flash
-const SmoothRoomLights = ({ roomLightsOn }) => {
-  const hemiRef = useRef();
-  const dirRef = useRef();
-  const pointRef = useRef();
-
-  useFrame((_, delta) => {
-    const lerpSpeed = Math.min(delta * 1.5, 1.0); // ~0.7s transition
-    if (hemiRef.current) {
-      const target = roomLightsOn ? 0.5 : 0.0;
-      hemiRef.current.intensity += (target - hemiRef.current.intensity) * lerpSpeed;
-    }
-    if (dirRef.current) {
-      const target = roomLightsOn ? 3.0 : 0.0;
-      dirRef.current.intensity += (target - dirRef.current.intensity) * lerpSpeed;
-    }
-    if (pointRef.current) {
-      const target = roomLightsOn ? 0.8 : 0.0;
-      pointRef.current.intensity += (target - pointRef.current.intensity) * lerpSpeed;
-    }
-  });
-
-  return (
-    <>
-      <hemisphereLight
-        ref={hemiRef}
-        skyColor="#d6e6ff"
-        groundColor="#5c4033"
-        intensity={0}
-      />
-      <directionalLight
-        ref={dirRef}
-        position={[-50, 30, 20]}
-        intensity={0}
-        color="#fff0dd"
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-        shadow-bias={-0.0001}
-      />
-      <pointLight
-        ref={pointRef}
-        position={[0, 80, 0]}
-        intensity={0}
-        color="#ffffff"
-        decay={2}
-        distance={200}
-      />
-    </>
-  );
-};
-
 // Scene component - realistic aquarium view
 const Scene = ({ fishData, onFishClick, roomLightsOn, feedEvent, petEvent }) => {
   const initialFish = useMemo(() => {
@@ -251,8 +199,32 @@ const Scene = ({ fishData, onFishClick, roomLightsOn, feedEvent, petEvent }) => 
       {/* 0. Ambient Fill - Reduced to fix "too bright" complaint */}
       <ambientLight intensity={0.4} color="#ffffff" />
 
-      {/* Room lights with smooth transition (hemisphere + directional + point) */}
-      <SmoothRoomLights roomLightsOn={roomLightsOn} />
+      {/* --- LIGHT 3: ROOM FILL (Controlled by Switch) --- */}
+      <hemisphereLight
+        skyColor="#d6e6ff"
+        groundColor="#5c4033"
+        intensity={roomLightsOn ? 0.5 : 0.0}
+      />
+
+      {/* 2. "Window" Sunlight */}
+      <directionalLight
+        position={[-50, 30, 20]}
+        intensity={roomLightsOn ? 3.0 : 0.0}
+        color="#fff0dd"
+        castShadow
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+        shadow-bias={-0.0001}
+      />
+
+      {/* 3. Soft Ceiling Fill */}
+      <pointLight
+        position={[0, 80, 0]}
+        intensity={roomLightsOn ? 0.8 : 0.0}
+        color="#ffffff"
+        decay={2}
+        distance={200}
+      />
 
       {/* --- LIGHT 2: OVERHEAD CAST --- */}
       <spotLight
