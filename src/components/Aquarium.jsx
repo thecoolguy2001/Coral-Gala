@@ -306,7 +306,19 @@ const Scene = ({ fishData, onFishClick, roomLightsOn, feedEvent, petEvent }) => 
   );
 };
 
-const Aquarium = ({ fishData = [], events = [], loading = false, roomLightsOn }) => {
+// Fires onReady callback after the first frame renders (models resolved via Suspense)
+const ReadyNotifier = ({ onReady }) => {
+  const called = useRef(false);
+  useFrame(() => {
+    if (!called.current) {
+      called.current = true;
+      onReady();
+    }
+  });
+  return null;
+};
+
+const Aquarium = ({ fishData = [], events = [], loading = false, roomLightsOn, onReady }) => {
   const [selectedFish, setSelectedFish] = React.useState(null);
   const [localAddedFish, setLocalAddedFish] = useState([]);
 
@@ -396,7 +408,10 @@ const Aquarium = ({ fishData = [], events = [], loading = false, roomLightsOn })
             camera.lookAt(...cameraLookAt);
           }}
         >
-          <Scene fishData={activeFishData} onFishClick={handleFishClick} roomLightsOn={roomLightsOn} feedEvent={feedEvent} petEvent={petEvent} />
+          <Suspense fallback={null}>
+            <Scene fishData={activeFishData} onFishClick={handleFishClick} roomLightsOn={roomLightsOn} feedEvent={feedEvent} petEvent={petEvent} />
+            {onReady && <ReadyNotifier onReady={onReady} />}
+          </Suspense>
         </Canvas>
       </ThreeErrorBoundary>
 
